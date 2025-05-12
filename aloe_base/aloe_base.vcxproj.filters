@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="include\aloe\logger.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="logger.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{e0c50afc-72e3-4526-9a18-421706fa7e5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\aloe">
+      <UniqueIdentifier>{72e53c4f-f061-427c-a437-faa79f3857f2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

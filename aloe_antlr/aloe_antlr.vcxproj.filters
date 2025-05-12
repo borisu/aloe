@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="gengen\aloeBaseListener.h">
+      <Filter>gengen</Filter>
+    </ClInclude>
+    <ClInclude Include="gengen\aloeLexer.h">
+      <Filter>gengen</Filter>
+    </ClInclude>
+    <ClInclude Include="gengen\aloeListener.h">
+      <Filter>gengen</Filter>
+    </ClInclude>
+    <ClInclude Include="gengen\aloeParser.h">
+      <Filter>gengen</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aloe\aloe-antlr4.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="gengen\aloeBaseListener.cpp">
+      <Filter>gengen</Filter>
+    </ClCompile>
+    <ClCompile Include="gengen\aloeLexer.cpp">
+      <Filter>gengen</Filter>
+    </ClCompile>
+    <ClCompile Include="gengen\aloeListener.cpp">
+      <Filter>gengen</Filter>
+    </ClCompile>
+    <ClCompile Include="gengen\aloeParser.cpp">
+      <Filter>gengen</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="gengen">
+      <UniqueIdentifier>{2a38a3be-d44e-4c40-998d-ef3bf9ce9f94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{e72dc5b3-77d1-40ad-9854-5e173bec0bcc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\aloe">
+      <UniqueIdentifier>{6078b59e-905a-43e7-a7dc-a1e9c15ef5b7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="gengen\aloe.interp">
+      <Filter>gengen</Filter>
+    </None>
+    <None Include="gengen\aloe.tokens">
+      <Filter>gengen</Filter>
+    </None>
+    <None Include="gengen\aloeLexer.interp">
+      <Filter>gengen</Filter>
+    </None>
+    <None Include="gengen\aloeLexer.tokens">
+      <Filter>gengen</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="aloe.g4" />
+  </ItemGroup>
+</Project>
