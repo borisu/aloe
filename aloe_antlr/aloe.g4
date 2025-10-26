@@ -6,103 +6,129 @@ options
 }
 
 
-// Parser rules
-
+////////////////////////////////////////////////////////////////////
+//
+// PARSER
+//
+////////////////////////////////////////////////////////////////////
 prog
-    : zoneStatement
-    | (importStatement)*
-    |  exportBlock
-    ;
-
-zoneStatement
-    : 'zone' nonZonedIdentifier
-    ;
-
-importStatement
-    : 'import' anyIdentifier
-    ;
-
-exportBlock
-    : 'export' '{' (declaration)* '}' 
+    : (declaration)* EOF
     ;
 
 declaration
-    : objectDeclaration
-    ;
-    
-objectDeclaration: 
-    'object' ShortIdentifier  (inheritance)* '{'   '}'
+    : objectDeclaration 
+    | varDeclaration
+    | funDeclaration 
     ;
 
-inheritance:
-    '>' anyIdentifier
+/* TYPES */
+
+int 
+    : IntType
     ;
+
+void 
+    : VoidType
+    ;
+
+char 
+    : CharType
+    ;
+
+builtinType 
+    : int
+    | char
+    | void
+    ;
+
+pointerType
+    : PointerArrow (builtinType | identifier | pointerType)
+    ;
+
+type 
+    : builtinType
+    | pointerType
+    ;
+
+/* Object Decalaration */
+
+objectDeclaration  
+    : 'object' inheritanceChain '{' declaration* '}'
+    ;  
+
+inheritanceChain
+    :  identifier ('>' inheritedType)*
+    ;
+
+inheritedType
+    : inheritedObjectType
+    | inheritedVirtualType
+    ;
+
+inheritedObjectType 
+    : identifier;
+
+inheritedVirtualType :
+    | PointerArrow identifier
+    ;
+
+/* Var Decalaration */
 
 varDeclaration
-    : 'var' ShortIdentifier typeIndicator
+    : 'var' identifier ':' type
+    ;
+
+/* Fun Decalaration */
+
+funDeclaration  
+    : 'fun' identifier ':' funType '{''}'
+    ; 
+
+funType
+    :  type '(' varList ')' (replaces identifier)?
+    ;
+
+varList
+    : varDeclaration?  
+    | varDeclaration (',' varDeclaration)+
+    ;
+    
+replaces
+    : Replaces
+    ;
+
+/* General Decalaration */
+
+identifier
+    : Identifier
     ;
 
 
-nonZonedIdentifier
-    : ShortIdentifier
-    | DottedIdentifier
-    ;
-
-zonedIdentifer
-    : nonZonedIdentifier ('@' nonZonedIdentifier)+
-    ;
-
-anyIdentifier
-    : nonZonedIdentifier
-    | zonedIdentifer
-    ;
-
-basicTypeSpecifier
-    : 'void'
-    | 'opaque'
-    | 'char'
-    | 'short'
-    | 'int'
-    | 'long'
-    | 'float'
-    | 'double'
-    ;
-
-directType
-    : (basicTypeSpecifier|anyIdentifier)
-    ;
-
-ptrType
-    : 'ptr' '(' directType ')'
-    ;
-
-anyType
-    : (directType| ptrType)
-    ;
-
-typeIndicator
-    : ':' (anyType)
-    ;
-
-
-/////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 //
 // LEXER
 //
-//////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
-DottedIdentifier
-    : ShortIdentifier ('.'ShortIdentifier)+
+/* Reserved Words */
+Replaces 
+    : 'replaces'
     ;
 
-ShortIdentifier
-    : IdentifierNondigit (IdentifierNondigit | Digit)*
+VoidType 
+    : 'void'
     ;
 
-fragment IdentifierNondigit
-    : Nondigit
-    | UniversalCharacterName
-    //|   // other implementation-defined characters...
+OpaqueType 
+    : 'opaque'
+    ;
+
+IntType 
+    : 'int'
+    ;
+
+CharType 
+    : 'char'
     ;
 
 fragment Nondigit
@@ -113,184 +139,30 @@ fragment Digit
     : [0-9]
     ;
 
-fragment UniversalCharacterName
-    : '\\u' HexQuad
-    | '\\U' HexQuad HexQuad
+PointerArrow
+    : '^'
     ;
 
-fragment HexQuad
-    : HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit
-    ;
-
-Constant
-    : IntegerConstant
-    | FloatingConstant
-    | CharacterConstant
-    ;
-
-fragment IntegerConstant
-    : DecimalConstant IntegerSuffix?
-    | OctalConstant IntegerSuffix?
-    | HexadecimalConstant IntegerSuffix?
-    | BinaryConstant
-    ;
-
-fragment BinaryConstant
-    : '0' [bB] [0-1]+
-    ;
-
-fragment DecimalConstant
-    : NonzeroDigit Digit*
-    ;
-
-fragment OctalConstant
-    : '0' OctalDigit*
-    ;
-
-fragment HexadecimalConstant
-    : HexadecimalPrefix HexadecimalDigit+
-    ;
-
-fragment HexadecimalPrefix
-    : '0' [xX]
-    ;
-
-fragment NonzeroDigit
-    : [1-9]
-    ;
-
-fragment OctalDigit
-    : [0-7]
-    ;
-
-fragment HexadecimalDigit
-    : [0-9a-fA-F]
-    ;
-
-fragment IntegerSuffix
-    : UnsignedSuffix LongSuffix?
-    | UnsignedSuffix LongLongSuffix
-    | LongSuffix UnsignedSuffix?
-    | LongLongSuffix UnsignedSuffix?
-    ;
-
-fragment UnsignedSuffix
-    : [uU]
-    ;
-
-fragment LongSuffix
-    : [lL]
-    ;
-
-fragment LongLongSuffix
-    : 'll'
-    | 'LL'
-    ;
-
-fragment FloatingConstant
-    : DecimalFloatingConstant
-    | HexadecimalFloatingConstant
-    ;
-
-fragment DecimalFloatingConstant
-    : FractionalConstant ExponentPart? FloatingSuffix?
-    | DigitSequence ExponentPart FloatingSuffix?
-    ;
-
-fragment HexadecimalFloatingConstant
-    : HexadecimalPrefix (HexadecimalFractionalConstant | HexadecimalDigitSequence) BinaryExponentPart FloatingSuffix?
-    ;
-
-fragment FractionalConstant
-    : DigitSequence? '.' DigitSequence
-    | DigitSequence '.'
-    ;
-
-fragment ExponentPart
-    : [eE] Sign? DigitSequence
-    ;
-
-fragment Sign
-    : [+-]
+Identifier
+    : (Nondigit)(Nondigit|Digit)*
     ;
 
 DigitSequence
     : Digit+
     ;
 
-fragment HexadecimalFractionalConstant
-    : HexadecimalDigitSequence? '.' HexadecimalDigitSequence
-    | HexadecimalDigitSequence '.'
-    ;
-
-fragment BinaryExponentPart
-    : [pP] Sign? DigitSequence
-    ;
-
-fragment HexadecimalDigitSequence
-    : HexadecimalDigit+
-    ;
-
-fragment FloatingSuffix
-    : [flFL]
-    ;
-
-fragment CharacterConstant
-    : '\'' CCharSequence '\''
-    | 'L\'' CCharSequence '\''
-    | 'u\'' CCharSequence '\''
-    | 'U\'' CCharSequence '\''
-    ;
-
-fragment CCharSequence
-    : CChar+
-    ;
-
-fragment CChar
-    : ~['\\\r\n]
-    | EscapeSequence
-    ;
-
-fragment EscapeSequence
-    : SimpleEscapeSequence
-    | OctalEscapeSequence
-    | HexadecimalEscapeSequence
-    | UniversalCharacterName
-    ;
-
-fragment SimpleEscapeSequence
-    : '\\' ['"?abfnrtv\\]
-    ;
-
-fragment OctalEscapeSequence
-    : '\\' OctalDigit OctalDigit? OctalDigit?
-    ;
-
-fragment HexadecimalEscapeSequence
-    : '\\x' HexadecimalDigit+
-    ;
-
 StringLiteral
-    : EncodingPrefix? '"' SCharSequence? '"'
+    :  '"' CharSequence? '"'
     ;
 
-fragment EncodingPrefix
-    : 'u8'
-    | 'u'
-    | 'U'
-    | 'L'
+fragment CharSequence
+    : Char+
     ;
 
-fragment SCharSequence
-    : SChar+
-    ;
-
-fragment SChar
+fragment Char
     : ~["\\\r\n]
-    | EscapeSequence
-    | '\\\n'   // Added line
-    | '\\\r\n' // Added line
     ;
+
 
 
 Whitespace

@@ -3,10 +3,10 @@
 
 using namespace aloe;
 
-TEST(parser_test, zone_test) {
+TEST(parser_test, object_test) {
 
 	aloe::parser_t p;
 
-	ASSERT_TRUE(p.parse_from_file("../../aloe_test/sources/module1.aloe", nullptr));
+	ASSERT_TRUE(p.parse_from_file("../../aloe_test/sources/objects.aloe", nullptr));
 	
 }

@@ -20,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="sources\module1.aloe">
+    <None Include="sources\objects.aloe">
       <Filter>sources</Filter>
     </None>
   </ItemGroup>

@@ -8,27 +8,37 @@ using namespace antlr4;
 bool
 parser_t::parse_from_file(const string& file_name, ast_t** ast_tree)
 {
-    std::ifstream stream;
-    stream.open(file_name, std::ifstream::in);
+    try {
+        std::ifstream stream;
+        stream.open(file_name, std::ifstream::in);
     
-    if (!stream.is_open())
+        if (!stream.is_open())
+        {
+            logi("fatal: Cannot open file:%s\n", file_name.c_str());
+            return false;
+       }
+
+        ANTLRInputStream input(stream);
+        aloeLexer lexer(&input);
+        CommonTokenStream tokens(&lexer);
+
+        aloeParser parser(&tokens);
+
+        parser.addErrorListener(this);
+
+        tree::ParseTree* tree = parser.prog();
+
+        std::string treeStr = tree->toStringTree(&parser);
+        std::cout << treeStr << std::endl;
+
+        return parser.getNumberOfSyntaxErrors() == 0;
+    }
+    catch (std::exception& e) 
     {
-        logi("fatal: Cannot open file:%s\n", file_name.c_str());
-        return false;
-   }
+       logi("Error: %s",e.what());
+    }
 
-
-    ANTLRInputStream input(stream);
-    aloeLexer lexer(&input);
-    CommonTokenStream tokens(&lexer);
-
-    aloeParser parser(&tokens);
-
-    parser.addErrorListener(this);
-
-    tree::ParseTree* tree = parser.prog();
-
-    return parser.getNumberOfSyntaxErrors() == 0;
+    return false;
 	
 }
 
