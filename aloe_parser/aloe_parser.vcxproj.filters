@@ -9,11 +9,12 @@
     <ClInclude Include="include\aloe\ast.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="antlr4_parser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="parser.cpp" />
     <ClCompile Include="ast.cpp" />
+    <ClCompile Include="antlr4_parser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">

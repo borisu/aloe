@@ -10,7 +10,8 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 #include <iostream>
-#include <aloe/aloe-antlr4.h>
+#include <string>
+#include "aloe/aloe-antlr4.h"
 #include "aloe/logger.h"
 
 

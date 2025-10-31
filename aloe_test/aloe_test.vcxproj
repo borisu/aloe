@@ -63,7 +63,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(VCPKG_ROOT)\installed\x64-windows\include\antlr4-runtime;..\aloe_base\include;..\aloe_antlr\include;..\aloe_parser\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\aloe_base\include;..\aloe_parser\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>

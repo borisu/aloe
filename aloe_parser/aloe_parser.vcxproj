@@ -146,14 +146,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="antlr4_parser.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\aloe\ast.h" />
     <ClInclude Include="include\aloe\parser.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="antlr4_parser.cpp" />
     <ClCompile Include="ast.cpp" />
-    <ClCompile Include="parser.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

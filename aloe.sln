@@ -9,8 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aloe_test", "aloe_test\aloe
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aloe_base", "aloe_base\aloe_base.vcxproj", "{F725E333-0CA3-4F55-8B28-C44C0348EC4E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aloe_cmd", "aloe_cmd\aloe_cmd.vcxproj", "{24820A6C-85DB-4668-91AE-443AC0057A1B}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aloe_antlr", "aloe_antlr\aloe_antlr.vcxproj", "{9ED379B2-0BCB-4129-A739-76C7C89815FE}"
 EndProject
 Global
@@ -45,14 +43,6 @@ Global
 		{F725E333-0CA3-4F55-8B28-C44C0348EC4E}.Release|x64.Build.0 = Release|x64
 		{F725E333-0CA3-4F55-8B28-C44C0348EC4E}.Release|x86.ActiveCfg = Release|Win32
 		{F725E333-0CA3-4F55-8B28-C44C0348EC4E}.Release|x86.Build.0 = Release|Win32
-		{24820A6C-85DB-4668-91AE-443AC0057A1B}.Debug|x64.ActiveCfg = Debug|x64
-		{24820A6C-85DB-4668-91AE-443AC0057A1B}.Debug|x64.Build.0 = Debug|x64
-		{24820A6C-85DB-4668-91AE-443AC0057A1B}.Debug|x86.ActiveCfg = Debug|Win32
-		{24820A6C-85DB-4668-91AE-443AC0057A1B}.Debug|x86.Build.0 = Debug|Win32
-		{24820A6C-85DB-4668-91AE-443AC0057A1B}.Release|x64.ActiveCfg = Release|x64
-		{24820A6C-85DB-4668-91AE-443AC0057A1B}.Release|x64.Build.0 = Release|x64
-		{24820A6C-85DB-4668-91AE-443AC0057A1B}.Release|x86.ActiveCfg = Release|Win32
-		{24820A6C-85DB-4668-91AE-443AC0057A1B}.Release|x86.Build.0 = Release|Win32
 		{9ED379B2-0BCB-4129-A739-76C7C89815FE}.Debug|x64.ActiveCfg = Debug|x64
 		{9ED379B2-0BCB-4129-A739-76C7C89815FE}.Debug|x64.Build.0 = Debug|x64
 		{9ED379B2-0BCB-4129-A739-76C7C89815FE}.Debug|x86.ActiveCfg = Debug|Win32

@@ -1,22 +1,27 @@
 #pragma once
-#include <string>
 #include "ast.h"
 
 using namespace std;
 
 namespace aloe
 {
-	class parser_t : public antlr4::BaseErrorListener
+	class parser_t
 	{
 	public:
 
-		bool parse_from_file(const string &file_name, ast_t **ast_tree);
+		virtual bool parse_from_file(const string &file_name, ast_t **ast_tree) = 0;
 
-		virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
-			size_t line, size_t charPositionInLine, const std::string& msg,
-			std::exception_ptr e) override;
+		virtual bool parse_from_stream(istream& is, ast_t** ast_tree) = 0;
 
+		virtual bool parse_from_string(const string& str, ast_t** ast_tree) = 0;
+
+		virtual void release_ast(ast_t* ast_tree) = 0;
+		
 	};
+
+	parser_t *create_parser();
+
+	void release_parser(parser_t*);
 
 }
 

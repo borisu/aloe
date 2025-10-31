@@ -12,10 +12,10 @@ options
 //
 ////////////////////////////////////////////////////////////////////
 prog
-    : (declaration)* EOF
+    : (statement)* EOF
     ;
 
-declaration
+statement
     : objectDeclaration 
     | varDeclaration
     | funDeclaration 
@@ -53,11 +53,11 @@ type
 /* Object Decalaration */
 
 objectDeclaration  
-    : 'object' inheritanceChain '{' declaration* '}'
+    : 'object' identifier (inheritanceChain)? '{' statement* '}'
     ;  
 
 inheritanceChain
-    :  identifier ('>' inheritedType)*
+    :   ('>' inheritedType)+
     ;
 
 inheritedType
