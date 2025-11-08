@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "antlr4_parser.h"
-#include "D:\Projects\aloe\aloe_antlr\gengen\aloeParser.h"
+
 
 using namespace aloe;
 using namespace std;
@@ -24,6 +24,11 @@ antl4_parser_t::release_ast(ast_t* ast)
     delete ast;
 }
 
+antl4_parser_t::scope_ctx_t::scope_ctx_t()
+{
+    state = PS_ROOT;
+    prev = nullptr;
+}
 
 bool 
 antl4_parser_t::parse_from_string(const string& str, ast_t** ast_tree)
@@ -44,6 +49,12 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_t** ast_tree)
 
         aloeParser parser(&tokens);
         parser.addErrorListener(this);
+
+
+        scope_ctx_t pctx;
+        pctx.state = PS_ROOT;
+
+        sx_s_.push(pctx);
 
         tree::ParseTreeWalker walker;
         walker.walk(this, parser.prog());
@@ -91,10 +102,22 @@ antl4_parser_t::syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offen
     logi("Syntax Error at line %d:%d - %s\n", line, charPositionInLine, msg.c_str());
 }
 
+
+
+
 void
 antl4_parser_t::enterObjectDeclaration(aloeParser::ObjectDeclarationContext* ctx)
 {
      string s = ctx->identifier()->getText();
+
+     // entering new scope
+     scope_ctx_t& prev_sx = sx_s_.top();
+     scope_ctx_t  sx(prev_sx);
+
+     sx.state = PS_OBJECT_DECLARATION;
+     sx.fqdn = prev_sx.fqdn + ':' + ctx->identifier()->getText();
+     sx.prev = &prev_sx;
+     
 }
 
 void

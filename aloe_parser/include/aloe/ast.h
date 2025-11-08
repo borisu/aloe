@@ -10,12 +10,10 @@ namespace aloe
 		FUN_DECLARATION
 	};
 
-	struct statement_t
+	struct object_declaration_t
 	{
-		statement_type_t type;
-	};
 
-	typedef std::list<statement_t> statements_list_t;
+	};
 	
 	enum identifier_type_t
 	{
@@ -34,12 +32,18 @@ namespace aloe
 	{
 		identifier_t id;
 	};
+	
+	struct statement_t
+	{
+		statement_type_t type;
+	};
+
+	typedef std::list<statement_t> statements_list_t;
 
 	struct ast_t
 	{
 		module_t module;
 		statements_list_t statements;
 	};
-
 	
 }

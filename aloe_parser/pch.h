@@ -11,6 +11,8 @@
 #include "framework.h"
 #include <iostream>
 #include <string>
+#include <stack>
+#include <map>
 #include "aloe/aloe-antlr4.h"
 #include "aloe/logger.h"
 
