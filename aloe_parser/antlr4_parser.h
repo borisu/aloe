@@ -24,28 +24,36 @@ namespace aloe
 			std::exception_ptr e) override;
 	private:
 
-		enum PARSING_SCOPE
+		enum PARSE_STATE
 		{
-			PS_ROOT,
-			PS_OBJECT_DECLARATION,
-			PS_INHERITANCE_CHAIN
+			GLOBAL_SCOPE,
+			NAMESPACE_SCOPE,
+			OBJECT_SCOPE
 		};
 
-		struct scope_ctx_t
+		struct ctx_t
 		{
-			scope_ctx_t();
+			ctx_t(PARSE_STATE state, ctx_t* prev = nullptr);
 
-			PARSING_SCOPE state;
+			PARSE_STATE state;
 
-			std::map<string,identifier_t> identifiers;
+			string fqn;
 
-			string fqdn;
+			unit_t* scope_unit;
 
-			scope_ctx_t* prev;
+			ctx_t* prev;
 
-		} sx_;
+			union
+			{
+				object_unit_t *obj;
+			}u;
+		};
+	
+		ast_t* ast_;
 
-		stack<scope_ctx_t> sx_s_;
+		node_t* curr_node_;
+
+		ctx_t*	curr_ctx_;
 
 		virtual void enterObjectDeclaration(aloeParser::ObjectDeclarationContext* /*ctx*/) override;
 

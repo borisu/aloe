@@ -13,6 +13,9 @@
 #include <string>
 #include <stack>
 #include <map>
+#include <variant>
+#include <memory>
+
 #include "aloe/aloe-antlr4.h"
 #include "aloe/logger.h"
 

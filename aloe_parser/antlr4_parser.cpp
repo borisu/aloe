@@ -24,10 +24,9 @@ antl4_parser_t::release_ast(ast_t* ast)
     delete ast;
 }
 
-antl4_parser_t::scope_ctx_t::scope_ctx_t()
+antl4_parser_t::ctx_t::ctx_t(PARSE_STATE state, ctx_t* prev):state(state),prev(prev)
 {
-    state = PS_ROOT;
-    prev = nullptr;
+    
 }
 
 bool 
@@ -50,12 +49,11 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_t** ast_tree)
         aloeParser parser(&tokens);
         parser.addErrorListener(this);
 
-
-        scope_ctx_t pctx;
-        pctx.state = PS_ROOT;
-
-        sx_s_.push(pctx);
-
+        ast_       = new ast_t();
+        ast_->root = new scope_node_t();
+        curr_node_ = ast_->root;
+        curr_ctx_  = new ctx_t(GLOBAL_SCOPE);
+        
         tree::ParseTreeWalker walker;
         walker.walk(this, parser.prog());
 
@@ -78,7 +76,7 @@ antl4_parser_t::parse_from_file(const string& file_name, ast_t** ast_tree)
 
         if (!stream.is_open())
         {
-            logi("fatal: Cannot open file:%s\n", file_name.c_str());
+            logi("error: cannot open file:%s\n", file_name.c_str());
             return false;
         }
 
@@ -87,7 +85,7 @@ antl4_parser_t::parse_from_file(const string& file_name, ast_t** ast_tree)
     }
     catch (std::exception& e)
     {
-        logi("Error: %s", e.what());
+        logi("unexpected error: %s", e.what());
     }
 
     return false;
@@ -102,22 +100,24 @@ antl4_parser_t::syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offen
     logi("Syntax Error at line %d:%d - %s\n", line, charPositionInLine, msg.c_str());
 }
 
-
-
-
 void
 antl4_parser_t::enterObjectDeclaration(aloeParser::ObjectDeclarationContext* ctx)
 {
-     string s = ctx->identifier()->getText();
+    object_unit_t* obj_unit(new object_unit_t());
 
-     // entering new scope
-     scope_ctx_t& prev_sx = sx_s_.top();
-     scope_ctx_t  sx(prev_sx);
+    if (ctx->identifier())
+    {
+        obj_unit->fqn = curr_ctx_->fqn + "::" + ctx->identifier()->getText();
 
-     sx.state = PS_OBJECT_DECLARATION;
-     sx.fqdn = prev_sx.fqdn + ':' + ctx->identifier()->getText();
-     sx.prev = &prev_sx;
-     
+        scope_node_t* snode = get_scope_node(curr_node_);
+
+        snode->ids[obj_unit->fqn] = obj_unit;
+    }
+
+    ctx_t* new_ctx = new ctx_t(OBJECT_SCOPE, curr_ctx_);
+
+    new_ctx->u.obj = obj_unit;
+
 }
 
 void

@@ -53,7 +53,7 @@ type
 /* Object Decalaration */
 
 objectDeclaration  
-    : 'object' identifier (inheritanceChain)? '{' statement* '}'
+    : 'object' (identifier)? (inheritanceChain)? Begin statement* End
     ;  
 
 inheritanceChain
@@ -181,3 +181,10 @@ LineComment
     : '//' ~[\r\n]* -> channel(HIDDEN)
     ;
 
+Begin
+    : '{'
+    ;
+
+End
+    : '}'
+    ;

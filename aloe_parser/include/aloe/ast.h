@@ -1,49 +1,64 @@
 #pragma once
+
+#include <variant>
+#include <string>
+#include <map>
+
 using namespace std;
 
 namespace aloe
 {
-	enum statement_type_t
+	enum unit_type_t
 	{
-		OBJECT_DECLARATION,
-		VAR_DECLARATION,
-		FUN_DECLARATION
+		OBJECT
 	};
 
-	struct object_declaration_t
+	struct unit_t
 	{
+		unit_t(unit_type_t type);
 
-	};
-	
-	enum identifier_type_t
-	{
-		OBJECT,
-		VAR,
-		FUNCTION
-	};
+		unit_type_t type;
 
-	struct identifier_t
-	{
-		identifier_type_t type;
 		string fqn;
 	};
 
-	struct module_t
+	struct object_unit_t : public unit_t
 	{
-		identifier_t id;
+		object_unit_t();
+	};
+
+	enum node_type_t
+	{
+		SCOPE_NODE
+	};
+
+	struct node_t
+	{
+		node_t(node_type_t type, node_t* prev = nullptr);
+
+		node_type_t type;
+
+		node_t *prev;
+	};
+
+	typedef std::map<string, unit_t*> id_map_t;
+
+	struct scope_node_t : public node_t
+	{
+		scope_node_t(node_t* prev = nullptr);
+
+		id_map_t ids;
 	};
 	
-	struct statement_t
-	{
-		statement_type_t type;
-	};
-
-	typedef std::list<statement_t> statements_list_t;
-
 	struct ast_t
 	{
-		module_t module;
-		statements_list_t statements;
+		ast_t();
+
+		node_t *root;
 	};
+
+	scope_node_t* get_scope_node(node_t *node);
+
+	void print_ast(ast_t *tree);
 	
 }

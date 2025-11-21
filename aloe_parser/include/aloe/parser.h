@@ -18,7 +18,7 @@ namespace aloe
 		virtual void release_ast(ast_t* ast_tree) = 0;
 		
 	};
-
+		
 	parser_t *create_parser();
 
 	void release_parser(parser_t*);
