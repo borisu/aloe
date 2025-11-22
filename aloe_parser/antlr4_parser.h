@@ -22,42 +22,25 @@ namespace aloe
 		virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
 			size_t line, size_t charPositionInLine, const std::string& msg,
 			std::exception_ptr e) override;
-	private:
+	protected:
 
-		enum PARSE_STATE
-		{
-			GLOBAL_SCOPE,
-			NAMESPACE_SCOPE,
-			OBJECT_SCOPE
-		};
+		virtual void release_node(node_t* node);
 
-		struct ctx_t
-		{
-			ctx_t(PARSE_STATE state, ctx_t* prev = nullptr);
-
-			PARSE_STATE state;
-
-			string fqn;
-
-			unit_t* scope_unit;
-
-			ctx_t* prev;
-
-			union
-			{
-				object_unit_t *obj;
-			}u;
-		};
-	
 		ast_t* ast_;
 
-		node_t* curr_node_;
-
-		ctx_t*	curr_ctx_;
+		stack<node_t*> s_;
 
 		virtual void enterObjectDeclaration(aloeParser::ObjectDeclarationContext* /*ctx*/) override;
-
 		virtual void exitObjectDeclaration(aloeParser::ObjectDeclarationContext* /*ctx*/) override;
+
+		virtual void enterInheritanceChain(aloeParser::InheritanceChainContext* /*ctx*/) override;
+		virtual void exitInheritanceChain(aloeParser::InheritanceChainContext* /*ctx*/) override;
+
+		virtual void enterIdentifier(aloeParser::IdentifierContext* /*ctx*/) override;
+		virtual void exitIdentifier(aloeParser::IdentifierContext* /*ctx*/) override;
+
+		virtual void enterInheritedVirtualType(aloeParser::InheritedVirtualTypeContext* /*ctx*/) override;
+		virtual void exitInheritedVirtualType(aloeParser::InheritedVirtualTypeContext* /*ctx*/) override;
 
 	};
 

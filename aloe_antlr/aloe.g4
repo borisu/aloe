@@ -61,15 +61,17 @@ inheritanceChain
     ;
 
 inheritedType
-    : inheritedObjectType
+    : inheritedDirectType
     | inheritedVirtualType
     ;
 
-inheritedObjectType 
-    : identifier;
+inheritedDirectType
+    : objectDeclaration
+    | identifier
+    ;
 
-inheritedVirtualType :
-    | PointerArrow identifier
+inheritedVirtualType 
+    : PointerArrow inheritedDirectType
     ;
 
 /* Var Decalaration */

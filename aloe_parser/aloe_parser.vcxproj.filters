@@ -10,11 +10,17 @@
       <Filter>include\aloe</Filter>
     </ClInclude>
     <ClInclude Include="antlr4_parser.h" />
+    <ClInclude Include="xml_log.h" />
+    <ClInclude Include="include\aloe\utils.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="ast.cpp" />
     <ClCompile Include="antlr4_parser.cpp" />
+    <ClCompile Include="xml_log.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">

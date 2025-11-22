@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "antlr4_parser.h"
+#include "aloe/utils.h"
 
 
 using namespace aloe;
@@ -24,7 +25,8 @@ antl4_parser_t::release_ast(ast_t* ast)
     delete ast;
 }
 
-antl4_parser_t::ctx_t::ctx_t(PARSE_STATE state, ctx_t* prev):state(state),prev(prev)
+void 
+antl4_parser_t::release_node(node_t* node)
 {
     
 }
@@ -40,6 +42,7 @@ antl4_parser_t::parse_from_string(const string& str, ast_t** ast_tree)
 bool 
 antl4_parser_t::parse_from_stream(istream& stream, ast_t** ast_tree)
 {
+    bool success = false;
     try {
        
         ANTLRInputStream input(stream);
@@ -50,21 +53,26 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_t** ast_tree)
         parser.addErrorListener(this);
 
         ast_       = new ast_t();
-        ast_->root = new scope_node_t();
-        curr_node_ = ast_->root;
-        curr_ctx_  = new ctx_t(GLOBAL_SCOPE);
+        s_.push(ast_);
+        
         
         tree::ParseTreeWalker walker;
         walker.walk(this, parser.prog());
 
-        return parser.getNumberOfSyntaxErrors() == 0;
+        success = parser.getNumberOfSyntaxErrors() == 0;
+
     }
     catch (std::exception& e)
     {
         logi("Error: %s", e.what());
     }
 
-    return false;
+    if (!success && ast_)
+        release_ast(ast_);
+    else
+        *ast_tree = ast_;
+
+    return success;
 }
 
 bool
@@ -92,36 +100,75 @@ antl4_parser_t::parse_from_file(const string& file_name, ast_t** ast_tree)
 
 }
 
-
 void
 antl4_parser_t::syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
     size_t line, size_t charPositionInLine, const std::string& msg,
     std::exception_ptr e) {
-    logi("Syntax Error at line %d:%d - %s\n", line, charPositionInLine, msg.c_str());
+    logi("syntax Error at line %d:%d - %s\n", line, charPositionInLine, msg.c_str());
 }
 
 void
 antl4_parser_t::enterObjectDeclaration(aloeParser::ObjectDeclarationContext* ctx)
 {
-    object_unit_t* obj_unit(new object_unit_t());
+    auto curr_node = s_.top();
 
-    if (ctx->identifier())
-    {
-        obj_unit->fqn = curr_ctx_->fqn + "::" + ctx->identifier()->getText();
-
-        scope_node_t* snode = get_scope_node(curr_node_);
-
-        snode->ids[obj_unit->fqn] = obj_unit;
-    }
-
-    ctx_t* new_ctx = new ctx_t(OBJECT_SCOPE, curr_ctx_);
-
-    new_ctx->u.obj = obj_unit;
-
+    object_node_t* node(new object_node_t());
+    curr_node->add_object_node(node);
+    
+    s_.push(node);
 }
 
-void
+void 
 antl4_parser_t::exitObjectDeclaration(aloeParser::ObjectDeclarationContext* ctx)
 {
+    s_.pop();
+}
+
+void 
+antl4_parser_t::enterInheritanceChain(aloeParser::InheritanceChainContext* /*ctx*/)
+{
+    auto curr_node = s_.top();
+
+    inheritance_chain_node_t* node(new inheritance_chain_node_t());
+    curr_node->add_inheritance_chain_node(node);
+
+    s_.push(node);
+}
+
+void 
+antl4_parser_t::exitInheritanceChain(aloeParser::InheritanceChainContext* /*ctx*/)
+{
+    s_.pop();
+}
+
+void 
+antl4_parser_t::enterIdentifier(aloeParser::IdentifierContext* ctx) 
+{
+    auto curr_node = s_.top();
+
+    identifier_node_t* node(new identifier_node_t());
+    node->name = ctx->getText();
+
+    curr_node->add_identifier_node(node);
+
+    s_.push(node);
     
+}
+
+void 
+antl4_parser_t::enterInheritedVirtualType(aloeParser::InheritedVirtualTypeContext* /*ctx*/)  
+{
+    s_.top()->mark_pointer(true);
+}
+
+void 
+antl4_parser_t::exitInheritedVirtualType(aloeParser::InheritedVirtualTypeContext* /*ctx*/) 
+{
+    s_.top()->mark_pointer(false);
+}
+
+void 
+antl4_parser_t::exitIdentifier(aloeParser::IdentifierContext* /*ctx*/)
+{
+    s_.pop();
 }
