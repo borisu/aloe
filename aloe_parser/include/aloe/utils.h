@@ -3,6 +3,5 @@
 
 namespace aloe
 {
-	void print_ast(ast_t* ast);
-
+	
 }

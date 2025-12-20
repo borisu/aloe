@@ -12,13 +12,23 @@ options
 //
 ////////////////////////////////////////////////////////////////////
 prog
-    : (statement)* EOF
+    : (statement ';'? )* EOF
     ;
 
 statement
     : objectDeclaration 
     | varDeclaration
     | funDeclaration 
+    ;
+
+/* OBJECT DECLARATION */
+
+objectDeclaration  
+    : 'object' (identifier)? (inheritanceChain)? Begin statement* End
+    ;  
+
+inheritanceChain
+    :   ('>' (type))+
     ;
 
 /* TYPES */
@@ -41,49 +51,30 @@ builtinType
     | void
     ;
 
-pointerType
-    : PointerArrow (builtinType | identifier | pointerType)
-    ;
 
 type 
     : builtinType
+    | objectDeclaration
+    | funDeclaration
     | pointerType
-    ;
-
-/* Object Decalaration */
-
-objectDeclaration  
-    : 'object' (identifier)? (inheritanceChain)? Begin statement* End
-    ;  
-
-inheritanceChain
-    :   ('>' inheritedType)+
-    ;
-
-inheritedType
-    : inheritedDirectType
-    | inheritedVirtualType
-    ;
-
-inheritedDirectType
-    : objectDeclaration
     | identifier
     ;
 
-inheritedVirtualType 
-    : PointerArrow inheritedDirectType
+pointerType
+    : PointerArrow type
     ;
+
 
 /* Var Decalaration */
 
 varDeclaration
-    : 'var' identifier ':' type
+    : 'var' identifier? ':' type
     ;
 
 /* Fun Decalaration */
 
 funDeclaration  
-    : 'fun' identifier ':' funType '{''}'
+    : 'fun' identifier? ':' funType Begin End
     ; 
 
 funType
@@ -164,8 +155,6 @@ fragment CharSequence
 fragment Char
     : ~["\\\r\n]
     ;
-
-
 
 Whitespace
     : [ \t]+ -> channel(HIDDEN)

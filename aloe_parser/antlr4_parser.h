@@ -11,36 +11,30 @@ namespace aloe
 	{
 	public:
 
-		virtual bool parse_from_file(const string& file_name, ast_t** ast) override;
+		virtual bool parse_from_file(const string& file_name) override;
 
-		virtual bool parse_from_stream(istream& is, ast_t** ast) override;
+		virtual bool parse_from_string(const string& str) override;
 
-		virtual bool parse_from_string(const string& str, ast_t** ast) override;
-
-		virtual void release_ast(ast_t* ast) override;
+		virtual bool parse_from_stream(istream& is) override;
 
 		virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
 			size_t line, size_t charPositionInLine, const std::string& msg,
 			std::exception_ptr e) override;
+
 	protected:
 
-		virtual void release_node(node_t* node);
+		virtual node_ptr_t find_type_definition(node_ptr_t parent, const string& name);
 
-		ast_t* ast_;
+		virtual bool walk_global_statement(ns_node_ptr_t parent, aloeParser::StatementContext *ctx);
 
-		stack<node_t*> s_;
+		virtual object_node_ptr_t walk_object_declaration(node_ptr_t parent, aloeParser::ObjectDeclarationContext* ctx);
 
-		virtual void enterObjectDeclaration(aloeParser::ObjectDeclarationContext* /*ctx*/) override;
-		virtual void exitObjectDeclaration(aloeParser::ObjectDeclarationContext* /*ctx*/) override;
+		virtual bool walk_chain_declaration(object_node_ptr_t obj, aloeParser::InheritanceChainContext* ctx);
 
-		virtual void enterInheritanceChain(aloeParser::InheritanceChainContext* /*ctx*/) override;
-		virtual void exitInheritanceChain(aloeParser::InheritanceChainContext* /*ctx*/) override;
+		virtual type_ptr_t walk_type(node_ptr_t parent, aloeParser::TypeContext* ctx, int ref_count = 0);
 
-		virtual void enterIdentifier(aloeParser::IdentifierContext* /*ctx*/) override;
-		virtual void exitIdentifier(aloeParser::IdentifierContext* /*ctx*/) override;
-
-		virtual void enterInheritedVirtualType(aloeParser::InheritedVirtualTypeContext* /*ctx*/) override;
-		virtual void exitInheritedVirtualType(aloeParser::InheritedVirtualTypeContext* /*ctx*/) override;
+		virtual fun_node_ptr_t walk_function_decalaration(ns_node_ptr_t parent, aloeParser::FunDeclarationContext* ctx);
+		
 
 	};
 

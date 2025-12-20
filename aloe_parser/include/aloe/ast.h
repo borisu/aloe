@@ -4,109 +4,73 @@
 #include <string>
 #include <list>
 #include <map>
+#include <vector>
+
+#include "aloe/types.h"
 
 using namespace std;
 
 namespace aloe
 {
-	enum entity_ref_type_e
-	{
-		REF_UNKNOWN,
-		REF_BY_ID,
-		REF_IN_PLACE
-	};
-
 	enum node_type_e
 	{
-		UNKNOWN_NODE,
+		NAMESPACE_NODE,
 		OBJECT_NODE,
-		IDENTIFIER_NODE,
-		INHERITANCE_CHAIN_NODE
+		FUNCTION_NODE
 	};
 
-	struct identifier_node_t;
-	struct object_node_t;
-	struct inheritance_chain_node_t;
+	struct node_t;
+	typedef shared_ptr<node_t> node_ptr_t;
 
 	struct node_t
 	{
-		node_t() { node_type = UNKNOWN_NODE; }
+		node_t(node_type_e type) : type(type) {}
+		node_type_e type;
+		node_ptr_t  prev;
 
-		node_type_e node_type;
+		typedef map<string, node_ptr_t>  
+		type_map_t;
 
-		virtual bool add_identifier_node(identifier_node_t* n)               { return false; };
-		virtual bool add_object_node(object_node_t* n)                       { return false; };
-		virtual bool add_inheritance_chain_node(inheritance_chain_node_t* n) { return false; };
-		virtual bool mark_pointer(bool ptr)                                  { return false; };
+		type_map_t  type_ids;
+
+		virtual ~node_t() {}
 	};
 
-	typedef std::list<node_t*>  node_list_t;
-
-	struct identifier_node_t : public node_t
+	struct ns_node_t : public node_t
 	{
-		identifier_node_t() { node_type = IDENTIFIER_NODE; }
-		string name;
-		string fqn;
+		ns_node_t() :node_t(NAMESPACE_NODE) {};
+		
+		vector<shared_ptr<ns_node_t>> children;
 	};
+
+	typedef shared_ptr<ns_node_t> ns_node_ptr_t;
 
 	struct object_node_t : public node_t
 	{
-		object_node_t() { node_type = OBJECT_NODE; id = nullptr; chain = nullptr; }
-		virtual bool add_identifier_node(identifier_node_t* n) override { id = n;  return true; };
-		virtual bool add_inheritance_chain_node(inheritance_chain_node_t* n) override { chain = n;  return true; };
-		identifier_node_t* id;
-		inheritance_chain_node_t* chain;
+		object_node_t() :node_t(OBJECT_NODE) {}
+
+		string           name;
+		list<type_ptr_t>    layers;
+
 	};
 
-	struct object_ref_t
+	typedef shared_ptr<object_node_t> object_node_ptr_t;
+
+	struct fun_node_t : public node_t
 	{
-		object_ref_t() { ref_type = REF_UNKNOWN; u = { 0 }; is_virtual = false; }
-		entity_ref_type_e ref_type;
-		bool is_virtual;
-		union entity {
-			object_node_t* object;
-			identifier_node_t* id;
-		} u;
+		fun_node_t() :node_t(FUNCTION_NODE) {}
+		string           name;
 	};
 
-	typedef std::list<object_ref_t>  object_ref_list_t;
+	typedef shared_ptr<fun_node_t> fun_node_ptr_t;
 
-	struct inheritance_chain_node_t : public node_t
+	struct ast_t
 	{
-		inheritance_chain_node_t() { node_type = INHERITANCE_CHAIN_NODE; is_virtual = false; }
+		ast_t() {}
 
-		bool is_virtual;
-
-		virtual bool mark_pointer(bool ptr) { is_virtual = ptr; return true; }
-
-		virtual bool add_identifier_node(identifier_node_t* n) override
-		{
-			object_ref_t e; 
-			e.ref_type = REF_BY_ID;
-			e.is_virtual = is_virtual;
-			e.u.id = n;
-			obj_entities.push_back(e);
-
-			return true;
-		}
-		virtual bool add_object_node(object_node_t* n) override
-		{
-			object_ref_t e;
-			e.ref_type = REF_IN_PLACE;
-			e.is_virtual = is_virtual;
-			e.u.object = n;
-			obj_entities.push_back(e);
-
-			return true;
-		}
-
-		object_ref_list_t obj_entities;
+		node_ptr_t root;
 	};
-	
-	struct ast_t : public node_t
-	{
-		virtual bool add_object_node(object_node_t* n) { nodes.push_back(n); return true; };
-		node_list_t nodes;
-	};
-	
+
+	typedef shared_ptr<ast_t> ast_t_ptr;
+		
 }
