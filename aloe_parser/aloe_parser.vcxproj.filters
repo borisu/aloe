@@ -13,7 +13,22 @@
     <ClInclude Include="include\aloe\utils.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
-    <ClInclude Include="include\aloe\types.h">
+    <ClInclude Include="include\aloe\type.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aloe\node.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aloe\scope.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aloe\object.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aloe\fun.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aloe\prog.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
   </ItemGroup>

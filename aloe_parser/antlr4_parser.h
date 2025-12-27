@@ -1,7 +1,7 @@
 #pragma once
+#include <stack>
 #include "aloe/aloe-antlr4.h"
 #include "aloe/parser.h"
-#include <stack>
 
 using namespace std;
 
@@ -23,17 +23,19 @@ namespace aloe
 
 	protected:
 
-		virtual node_ptr_t find_type_definition(node_ptr_t parent, const string& name);
+		virtual scope_node_ptr_t find_my_scope_node(node_ptr_t first);
 
-		virtual bool walk_global_statement(ns_node_ptr_t parent, aloeParser::StatementContext *ctx);
+		virtual node_ptr_t find_type_definition_by_name(node_ptr_t first, const string& name);
+
+		virtual bool walk_prog(ast_ptr_t ast, aloeParser::ProgContext* ctx);
 
 		virtual object_node_ptr_t walk_object_declaration(node_ptr_t parent, aloeParser::ObjectDeclarationContext* ctx);
 
 		virtual bool walk_chain_declaration(object_node_ptr_t obj, aloeParser::InheritanceChainContext* ctx);
 
-		virtual type_ptr_t walk_type(node_ptr_t parent, aloeParser::TypeContext* ctx, int ref_count = 0);
+		virtual type_node_ptr_t walk_type(node_ptr_t parent, aloeParser::TypeContext* ctx, int ref_count = 0);
 
-		virtual fun_node_ptr_t walk_function_decalaration(ns_node_ptr_t parent, aloeParser::FunDeclarationContext* ctx);
+		virtual fun_node_ptr_t walk_function_decalaration(node_ptr_t parent, aloeParser::FunDeclarationContext* ctx);
 		
 
 	};

@@ -12,7 +12,13 @@ options
 //
 ////////////////////////////////////////////////////////////////////
 prog
-    : (statement ';'? )* EOF
+    : (globalScopeStatements ';'? )* EOF
+    ;
+
+globalScopeStatements
+    : objectDeclaration 
+    | varDeclaration
+    | funDeclaration 
     ;
 
 statement
