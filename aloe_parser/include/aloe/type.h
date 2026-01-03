@@ -9,7 +9,9 @@ namespace aloe
 	{
 		UNKNOWN,
 		INT,
+		VOID,
 		DOUBLE,
+		OPAQUE,
 		CHAR,
 		OBJECT,
 		FUNCTION
@@ -26,6 +28,8 @@ namespace aloe
 		node_ptr_t definition;
 	};
 
-	typedef shared_ptr<type_node_t> type_node_ptr_t;
+	typedef shared_ptr<type_node_t> 
+	type_node_ptr_t;
+
 }
 

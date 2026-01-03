@@ -31,6 +31,9 @@
     <ClInclude Include="include\aloe\prog.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="include\aloe\var.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

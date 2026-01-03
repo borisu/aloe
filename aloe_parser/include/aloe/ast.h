@@ -3,9 +3,11 @@
 #include "node.h"
 #include "type.h"
 #include "scope.h"
+#include "var.h"
+#include "fun.h"
 #include "object.h"
 #include "prog.h"
-#include "fun.h"
+
 
 using namespace std;
 

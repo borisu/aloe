@@ -10,7 +10,9 @@ namespace aloe
 		PROG_NODE,
 		OBJECT_NODE,
 		FUNCTION_NODE,
-		TYPE_NODE
+		TYPE_NODE,
+		VAR_NODE,
+		VAR_LIST_NODE
 	};
 
 	struct node_t;

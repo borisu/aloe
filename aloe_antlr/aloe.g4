@@ -51,9 +51,20 @@ char
     : CharType
     ;
 
+double
+    : DoubleType
+    ;
+
+opaque
+    : OpaqueType
+    ;
+
+
 builtinType 
     : int
     | char
+    | double
+    | opaque
     | void
     ;
 
@@ -80,11 +91,15 @@ varDeclaration
 /* Fun Decalaration */
 
 funDeclaration  
-    : 'fun' identifier? ':' funType Begin End
+    : 'fun' identifier? ':' funType (replaces idList)? Begin End
     ; 
 
+idList
+    : (identifier)+
+    ;
+
 funType
-    :  type '(' varList ')' (replaces identifier)?
+    :  type '(' varList ')'
     ;
 
 varList
@@ -128,6 +143,10 @@ IntType
 
 CharType 
     : 'char'
+    ;
+
+DoubleType 
+    : 'double'
     ;
 
 fragment Nondigit

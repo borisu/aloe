@@ -25,6 +25,17 @@ aloe::logf(LOG_LEVEL log_level, const char* format, ...)
 	va_end(args);
 }
 
+void
+aloe::loginl(const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+
+	logva(INFO, format, args);
+	log1nl(stderr);
+
+	va_end(args);
+}
 
 void
 aloe::logi(const char* format, ...)

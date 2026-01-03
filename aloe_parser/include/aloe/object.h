@@ -19,3 +19,4 @@ namespace aloe
 	typedef shared_ptr<object_node_t> object_node_ptr_t;
 
 }
+	

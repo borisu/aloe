@@ -35,6 +35,10 @@ namespace aloe
 
 		virtual type_node_ptr_t walk_type(node_ptr_t parent, aloeParser::TypeContext* ctx, int ref_count = 0);
 
+		virtual var_list_node_ptr_t walk_var_list(node_ptr_t parent, aloeParser::VarListContext* ctx);
+
+		virtual var_node_ptr_t walk_var(node_ptr_t parent, aloeParser::VarDeclarationContext* ctx);
+
 		virtual fun_node_ptr_t walk_function_decalaration(node_ptr_t parent, aloeParser::FunDeclarationContext* ctx);
 		
 
