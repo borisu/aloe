@@ -276,6 +276,7 @@ antl4_parser_t::walk_function_decalaration(node_ptr_t parent, aloeParser::FunDec
     }
 
     fun_node_ptr_t fun = fun_node_ptr_t(new fun_node_t());
+    fun->prev = parent;
 
     fun->ret_type  = walk_type(parent, ctx->funType()->type());
     if (!fun->ret_type)
@@ -296,6 +297,7 @@ var_list_node_ptr_t
 antl4_parser_t::walk_var_list(node_ptr_t parent, aloeParser::VarListContext* ctx)
 {
     var_list_node_ptr_t var_list(new var_node_list_t());
+    var_list->prev = parent;
 
     bool err = false;
     for (auto& varCtx : ctx->varDeclaration())
@@ -322,6 +324,7 @@ antl4_parser_t::walk_var(node_ptr_t parent, aloeParser::VarDeclarationContext* c
 
     var_node_ptr_t var = var_node_ptr_t(new var_node_t());
     var->name = name;
+    var->prev = parent;
 
     var->type = walk_type(var, ctx->type());
     if (!var->type)

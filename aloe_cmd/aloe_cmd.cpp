@@ -32,7 +32,8 @@ int main()
     TEST_PARSE(R"( object A > int {})", false);
 
     TEST_PARSE(R"( fun foo : int (var x:int, var y:int) {})", true);
-    TEST_PARSE(R"( fun foo : int (var x:A, var y:int) {})",   false);
+    TEST_PARSE(R"( fun foo : int (var x:A, var y:int) {})", false);
+    TEST_PARSE(R"( object A {} ; fun foo : int (var x:A, var y:int) {})",   true);
     
    
     release_parser(p);
