@@ -12,7 +12,10 @@ namespace aloe
 		FUNCTION_NODE,
 		TYPE_NODE,
 		VAR_NODE,
-		VAR_LIST_NODE
+		VAR_LIST_NODE,
+		FUN_CALL_NODE,
+		PARAM_NODE,
+		INH_CHAIN_NODE
 	};
 
 	struct node_t;

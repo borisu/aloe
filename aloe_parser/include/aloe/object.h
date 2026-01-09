@@ -3,6 +3,7 @@
 #include "node.h"
 #include "type.h"
 #include "var.h"
+#include "inh_chain.h"
 
 using namespace std;
 
@@ -14,7 +15,7 @@ namespace aloe
 
 		string           name;
 
-		list<type_node_ptr_t>    layers;
+		inh_chain_node_ptr_t inh_chain;
 
 		var_list_node_ptr_t fields;
 	};

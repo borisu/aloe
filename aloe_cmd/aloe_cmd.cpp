@@ -39,8 +39,10 @@ int main()
 {
     auto p = create_parser();
 
-    /*TEST_PARSE(R"(var a:int)", true);
-    TEST_PARSE(R"(var b:A)",  false);
+    TEST_PARSE(R"(var b:A)", false);
+
+    TEST_PARSE(R"(var a:int)", true);
+    
     TEST_PARSE(R"(var :int)", true);
 
     TEST_PARSE(R"( object B (); object A > B ())", true);
@@ -56,7 +58,7 @@ int main()
     TEST_PARSE(R"( object A () ; fun foo : A (var x:A, var y:int) {})", true);
 
     TEST_PARSE(R"( fun foo:void() { foo(); })", true);
-    TEST_PARSE(R"( fun foo:void() { fun:int(){}();})", true);*/
+    TEST_PARSE(R"( fun foo:void() { fun:int(){}();})", true);
 
 
     TEST_EXEC(R"( fun main:void() { __print("ok"); })", true);

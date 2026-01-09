@@ -7,6 +7,8 @@
 #include "fun.h"
 #include "object.h"
 #include "prog.h"
+#include "fun_call.h"
+#include "inh_chain.h"
 
 
 using namespace std;
@@ -17,7 +19,7 @@ namespace aloe
 	{
 		ast_t() {}
 
-		prog_node_ptr_t root;
+		prog_node_ptr_t prog;
 
 		virtual ~ast_t() {};
 	};

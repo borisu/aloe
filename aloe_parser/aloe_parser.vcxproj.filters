@@ -34,6 +34,15 @@
     <ClInclude Include="include\aloe\var.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="include\aloe\fun_call.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aloe\param.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aloe\inh_chain.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

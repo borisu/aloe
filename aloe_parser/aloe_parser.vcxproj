@@ -151,8 +151,11 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\aloe\ast.h" />
     <ClInclude Include="include\aloe\fun.h" />
+    <ClInclude Include="include\aloe\fun_call.h" />
+    <ClInclude Include="include\aloe\inh_chain.h" />
     <ClInclude Include="include\aloe\node.h" />
     <ClInclude Include="include\aloe\object.h" />
+    <ClInclude Include="include\aloe\param.h" />
     <ClInclude Include="include\aloe\parser.h" />
     <ClInclude Include="include\aloe\prog.h" />
     <ClInclude Include="include\aloe\scope.h" />

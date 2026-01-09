@@ -76,8 +76,13 @@ antl4_parser_t::parse_from_stream(istream& stream)
         parser.addErrorListener(this);
 
         ast_ptr_t ast(new ast_t());
-        success &= walk_prog(ast, parser.prog());
-        success &= parser.getNumberOfSyntaxErrors() == 0;
+        ast->prog = walk_prog(ast, parser.prog());
+
+    }
+    catch (parse_exeption_t&)
+    {
+        loginl("Compilation failed!");
+        success = false;
     }
     catch (std::exception& e)
     {
@@ -121,38 +126,42 @@ antl4_parser_t::syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offen
 }
 
 
-bool 
+prog_node_ptr_t
 antl4_parser_t::walk_prog(ast_ptr_t ast, aloeParser::ProgContext* ctx)
 {
-    prog_node_ptr_t root(new prog_node_t());
+    prog_node_ptr_t prog(new prog_node_t());
 
-    ast->root = root;
+    ast->prog = prog;
 
     bool res = true;
 
-    for (auto& stmt_ctx : ctx->declarationStatementList()->declarationStatement())
+    for (auto& stmt : ctx->declarationStatementList()->declarationStatement())
     {
-        if (stmt_ctx->varDeclaration() != nullptr)
+        try
         {
-            auto node = walk_var(root, stmt_ctx->varDeclaration());
-            if (!node)
-                res = false;
+            if (stmt->varDeclaration() != nullptr)
+            {
+                walk_var(prog, stmt->varDeclaration());
+            }
+            else if (stmt->funDeclaration() != nullptr)
+            {
+                walk_function_decalaration(prog, stmt->funDeclaration());
+            }
+            else if (stmt->objectDeclaration() != nullptr)
+            {
+                walk_object_declaration(prog, stmt->objectDeclaration());
+            }
         }
-        else if (stmt_ctx->funDeclaration() != nullptr)
+        catch (parse_exeption_t)
         {
-            auto node = walk_function_decalaration(root, stmt_ctx->funDeclaration());
-            if (!node)
-                res = false;
-        }
-        else if (stmt_ctx->objectDeclaration() != nullptr)
-        {
-            auto node = walk_object_declaration(root, stmt_ctx->objectDeclaration());
-            if (!node)
-                res = false;
+            res = false; // not failing immediately, giving chance for see other parsing errors;
         }
     }
 
-    return res;
+    if (!res)
+        throw parse_exeption_t();
+    
+    return prog;
 }
 
 object_node_ptr_t 
@@ -163,48 +172,44 @@ antl4_parser_t::walk_object_declaration(node_ptr_t parent, aloeParser::ObjectDec
     if (find_type_definition_by_name(parent, name))
     {
         loginl("error on (line:%zu, pos:%zu) - object type %s already defined.", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), name.c_str());
-        return nullptr;
+        throw parse_exeption_t();
     }
 
     object_node_ptr_t obj (new object_node_t());
-    obj->prev = parent;
 
-    if (!walk_chain_declaration(obj, ctx->inheritanceChain()))
-        return nullptr;
-
-    obj->fields = walk_var_list(parent, ctx->varList());
-    if (!obj->fields)
-    {
-        return nullptr;
-    }
-
+    obj->prev      = parent;
+    obj->inh_chain = walk_chain_declaration(obj, ctx->inheritanceChain());
+    obj->fields    = walk_var_list(parent, ctx->varList());
+    
     find_my_scope_node(parent)->type_defs[name] = obj;
 
     return obj;
 }
 
-bool 
-antl4_parser_t::walk_chain_declaration(object_node_ptr_t obj, aloeParser::InheritanceChainContext* chainCtx)
+inh_chain_node_ptr_t
+antl4_parser_t::walk_chain_declaration(node_ptr_t parent, aloeParser::InheritanceChainContext* chainCtx)
 {
-    if (!chainCtx)
-        return true;
-
-    for (auto& typeCtx : chainCtx->type())
+    inh_chain_node_ptr_t inh_chain(new inh_chain_node_t());
+    inh_chain->prev = parent;
+    
+    if (chainCtx)
     {
-        type_node_ptr_t t = walk_type(dynamic_pointer_cast<node_t>(obj), typeCtx);
-        if (!t)
-            return false;
-        
-        if (t->type_type != OBJECT)
+        for (auto& typeCtx : chainCtx->type())
         {
-            loginl("error on (line:%zu, pos:%zu) - wrong base type for inheritance", chainCtx->getStart()->getLine(), chainCtx->getStart()->getStartIndex());
-            return false;
+            type_node_ptr_t t = walk_type(parent, typeCtx);
+
+            if (t->type_type != OBJECT)
+            {
+                loginl("error on (line:%zu, pos:%zu) - wrong base type '%s' for inheritance", chainCtx->getStart()->getLine(), chainCtx->getStart()->getStartIndex(), typeCtx->getText().c_str());
+                throw parse_exeption_t();
+            }
+
+            inh_chain->layers.push_back(t);
         }
-
-        obj->layers.push_back(t);
     }
+    
 
-    return true;
+    return inh_chain;
 }
 
 type_node_ptr_t
@@ -217,9 +222,6 @@ antl4_parser_t::walk_type(node_ptr_t parent, aloeParser::TypeContext* ctx, int r
     else if (ctx->objectDeclaration())
     {
         auto obj  = walk_object_declaration(parent, ctx->objectDeclaration());
-        if (!obj)
-            return nullptr;
-        
         return type_node_ptr_t(new type_node_t(OBJECT, obj));
     }
     else if (ctx->builtinType())
@@ -251,7 +253,7 @@ antl4_parser_t::walk_type(node_ptr_t parent, aloeParser::TypeContext* ctx, int r
         if (!type_def)
         {
             loginl("error on (line:%zu, pos:%zu) - unknown type %s", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), ctx->identifier()->getText().c_str());
-            return nullptr;
+            throw parse_exeption_t();
         }
 
         switch (type_def->type)
@@ -265,35 +267,51 @@ antl4_parser_t::walk_type(node_ptr_t parent, aloeParser::TypeContext* ctx, int r
         
     }
   
-    return nullptr;
+   throw parse_exeption_t();
 }
 
 
 fun_node_ptr_t
 antl4_parser_t::walk_function_decalaration(node_ptr_t parent, aloeParser::FunDeclarationContext* ctx)
 {
-    ctx->identifier()->getText();
     string name = ctx->identifier() ? ctx->identifier()->getText() : string("$anonymous_function_") + std::to_string(++function_id);
 
     if (find_type_definition_by_name(parent, name))
     {
         loginl("error on (line:%zu, pos:%zu) - function %s already defined", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), name.c_str());
-        return nullptr;
+        throw parse_exeption_t();
     }
 
     fun_node_ptr_t fun = fun_node_ptr_t(new fun_node_t());
-    fun->prev = parent;
-
+    fun->prev      = parent;
     fun->ret_type  = walk_type(parent, ctx->funType()->type());
-    if (!fun->ret_type)
-    {
-        return nullptr;
-    }
+    fun->params    = walk_var_list(parent, ctx->funType()->varList());
 
-    fun->params = walk_var_list(parent, ctx->funType()->varList());
-    if (!fun->params)
+    for (auto& exec_ctx : ctx->executionStatement())
     {
-        return nullptr;
+        if (exec_ctx->varDeclaration())
+        {
+            walk_var(parent, exec_ctx->varDeclaration());
+        }
+        else if (exec_ctx->funDeclaration())
+        {
+            walk_function_decalaration(parent, exec_ctx->funDeclaration());
+        }
+        else if (exec_ctx->objectDeclaration())
+        {
+            walk_object_declaration(parent, exec_ctx->objectDeclaration());
+        }
+        else if (exec_ctx->funCall())
+        {
+            if (exec_ctx->funCall()->funDeclaration())
+            {
+                walk_function_decalaration(parent, exec_ctx->funCall()->funDeclaration());
+            }
+            else if (exec_ctx->funCall()->identifier())
+            {
+
+            }
+        }
     }
 
     return fun;
@@ -309,9 +327,6 @@ antl4_parser_t::walk_var_list(node_ptr_t parent, aloeParser::VarListContext* ctx
     for (auto& varCtx : ctx->varDeclaration())
     {
         auto var_ptr = walk_var(var_list, varCtx);
-        if (!var_ptr)
-            return nullptr;
-        
         var_list->vars[var_ptr->name] = var_ptr;
     }
     
@@ -325,18 +340,15 @@ antl4_parser_t::walk_var(node_ptr_t parent, aloeParser::VarDeclarationContext* c
     if (find_type_definition_by_name(parent, name))
     {
         loginl("error on (line:%zu, pos:%zu) - var %s already defined", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), name.c_str());
-        return nullptr;
+        throw parse_exeption_t();
     }
 
     var_node_ptr_t var = var_node_ptr_t(new var_node_t());
-    var->name = name;
     var->prev = parent;
 
+    var->name = name;
     var->type = walk_type(var, ctx->type());
-    if (!var->type)
-    {
-        return nullptr;
-    }
 
     return var;
 }
+
