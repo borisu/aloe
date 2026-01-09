@@ -2,6 +2,7 @@
 #include <list>
 #include "node.h"
 #include "type.h"
+#include "var.h"
 
 using namespace std;
 
@@ -14,6 +15,8 @@ namespace aloe
 		string           name;
 
 		list<type_node_ptr_t>    layers;
+
+		var_list_node_ptr_t fields;
 	};
 
 	typedef shared_ptr<object_node_t> object_node_ptr_t;

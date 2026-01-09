@@ -16,7 +16,7 @@ namespace aloe
 		virtual bool parse_from_string(const string& str) = 0;
 		
 	};
-		
+
 	parser_t *create_parser();
 
 	void release_parser(parser_t*);

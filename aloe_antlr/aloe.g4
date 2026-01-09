@@ -5,39 +5,44 @@ options
     exportMacro='';
 }
 
-
-////////////////////////////////////////////////////////////////////
-//
-// PARSER
-//
-////////////////////////////////////////////////////////////////////
 prog
-    : (globalScopeStatements ';'? )* EOF
+    : declarationStatementList EOF
     ;
 
-globalScopeStatements
+declarationStatementList
+    : (declarationStatement ';'?)*
+    ;
+
+declarationStatement
     : objectDeclaration 
     | varDeclaration
     | funDeclaration 
     ;
 
-statement
+
+executionStatement
     : objectDeclaration 
     | varDeclaration
+    | funCall
     | funDeclaration 
     ;
 
-/* OBJECT DECLARATION */
+
+/********************/
+/*      Object       */
+/********************/
 
 objectDeclaration  
-    : 'object' (identifier)? (inheritanceChain)? Begin statement* End
+    : 'object' (identifier)? (inheritanceChain)?  '('  varList ')' 
     ;  
 
 inheritanceChain
-    :   ('>' (type))+
+    : ('>' (type))+
     ;
 
-/* TYPES */
+/********************/
+/*      Types       */
+/********************/
 
 int 
     : IntType
@@ -68,7 +73,6 @@ builtinType
     | void
     ;
 
-
 type 
     : builtinType
     | objectDeclaration
@@ -78,45 +82,62 @@ type
     ;
 
 pointerType
-    : PointerArrow type
+    : '^' type
     ;
 
 
+/********************/
 /* Var Decalaration */
+/********************/
 
 varDeclaration
     : 'var' identifier? ':' type
-    ;
-
-/* Fun Decalaration */
-
-funDeclaration  
-    : 'fun' identifier? ':' funType (replaces idList)? Begin End
-    ; 
-
-idList
-    : (identifier)+
-    ;
-
-funType
-    :  type '(' varList ')'
     ;
 
 varList
     : varDeclaration?  
     | varDeclaration (',' varDeclaration)+
     ;
-    
-replaces
-    : Replaces
+
+
+/********************/
+/* Fun Decalaration */
+/********************/
+
+funDeclaration  
+    : 'fun' identifier? ':' funType '{' (executionStatement ';'? )* '}'
+    ; 
+
+funType
+    :  type '(' varList ')'
     ;
 
-/* General Decalaration */
+funCall
+    : (identifier|funDeclaration) '(' argumentList ')'
+    ;
 
+argumentList
+    : argument?
+    | argument (',' argument)+
+    ;
+
+argument 
+    : StringLiteral
+    | DigitSequence
+    | identifier
+    | varDeclaration
+    ;
+
+
+
+/* General Decalaration */
 identifier
     : Identifier
     ;
 
+/* Function Call */
+
+      
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -157,10 +178,6 @@ fragment Digit
     : [0-9]
     ;
 
-PointerArrow
-    : '^'
-    ;
-
 Identifier
     : (Nondigit)(Nondigit|Digit)*
     ;
@@ -197,10 +214,3 @@ LineComment
     : '//' ~[\r\n]* -> channel(HIDDEN)
     ;
 
-Begin
-    : '{'
-    ;
-
-End
-    : '}'
-    ;

@@ -130,7 +130,7 @@ antl4_parser_t::walk_prog(ast_ptr_t ast, aloeParser::ProgContext* ctx)
 
     bool res = true;
 
-    for (auto& stmt_ctx : ctx->globalScopeStatements())
+    for (auto& stmt_ctx : ctx->declarationStatementList()->declarationStatement())
     {
         if (stmt_ctx->varDeclaration() != nullptr)
         {
@@ -171,6 +171,12 @@ antl4_parser_t::walk_object_declaration(node_ptr_t parent, aloeParser::ObjectDec
 
     if (!walk_chain_declaration(obj, ctx->inheritanceChain()))
         return nullptr;
+
+    obj->fields = walk_var_list(parent, ctx->varList());
+    if (!obj->fields)
+    {
+        return nullptr;
+    }
 
     find_my_scope_node(parent)->type_defs[name] = obj;
 

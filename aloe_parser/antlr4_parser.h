@@ -28,7 +28,7 @@ namespace aloe
 		virtual node_ptr_t find_type_definition_by_name(node_ptr_t first, const string& name);
 
 		virtual bool walk_prog(ast_ptr_t ast, aloeParser::ProgContext* ctx);
-
+		
 		virtual object_node_ptr_t walk_object_declaration(node_ptr_t parent, aloeParser::ObjectDeclarationContext* ctx);
 
 		virtual bool walk_chain_declaration(object_node_ptr_t obj, aloeParser::InheritanceChainContext* ctx);
