@@ -15,9 +15,9 @@ using namespace std;
 
 namespace aloe
 {
-	struct ast_t
+	struct ast_t : public node_t
 	{
-		ast_t() {}
+		ast_t() : node_t(AST_ROOT_NODE) {}
 
 		prog_node_ptr_t prog;
 

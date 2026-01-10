@@ -43,11 +43,13 @@
     <ClInclude Include="include\aloe\inh_chain.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="environment.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="antlr4_parser.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClCompile Include="environment.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">
