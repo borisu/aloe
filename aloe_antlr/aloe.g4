@@ -23,13 +23,11 @@ declarationStatement
 executionStatement
     : objectDeclaration 
     | varDeclaration
-    | funCall
     | funDeclaration 
     ;
 
-
 /********************/
-/*      Object       */
+/*      Object      */
 /********************/
 
 objectDeclaration  
@@ -112,32 +110,45 @@ funType
     :  type '(' varList ')'
     ;
 
-funCall
-    : (identifier|funDeclaration) '(' argumentList ')'
-    ;
-
-argumentList
-    : argument?
-    | argument (',' argument)+
-    ;
-
-argument 
-    : StringLiteral
-    | DigitSequence
-    | identifier
-    | varDeclaration
-    ;
-
-
+/*****************************/
+/*   Identifiers & Literals  */
+/*****************************/
 
 /* General Decalaration */
 identifier
     : Identifier
     ;
 
-/* Function Call */
+literal
+    : DigitSequence
+    | StringLiteral+
+    | CharacterConstant
+    ;
+ 
+/********************/
+/*   Expressions    */
+/********************/
 
+primaryExpression
+    : identifier            # IdentifierExpr 
+    | literal               # LiteralExpr 
+    | '(' expression ')'    # ParenthesizedExpr
+    ;
+ 
+expression
+    : primaryExpression (
+        '[' expression ']'
+        | '(' argumentExpressionList? ')'
+        | ('.' | '->') Identifier
+        | '++'
+        | '--'
+     )*
+    | primaryExpression            
+    ;
       
+argumentExpressionList
+    : expression (',' expression)*
+    ;
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -190,12 +201,25 @@ StringLiteral
     :  '"' CharSequence? '"'
     ;
 
+CharacterConstant
+    : '\'' Char '\''
+    ;
+
 fragment CharSequence
     : Char+
     ;
 
-fragment Char
+fragment Char   
     : ~["\\\r\n]
+    | EscapeSequence
+    ;
+
+fragment EscapeSequence
+    : SimpleEscapeSequence 
+    ;
+
+fragment SimpleEscapeSequence
+    : '\\' ['"?abfnrtv\\]
     ;
 
 Whitespace
