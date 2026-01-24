@@ -34,9 +34,6 @@
     <ClInclude Include="include\aloe\var.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
-    <ClInclude Include="include\aloe\fun_call.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
     <ClInclude Include="include\aloe\param.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
@@ -44,6 +41,9 @@
       <Filter>include\aloe</Filter>
     </ClInclude>
     <ClInclude Include="environment.h" />
+    <ClInclude Include="include\aloe\expression.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

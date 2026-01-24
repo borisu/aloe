@@ -151,8 +151,8 @@
     <ClInclude Include="environment.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\aloe\ast.h" />
+    <ClInclude Include="include\aloe\expression.h" />
     <ClInclude Include="include\aloe\fun.h" />
-    <ClInclude Include="include\aloe\fun_call.h" />
     <ClInclude Include="include\aloe\inh_chain.h" />
     <ClInclude Include="include\aloe\node.h" />
     <ClInclude Include="include\aloe\object.h" />

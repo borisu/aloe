@@ -257,24 +257,29 @@ antl4_parser_t::walk_function_decalaration( environment_ptr_t env, aloeParser::F
 
     // NEW SCOPE
     {
-    /**/   environment_ptr_t new_env(new environment_t(env));
-    /**/   fun->params = walk_var_list(new_env, ctx->funType()->varList());
-    /**/
-    /**/   for (auto& exec_ctx : ctx->executionStatement())
-    /**/   {
-    /**/       if (exec_ctx->varDeclaration())
-    /**/       {
-    /**/           walk_var(new_env, exec_ctx->varDeclaration());
-    /**/       }
-    /**/       else if (exec_ctx->funDeclaration())
-    /**/       {
-    /**/           walk_function_decalaration(new_env, exec_ctx->funDeclaration());
-    /**/       }
-    /**/       else if (exec_ctx->objectDeclaration())
-    /**/       {
-    /**/           walk_object_declaration(new_env, exec_ctx->objectDeclaration());
-    /**/       }
-    /**/   }
+       environment_ptr_t new_env(new environment_t(env));
+       fun->params = walk_var_list(new_env, ctx->funType()->varList());
+    
+       for (auto& exec_ctx : ctx->executionStatement())
+       {
+           if (exec_ctx->varDeclaration())
+           {
+               walk_var(new_env, exec_ctx->varDeclaration());
+           }
+           else if (exec_ctx->funDeclaration())
+           {
+               walk_function_decalaration(new_env, exec_ctx->funDeclaration());
+           }
+           else if (exec_ctx->objectDeclaration())
+           {
+               walk_object_declaration(new_env, exec_ctx->objectDeclaration());
+           }
+           else if (exec_ctx->expression())
+           {
+              walk_expression(new_env, exec_ctx->expression());
+        
+           }
+       } // for 
     } // SCOPE
 
     return fun;
@@ -314,3 +319,9 @@ antl4_parser_t::walk_var( environment_ptr_t env, aloeParser::VarDeclarationConte
     return var;
 }
 
+expr_node_ptr_t 
+antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx)
+{
+    
+    return nullptr;
+}

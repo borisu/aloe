@@ -7,8 +7,8 @@
 #include "fun.h"
 #include "object.h"
 #include "prog.h"
-#include "fun_call.h"
 #include "inh_chain.h"
+#include "expression.h"
 
 
 using namespace std;

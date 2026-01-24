@@ -17,7 +17,7 @@ namespace aloe
 		VAR_NODE,
 		VAR_LIST_NODE,
 		/* execution nodes */
-		FUN_CALL_NODE,
+		EXPRESSION_NODE,
 		PARAM_NODE,
 	};
 

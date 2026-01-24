@@ -26,11 +26,8 @@ namespace aloe
 
 	protected:
 
-		
 		virtual prog_node_ptr_t walk_prog(environment_ptr_t env,  aloeParser::ProgContext* ctx);
 
-		//virtual func_call_ptr_t walk_fun_call(node_ptr_t parent, aloeParser::ExecutionStatementContext* ctx);
-		
 		virtual object_node_ptr_t walk_object_declaration(environment_ptr_t env, aloeParser::ObjectDeclarationContext* ctx);
 
 		virtual inh_chain_node_ptr_t walk_chain_declaration(environment_ptr_t env,  aloeParser::InheritanceChainContext* ctx);
@@ -42,6 +39,8 @@ namespace aloe
 		virtual var_node_ptr_t walk_var(environment_ptr_t env, aloeParser::VarDeclarationContext* ctx);
 
 		virtual fun_node_ptr_t walk_function_decalaration(environment_ptr_t env,  aloeParser::FunDeclarationContext* ctx);
+
+		virtual expr_node_ptr_t walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx);
 		
 
 	};
