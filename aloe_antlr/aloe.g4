@@ -161,10 +161,10 @@ expression
     // -------- Precedence 4                                
     | expression '+'  expression                           #expr_add
     | expression '-'  expression                           #expr_sub
-    // -------- Precedence 5                                expr_
+    // -------- Precedence 5                                
     | expression '<<'  expression                          #expr_shiftleft
     | expression '>>'  expression                          #expr_shiftright
-    // -------- Precedence 6                                expr_
+    // -------- Precedence 6                                
     | expression '<'  expression                           #expr_less
     | expression '<=' expression                           #expr_lesseeq
     | expression '>'  expression                           #expr_more
@@ -274,7 +274,7 @@ fragment EscapeSequence
     ;
 
 fragment SimpleEscapeSequence
-    : '\\' ['"?abfnrtv\\]
+    : '\\' ['"?abfnrtv0\\]
     ;
 
 Whitespace

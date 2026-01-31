@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <variant>
 #include "node.h"
 #include "type.h"
 #include "var.h"
@@ -18,7 +19,10 @@ namespace aloe
 	enum operator_e
 	{
 		OP_UNKONWN,
-		
+		OP_LITERAL_INTEGER,
+		OP_LITERAL_CHAR,
+		OP_LITERAL_STRING,
+		OP_FUN_CALL,
 	} ;
 
 	struct expr_node_t : public scope_node_t
@@ -27,7 +31,7 @@ namespace aloe
 
 		vector<expr_node_ptr_t> operands;
 	
-		string value;
+		variant<string,int,char> value;
 
 		operator_e op;
 

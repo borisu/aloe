@@ -15,6 +15,8 @@
 #include <map>
 #include <variant>
 #include <memory>
+#include <typeindex>
+#include <typeinfo>
 
 #include "aloe/aloe-antlr4.h"
 #include "aloe/logger.h"

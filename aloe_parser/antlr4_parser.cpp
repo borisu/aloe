@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "antlr4_parser.h"
-#include "aloe/utils.h"
+#include "utils.h"
+
 
 
 using namespace aloe;
@@ -319,9 +320,204 @@ antl4_parser_t::walk_var( environment_ptr_t env, aloeParser::VarDeclarationConte
     return var;
 }
 
+
+
 expr_node_ptr_t 
 antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx)
 {
+
+#define INSTANCE_OF(C) C* e = dynamic_cast<C*>(ctx)    
     
+   expr_node_ptr_t expr_node(new expr_node_t());
+
+   if (INSTANCE_OF(aloeParser::Expr_identifierContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_literalContext)) {
+
+       if (e->literal()->DigitSequence())
+       {
+           expr_node->op = OP_LITERAL_INTEGER;
+           expr_node->value = std::stoi(e->literal()->DigitSequence()->getText());
+       }
+       else if (e->literal()->StringLiteral().size() > 0)
+       {
+           expr_node->op = OP_LITERAL_STRING;
+           string sf;
+           for (auto& s : e->literal()->StringLiteral())
+           {
+                sf += s->getText();
+           }
+           expr_node->value = unescape(sf.substr(1, sf.size() - 2));
+       }
+       else if (e->literal()->CharacterConstant())
+       {
+           expr_node->op = OP_LITERAL_CHAR;
+           expr_node->value = unescape(e->literal()->CharacterConstant()->getText())[0];
+       }
+       else
+       {
+           loginl("parse error (line:%zu, pos:%zu): Cannot parse literal %s", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), e->literal()->getText().c_str());
+           throw parse_exeption_t();
+       }
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_bracketedContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_sfxplusplusContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_sfxminminContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_funcallContext)) {
+
+       expr_node->op = OP_FUN_CALL;
+       for (auto& arg_ctx : e->argumentExpressionList()->expression())
+       {
+           expr_node->operands.push_back(walk_expression(env, arg_ctx));
+       }
+       
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_indexContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_dotContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_arrowContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_preplusplusContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_preminminContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_plusContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_minContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_notContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_bwsnotContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_castContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_derefContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_addressofContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_sizeofexprContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_sizeoftypeContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_multContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_divContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_modContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_addContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_subContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_shiftleftContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_shiftrightContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_lessContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_lesseeqContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_moreContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_moreeqContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_logicaleqContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_noteqContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_andContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_xorContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_orContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_logicalandContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_logicalorContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_ternaryContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_assignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_addassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_subassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_multassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_divassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_modassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_shiftleftassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_shiftrightassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_andassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_xorassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_orassignContext)) {
+
+   }
+   else if (INSTANCE_OF(aloeParser::Expr_commaContext)) {
+
+   }
+ 
     return nullptr;
+
+#undef INSTANCE_OF
 }
+

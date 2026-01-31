@@ -161,9 +161,9 @@
     <ClInclude Include="include\aloe\prog.h" />
     <ClInclude Include="include\aloe\scope.h" />
     <ClInclude Include="include\aloe\type.h" />
-    <ClInclude Include="include\aloe\utils.h" />
     <ClInclude Include="include\aloe\var.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="antlr4_parser.cpp" />
