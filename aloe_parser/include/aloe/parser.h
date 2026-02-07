@@ -9,17 +9,17 @@ namespace aloe
 	{
 	public:
 
-		virtual bool parse_from_file(const string &file_name) = 0;
+		virtual bool parse_from_file(const string &file_name, ast_ptr_t &ast) = 0;
 
-		virtual bool parse_from_stream(istream& is) = 0;
+		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast) = 0;
 
-		virtual bool parse_from_string(const string& str) = 0;
+		virtual bool parse_from_string(const string& str, ast_ptr_t& ast) = 0;
 		
 	};
 
-	parser_t *create_parser();
+	typedef shared_ptr<parser_t> parser_ptr_t;
 
-	void release_parser(parser_t*);
+	parser_ptr_t create_parser();
 
 }
 

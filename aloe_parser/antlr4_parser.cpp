@@ -11,27 +11,21 @@ using namespace antlr4;
 static int object_id = 0;
 static int function_id = 0;
 
-parser_t* 
+parser_ptr_t
 aloe::create_parser()
 {
-    return new antl4_parser_t();
-}
-
-void
-aloe::release_parser(parser_t* p)
-{
-    delete p;
+    return parser_ptr_t(new antl4_parser_t());
 }
 
 bool 
-antl4_parser_t::parse_from_string(const string& str)
+antl4_parser_t::parse_from_string(const string& str, ast_ptr_t& ast)
 {
     std::istringstream stream(str);
-    return parse_from_stream(stream);
+    return parse_from_stream(stream,ast);
 }
 
 bool 
-antl4_parser_t::parse_from_stream(istream& stream)
+antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast)
 {
     bool success = true;
 
@@ -44,7 +38,7 @@ antl4_parser_t::parse_from_stream(istream& stream)
         aloeParser parser(&tokens);
         parser.addErrorListener(this);
 
-        ast_ptr_t ast(new ast_t());
+        ast.reset(new ast_t());
         environment_ptr_t env(new  environment_t());
         ast->prog = walk_prog(env, parser.prog());
 
@@ -64,7 +58,7 @@ antl4_parser_t::parse_from_stream(istream& stream)
 }
 
 bool
-antl4_parser_t::parse_from_file(const string& file_name)
+antl4_parser_t::parse_from_file(const string& file_name, ast_ptr_t& ast)
 {
     try {
 
@@ -77,7 +71,7 @@ antl4_parser_t::parse_from_file(const string& file_name)
             return false;
         }
 
-        return parse_from_stream(stream);
+        return parse_from_stream(stream,ast);
         
     }
     catch (std::exception& e)

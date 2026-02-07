@@ -14,11 +14,11 @@ namespace aloe
 	{
 	public:
 
-		virtual bool parse_from_file(const string& file_name) override;
+		virtual bool parse_from_file(const string& file_name, ast_ptr_t& ast) override;
 
-		virtual bool parse_from_string(const string& str) override;
+		virtual bool parse_from_string(const string& str, ast_ptr_t& ast) override;
 
-		virtual bool parse_from_stream(istream& is) override;
+		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast) override;
 
 		virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
 			size_t line, size_t charPositionInLine, const std::string& msg,

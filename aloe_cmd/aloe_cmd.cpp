@@ -1,10 +1,12 @@
 // aloe_cmd.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+
 #include <iostream>
 
 #include "aloe/logger.h"
 #include "aloe/parser.h"
+#include "aloe/compiler.h"
 
 
 using namespace aloe;
@@ -19,77 +21,83 @@ void aloe::log1nl(FILE* stream)
     fprintf(stream, ";");
 }
 
-#define TEST_PARSE(CMD,E) { printf("TEST \"%-50s\"",CMD);   p->parse_from_string(CMD) == E ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
+#define TEST_PARSE_STRING(CMD,E) { printf("TEST PARSE STRING \"%-50s\"",CMD);  parse_string(CMD) == E ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
 
-#define TEST_EXEC(CMD,E) { printf("EXEC \"%-50s\"", CMD);  exec(CMD) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
+#define TEST_PARSE_FILE(CMD,E)   { printf("TEST PARSE FILE \"%-50s\"", CMD);   parse_file(CMD) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
 
-#define TEST_FILE(CMD,E) { printf("RUN \"%-50s\"", CMD);   run_file(CMD) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
+#define TEST_COMPILE_FILE(CMD,E) { printf("TEST COMPILE FILE \"%-50s\"", CMD); compile_file(CMD) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
 
-bool exec(const char *al)
+bool compile_file(const char *al)
 {
     auto p = create_parser();
 
-    if (!p->parse_from_string(al))
+    ast_ptr_t ast;
+
+    if (!p->parse_from_file(al,ast))
         return false;
 
-    release_parser(p);
-
-    return true;
+    auto c = create_compiler();
+    return c->compile(ast);
+    
 }
 
-bool run_file(const char* al)
+bool parse_file(const char* al)
 {
     auto p = create_parser();
 
-    if (!p->parse_from_file(al))
-        return false;
+    ast_ptr_t ast;
 
-    release_parser(p);
-
-    return true;
+    return p->parse_from_file(al, ast);
 }
 
-void file_tests()
-{
-    TEST_FILE("leaf.al", true);
-}
-
-void parse_tests()
+bool parse_string(const char* al)
 {
     auto p = create_parser();
 
-    TEST_PARSE(R"(var b:A)", false);
+    ast_ptr_t ast;
 
-    TEST_PARSE(R"(var a:int)", true);
+    return p->parse_from_string(al, ast);
+}
 
-    TEST_PARSE(R"(var :int)", true);
+void parse_file_tests()
+{
+    TEST_PARSE_FILE("leaf.al", true);
+}
 
-    TEST_PARSE(R"( object B (); object A > B ())", true);
-    TEST_PARSE(R"( object B (); object A > ^B ())", true);
-    TEST_PARSE(R"( object A > C ())", false);
-    TEST_PARSE(R"( object A > ^C ())", false);
-    TEST_PARSE(R"( object A > int ())", false);
+void compile_file_tests()
+{
+    TEST_PARSE_FILE("leaf.al", true);
+}
 
-    TEST_PARSE(R"( fun foo : int (var x:int, var y:int) {})", true);
-    TEST_PARSE(R"( fun foo : int (var x:A, var y:int) {})", false);
-    TEST_PARSE(R"( object A () ; fun foo : int (var x:A, var y:int) {})", true);
-    TEST_PARSE(R"( object A () ; fun foo : B (var x:A, var y:int) {})", false);
-    TEST_PARSE(R"( object A () ; fun foo : A (var x:A, var y:int) {})", true);
+void parse_string_tests()
+{
+    auto p = create_parser();
 
-    TEST_PARSE(R"( fun foo:void() { foo(); })", true);
-    TEST_PARSE(R"( fun foo:void() { fun:int(){}();})", true);
+    TEST_PARSE_STRING(R"(var b:A)", false);
+    TEST_PARSE_STRING(R"(var a:int)", true);
+    TEST_PARSE_STRING(R"(var :int)", true);
 
+    TEST_PARSE_STRING(R"( object B (); object A > B ())", true);
+    TEST_PARSE_STRING(R"( object B (); object A > ^B ())", true);
+    TEST_PARSE_STRING(R"( object A > C ())", false);
+    TEST_PARSE_STRING(R"( object A > ^C ())", false);
+    TEST_PARSE_STRING(R"( object A > int ())", false);
 
-    TEST_EXEC(R"( fun main:void() { __print("ok"); })", true);
+    TEST_PARSE_STRING(R"( fun foo : int (var x:int, var y:int) {})", true);
+    TEST_PARSE_STRING(R"( fun foo : int (var x:A, var y:int) {})", false);
+    TEST_PARSE_STRING(R"( object A () ; fun foo : int (var x:A, var y:int) {})", true);
+    TEST_PARSE_STRING(R"( object A () ; fun foo : B (var x:A, var y:int) {})", false);
+    TEST_PARSE_STRING(R"( object A () ; fun foo : A (var x:A, var y:int) {})", true);
 
-    release_parser(p);
+    TEST_PARSE_STRING(R"( fun foo:void() { foo(); })", true);
+    TEST_PARSE_STRING(R"( fun foo:void() { fun:int(){}();})", true);
+
+    
 }
 
 int main()
 {
-
-    file_tests();
-    
+    compile_file("leaf.al");
 }
 
 
