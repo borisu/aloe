@@ -13,10 +13,10 @@ aloe::create_compiler()
 }
     
 bool 
-llvmir_compiler_t::compile(ast_ptr_t ast)
+llvmir_compiler_t::compile(const string& module_name, ast_ptr_t ast, object_type_e obj_type, string& out)
 {
     LLVMContext context;
-    Module module("simple_module", context);
+    Module module(module_name, context);
 
     IRBuilder<> builder(context);
 
@@ -33,7 +33,8 @@ llvmir_compiler_t::compile(ast_ptr_t ast)
     builder.CreateRet(builder.getInt32(0));
 
     // Print LLVM IR
-    module.print(outs(), nullptr);
+    llvm::raw_string_ostream llvmOs(out);
+    module.print(llvmOs, nullptr);
 
     return true;
 }

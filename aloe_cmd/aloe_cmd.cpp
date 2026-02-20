@@ -37,7 +37,8 @@ bool compile_file(const char *al)
         return false;
 
     auto c = create_compiler();
-    return c->compile(ast);
+    string ir_str;
+    return c->compile("a",ast, LLVM_IR, ir_str);
     
 }
 

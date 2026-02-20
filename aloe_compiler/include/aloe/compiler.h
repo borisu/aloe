@@ -7,11 +7,21 @@ using namespace std;
 
 namespace aloe
 {
+	enum object_type_e
+	{
+		LLVM_IR,
+		OBJECT_FILE
+	};
+
 	class compiler_t
 	{
 	public:
 
-		virtual bool compile(ast_ptr_t ast) = 0;
+		virtual bool compile(
+			const string &module_name, 
+			ast_ptr_t ast, 
+			object_type_e obj_type, 
+			string &out) = 0;
 
 	};
 
