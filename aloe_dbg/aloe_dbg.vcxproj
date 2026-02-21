@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{cc2c395c-7a3a-476c-bfa5-773f0b4d2394}</ProjectGuid>
-    <RootNamespace>aloecmd</RootNamespace>
+    <ProjectGuid>{1cd6def0-3bbb-4532-9166-03c99f7c21cf}</ProjectGuid>
+    <RootNamespace>aloedbg</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -105,13 +105,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\aloe_parser\include;..\aloe_base\include\;..\aloe_compiler\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files (x86)\LLVM\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ntdll.lib;LLVMWindowsManifest.lib;LLVMXRay.lib;LLVMLibDriver.lib;LLVMDlltoolDriver.lib;LLVMTelemetry.lib;LLVMTextAPIBinaryReader.lib;LLVMCoverage.lib;LLVMLineEditor.lib;LLVMXCoreDisassembler.lib;LLVMXCoreCodeGen.lib;LLVMXCoreDesc.lib;LLVMXCoreInfo.lib;LLVMX86TargetMCA.lib;LLVMX86Disassembler.lib;LLVMX86AsmParser.lib;LLVMX86CodeGen.lib;LLVMX86Desc.lib;LLVMX86Info.lib;LLVMWebAssemblyDisassembler.lib;LLVMWebAssemblyAsmParser.lib;LLVMWebAssemblyCodeGen.lib;LLVMWebAssemblyUtils.lib;LLVMWebAssemblyDesc.lib;LLVMWebAssemblyInfo.lib;LLVMVEDisassembler.lib;LLVMVEAsmParser.lib;LLVMVECodeGen.lib;LLVMVEDesc.lib;LLVMVEInfo.lib;LLVMSystemZDisassembler.lib;LLVMSystemZAsmParser.lib;LLVMSystemZCodeGen.lib;LLVMSystemZDesc.lib;LLVMSystemZInfo.lib;LLVMSPIRVCodeGen.lib;LLVMSPIRVDesc.lib;LLVMSPIRVInfo.lib;LLVMSPIRVAnalysis.lib;LLVMSparcDisassembler.lib;LLVMSparcAsmParser.lib;LLVMSparcCodeGen.lib;LLVMSparcDesc.lib;LLVMSparcInfo.lib;LLVMRISCVTargetMCA.lib;LLVMRISCVDisassembler.lib;LLVMRISCVAsmParser.lib;LLVMRISCVCodeGen.lib;LLVMRISCVDesc.lib;LLVMRISCVInfo.lib;LLVMPowerPCDisassembler.lib;LLVMPowerPCAsmParser.lib;LLVMPowerPCCodeGen.lib;LLVMPowerPCDesc.lib;LLVMPowerPCInfo.lib;LLVMNVPTXCodeGen.lib;LLVMNVPTXDesc.lib;LLVMNVPTXInfo.lib;LLVMMSP430Disassembler.lib;LLVMMSP430AsmParser.lib;LLVMMSP430CodeGen.lib;LLVMMSP430Desc.lib;LLVMMSP430Info.lib;LLVMMipsDisassembler.lib;LLVMMipsAsmParser.lib;LLVMMipsCodeGen.lib;LLVMMipsDesc.lib;LLVMMipsInfo.lib;LLVMLoongArchDisassembler.lib;LLVMLoongArchAsmParser.lib;LLVMLoongArchCodeGen.lib;LLVMLoongArchDesc.lib;LLVMLoongArchInfo.lib;LLVMLanaiDisassembler.lib;LLVMLanaiCodeGen.lib;LLVMLanaiAsmParser.lib;LLVMLanaiDesc.lib;LLVMLanaiInfo.lib;LLVMHexagonDisassembler.lib;LLVMHexagonCodeGen.lib;LLVMHexagonAsmParser.lib;LLVMHexagonDesc.lib;LLVMHexagonInfo.lib;LLVMBPFDisassembler.lib;LLVMBPFAsmParser.lib;LLVMBPFCodeGen.lib;LLVMBPFDesc.lib;LLVMBPFInfo.lib;LLVMAVRDisassembler.lib;LLVMAVRAsmParser.lib;LLVMAVRCodeGen.lib;LLVMAVRDesc.lib;LLVMAVRInfo.lib;LLVMARMDisassembler.lib;LLVMARMAsmParser.lib;LLVMARMCodeGen.lib;LLVMARMDesc.lib;LLVMARMUtils.lib;LLVMARMInfo.lib;LLVMAMDGPUTargetMCA.lib;LLVMAMDGPUDisassembler.lib;LLVMAMDGPUAsmParser.lib;LLVMAMDGPUCodeGen.lib;LLVMAMDGPUDesc.lib;LLVMAMDGPUUtils.lib;LLVMAMDGPUInfo.lib;LLVMAArch64Disassembler.lib;LLVMAArch64AsmParser.lib;LLVMAArch64CodeGen.lib;LLVMAArch64Desc.lib;LLVMAArch64Utils.lib;LLVMAArch64Info.lib;LLVMOrcDebugging.lib;LLVMOrcJIT.lib;LLVMWindowsDriver.lib;LLVMMCJIT.lib;LLVMJITLink.lib;LLVMInterpreter.lib;LLVMExecutionEngine.lib;LLVMRuntimeDyld.lib;LLVMOrcTargetProcess.lib;LLVMOrcShared.lib;LLVMDWP.lib;LLVMDWARFCFIChecker.lib;LLVMDebugInfoLogicalView.lib;LLVMOption.lib;LLVMObjCopy.lib;LLVMMCA.lib;LLVMMCDisassembler.lib;LLVMDTLTO.lib;LLVMLTO.lib;LLVMPlugins.lib;LLVMPasses.lib;LLVMHipStdPar.lib;LLVMCFGuard.lib;LLVMCoroutines.lib;LLVMipo.lib;LLVMVectorize.lib;LLVMSandboxIR.lib;LLVMLinker.lib;LLVMFrontendOpenMP.lib;LLVMFrontendOffloading.lib;LLVMObjectYAML.lib;LLVMFrontendOpenACC.lib;LLVMFrontendDriver.lib;LLVMInstrumentation.lib;LLVMFrontendDirective.lib;LLVMFrontendAtomic.lib;LLVMExtensions.lib;LLVMDWARFLinkerParallel.lib;LLVMDWARFLinkerClassic.lib;LLVMDWARFLinker.lib;LLVMGlobalISel.lib;LLVMMIRParser.lib;LLVMAsmPrinter.lib;LLVMSelectionDAG.lib;LLVMCodeGen.lib;LLVMTarget.lib;LLVMObjCARCOpts.lib;LLVMCodeGenTypes.lib;LLVMCGData.lib;LLVMCAS.lib;LLVMIRPrinter.lib;LLVMInterfaceStub.lib;LLVMFileCheck.lib;LLVMFuzzMutate.lib;LLVMScalarOpts.lib;LLVMInstCombine.lib;LLVMAggressiveInstCombine.lib;LLVMTransformUtils.lib;LLVMBitWriter.lib;LLVMAnalysis.lib;LLVMProfileData.lib;LLVMSymbolize.lib;LLVMDebugInfoBTF.lib;LLVMDebugInfoPDB.lib;LLVMDebugInfoMSF.lib;LLVMDebugInfoCodeView.lib;LLVMDebugInfoGSYM.lib;LLVMDebugInfoDWARF.lib;LLVMObject.lib;LLVMTextAPI.lib;LLVMMCParser.lib;LLVMIRReader.lib;LLVMAsmParser.lib;LLVMMC.lib;LLVMDebugInfoDWARFLowLevel.lib;LLVMBitReader.lib;LLVMFrontendHLSL.lib;LLVMFuzzerCLI.lib;LLVMABI.lib;LLVMCore.lib;LLVMRemarks.lib;LLVMBitstreamReader.lib;LLVMBinaryFormat.lib;LLVMTargetParser.lib;LLVMTableGen.lib;LLVMSupportLSP.lib;LLVMSupport.lib;LLVMDemangle.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(IntDirFullPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,30 +129,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="aloe_cmd.cpp" />
-    <ClCompile Include="tests_cmd.cpp" />
-    <ClCompile Include="compile_cmd.cpp" />
+    <ClCompile Include="aloe_dbg.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\aloe_antlr\aloe_antlr.vcxproj">
-      <Project>{9ed379b2-0bcb-4129-a739-76c7c89815fe}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\aloe_base\aloe_base.vcxproj">
-      <Project>{f725e333-0ca3-4f55-8b28-c44c0348ec4e}</Project>
+    <CustomBuild Include="a.ll">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"%LLVM%\llc" -filetype=obj %(FullPath) -o $(IntDirFullPath)%(Filename).obj</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDirFullPath)%(Filename).obj</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\a.alo</AdditionalInputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\aloe_cmd\aloe_cmd.vcxproj">
+      <Project>{cc2c395c-7a3a-476c-bfa5-773f0b4d2394}</Project>
     </ProjectReference>
     <ProjectReference Include="..\aloe_compiler\aloe_compiler.vcxproj">
       <Project>{6bbf1cea-d45d-48e9-9015-7df6be6689a9}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\aloe_parser\aloe_parser.vcxproj">
-      <Project>{434e4115-5200-4840-a3ad-8bf20270432b}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="leaf.al" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="tests_cmd.h" />
-    <ClInclude Include="compile_cmd.h" />
+    <CustomBuild Include="a.alo">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetDir)\aloe_cmd.exe -c  %(FullPath)  -o $(ProjectDir)\a.ll</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\a.ll</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </AdditionalInputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

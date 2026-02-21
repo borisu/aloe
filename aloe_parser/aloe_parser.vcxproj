@@ -176,6 +176,14 @@
     </ClCompile>
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\aloe_antlr\aloe_antlr.vcxproj">
+      <Project>{9ed379b2-0bcb-4129-a739-76c7c89815fe}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\aloe_base\aloe_base.vcxproj">
+      <Project>{f725e333-0ca3-4f55-8b28-c44c0348ec4e}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

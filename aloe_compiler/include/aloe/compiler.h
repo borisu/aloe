@@ -12,16 +12,17 @@ namespace aloe
 		LLVM_IR,
 		OBJECT_FILE
 	};
-
+	
 	class compiler_t
 	{
 	public:
 
 		virtual bool compile(
-			const string &module_name, 
-			ast_ptr_t ast, 
-			object_type_e obj_type, 
-			string &out) = 0;
+			const string& file_name,
+			const string& module_name,
+			ast_ptr_t ast,
+			object_type_e obj_type,
+			string& out) = 0;
 
 	};
 

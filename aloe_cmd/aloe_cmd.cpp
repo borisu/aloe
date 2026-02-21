@@ -3,10 +3,14 @@
 
 
 #include <iostream>
+#include <fstream>
+#include <string>
 
 #include "aloe/logger.h"
 #include "aloe/parser.h"
 #include "aloe/compiler.h"
+#include "tests_cmd.h"
+#include "compile_cmd.h"
 
 
 using namespace aloe;
@@ -21,84 +25,76 @@ void aloe::log1nl(FILE* stream)
     fprintf(stream, ";");
 }
 
-#define TEST_PARSE_STRING(CMD,E) { printf("TEST PARSE STRING \"%-50s\"",CMD);  parse_string(CMD) == E ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
 
-#define TEST_PARSE_FILE(CMD,E)   { printf("TEST PARSE FILE \"%-50s\"", CMD);   parse_file(CMD) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
 
-#define TEST_COMPILE_FILE(CMD,E) { printf("TEST COMPILE FILE \"%-50s\"", CMD); compile_file(CMD) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
-
-bool compile_file(const char *al)
+enum ALOE_CMD_MODE
 {
-    auto p = create_parser();
-
-    ast_ptr_t ast;
-
-    if (!p->parse_from_file(al,ast))
-        return false;
-
-    auto c = create_compiler();
-    string ir_str;
-    return c->compile("a",ast, LLVM_IR, ir_str);
+    MODE_UNKNOWN,
+    MODE_COMPILE,
+    MODE_TEST
+};
     
-}
 
-bool parse_file(const char* al)
+int main(int argc, char* argv[])
 {
-    auto p = create_parser();
+    std::string input_file;
+    std::string output_file;
+    std::string output_dir;
+    bool verbose = false;
 
-    ast_ptr_t ast;
+    auto mode = MODE_UNKNOWN;
 
-    return p->parse_from_file(al, ast);
-}
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
 
-bool parse_string(const char* al)
-{
-    auto p = create_parser();
+        if (arg == "-c" && i + 1 < argc) {
+            if (mode != MODE_UNKNOWN)
+            {
+                std::cerr << "Options error: multiple modes set.";
+                exit(1);
+            }
+            mode = MODE_COMPILE;
+            input_file = argv[++i]; // consume next argument
+        }
+        else if (arg == "-o" && i + 1 < argc) {
+            output_file = argv[++i]; // consume next argument
+        }
+        else if (arg == "-t") {
+            if (mode != MODE_UNKNOWN)
+            {
+                std::cerr << "Options error: multiple modes set.";
+                exit(1);
+            }
+            mode = MODE_TEST;
+            break;
+        }
+        else {
+            std::cerr << "Unknown option: " << arg << "\n";
+        }
+    }
 
-    ast_ptr_t ast;
+    auto err_code = 1;
 
-    return p->parse_from_string(al, ast);
-}
+    switch (mode){
+    case MODE_UNKNOWN:
+    {
+        std::cerr << "Please set mode of operation";
+        break;
+    }
+    case MODE_COMPILE:
+    {
+        err_code =  compile_cmd_t().compile_file(input_file.c_str(), output_file.c_str()) ? 0 : 1;
+        break;
+    }
+    case MODE_TEST:
+    {
+        err_code = 0;
+        tests_cmd_t().run_tests();
+    }
+    }
 
-void parse_file_tests()
-{
-    TEST_PARSE_FILE("leaf.al", true);
-}
 
-void compile_file_tests()
-{
-    TEST_PARSE_FILE("leaf.al", true);
-}
-
-void parse_string_tests()
-{
-    auto p = create_parser();
-
-    TEST_PARSE_STRING(R"(var b:A)", false);
-    TEST_PARSE_STRING(R"(var a:int)", true);
-    TEST_PARSE_STRING(R"(var :int)", true);
-
-    TEST_PARSE_STRING(R"( object B (); object A > B ())", true);
-    TEST_PARSE_STRING(R"( object B (); object A > ^B ())", true);
-    TEST_PARSE_STRING(R"( object A > C ())", false);
-    TEST_PARSE_STRING(R"( object A > ^C ())", false);
-    TEST_PARSE_STRING(R"( object A > int ())", false);
-
-    TEST_PARSE_STRING(R"( fun foo : int (var x:int, var y:int) {})", true);
-    TEST_PARSE_STRING(R"( fun foo : int (var x:A, var y:int) {})", false);
-    TEST_PARSE_STRING(R"( object A () ; fun foo : int (var x:A, var y:int) {})", true);
-    TEST_PARSE_STRING(R"( object A () ; fun foo : B (var x:A, var y:int) {})", false);
-    TEST_PARSE_STRING(R"( object A () ; fun foo : A (var x:A, var y:int) {})", true);
-
-    TEST_PARSE_STRING(R"( fun foo:void() { foo(); })", true);
-    TEST_PARSE_STRING(R"( fun foo:void() { fun:int(){}();})", true);
-
-    
-}
-
-int main()
-{
-    compile_file("leaf.al");
+    return err_code;
 }
 
 

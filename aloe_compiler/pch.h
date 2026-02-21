@@ -14,10 +14,17 @@
 #pragma warning(disable : 4624)
 #pragma warning(disable : 4267)
 
+#include <iostream>
+#include <filesystem>
+#include <string>
+
+
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/IR/DIBuilder.h>
+
 
 
 

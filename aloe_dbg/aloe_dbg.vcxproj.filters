@@ -7,15 +7,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="aloe_cmd.cpp" />
-    <ClCompile Include="tests_cmd.cpp" />
-    <ClCompile Include="compile_cmd.cpp" />
+    <ClCompile Include="aloe_dbg.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="leaf.al" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="tests_cmd.h" />
-    <ClInclude Include="compile_cmd.h" />
+    <CustomBuild Include="a.ll" />
+    <CustomBuild Include="a.alo" />
   </ItemGroup>
 </Project>
