@@ -15,22 +15,26 @@ namespace aloe
 
 		environment_t(environment_ptr_t env = nullptr);
 
-		bool register_type(const string& name, node_ptr_t node);
+		bool register_id(identifier_node_ptr_t	id, node_ptr_t node);
 
-		bool register_var(const string& name, node_ptr_t node);
-
-		node_ptr_t find_type_definition_by_name(const string& name);
-
-		node_ptr_t find_var_definition_by_name(const string& name);
+		node_ptr_t find_id(identifier_node_ptr_t id);
 
 	private:
 
-		typedef map<string, node_ptr_t>
-			def_map_t;
+		struct id_ptr_cmp
+		{
+			bool operator()(const identifier_node_ptr_t& a, const identifier_node_ptr_t& b) const
+			{
+				if (a->name != b->name)
+					return a->name < b->name;
+				return a->id_type < b->id_type;
+			}
+		};
 
-		def_map_t  type_defs;
+		typedef map<identifier_node_ptr_t, node_ptr_t, id_ptr_cmp>
+		def_map_t;
 
-		def_map_t  var_defs;
+		def_map_t  id_map;
 
 		environment_ptr_t prev;
 

@@ -9,6 +9,8 @@
 #include "prog.h"
 #include "inh_chain.h"
 #include "expression.h"
+#include "literal.h"
+#include "identifier.h"
 
 
 using namespace std;

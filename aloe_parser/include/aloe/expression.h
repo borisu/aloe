@@ -3,35 +3,29 @@
 #include <vector>
 #include <variant>
 #include "node.h"
-#include "type.h"
-#include "var.h"
-#include "scope.h"
+
 
 using namespace std;
 
 namespace aloe
 {
 
-	
 	struct expr_node_t;
 	typedef shared_ptr<expr_node_t> expr_node_ptr_t;
 
 	enum operator_e
 	{
 		OP_UNKONWN,
-		OP_LITERAL_INTEGER,
-		OP_LITERAL_CHAR,
-		OP_LITERAL_STRING,
+		OP_LITERAL,
 		OP_FUN_CALL,
+		OP_IDENTIFIER
 	} ;
 
-	struct expr_node_t : public scope_node_t
+	struct expr_node_t : public node_t
 	{
-		expr_node_t() :scope_node_t(EXPRESSION_NODE),op(OP_UNKONWN) {}
+		expr_node_t() :node_t(EXPRESSION_NODE),op(OP_UNKONWN) {}
 
-		vector<expr_node_ptr_t> operands;
-	
-		variant<string,int,char> value;
+		vector<node_ptr_t> operands;
 
 		operator_e op;
 

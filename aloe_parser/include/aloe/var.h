@@ -11,8 +11,8 @@ namespace aloe
 	struct var_node_t : public node_t
 	{
 		var_node_t() :node_t(VAR_NODE) {};
-		string name;
-		type_node_ptr_t type;
+		identifier_node_ptr_t	id;
+		type_node_ptr_t			type;
 	};
 
 	typedef shared_ptr<var_node_t> 
@@ -21,7 +21,7 @@ namespace aloe
 	struct var_node_list_t : public node_t
 	{
 		var_node_list_t() :node_t(VAR_LIST_NODE) {};
-		map<string, var_node_ptr_t> vars;
+		map<identifier_node_ptr_t, var_node_ptr_t> vars;
 	};
 
 	typedef shared_ptr<var_node_list_t>

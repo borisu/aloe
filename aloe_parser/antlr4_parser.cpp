@@ -9,7 +9,7 @@ using namespace std;
 using namespace antlr4;
 
 static int object_id = 0;
-static int function_id = 0;
+static int anonymous_id_counter = 0;
 
 parser_ptr_t
 aloe::create_parser()
@@ -128,27 +128,16 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
 object_node_ptr_t 
 antl4_parser_t::walk_object_declaration( environment_ptr_t env, aloeParser::ObjectDeclarationContext* ctx)
 {
-    string name = ctx->identifier() ? ctx->identifier()->getText() : string("$anonymous_object_") + std::to_string(++object_id);
-
-    if (env->find_type_definition_by_name(name))
-    {
-        loginl("error on (line:%zu, pos:%zu) - object type %s already defined.", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), name.c_str());
-        throw parse_exeption_t();
-    }
-
+    environment_ptr_t new_env(new environment_t(env));
     object_node_ptr_t obj (new object_node_t());
 
-    obj->inh_chain = walk_chain_declaration(env, ctx->inheritanceChain());
-
-    // NEW SCOPE
-    {
-        environment_ptr_t new_env(new environment_t(env));
-        obj->fields = walk_var_list(new_env, ctx->varList());
-    }
+    obj->id         = walk_identifier(env, ctx->identifier(), true, ID_TYPE);
+    obj->inh_chain  = walk_chain_declaration(env, ctx->inheritanceChain());
+    obj->fields     = walk_var_list(new_env, ctx->varList());
     
-    
-    env->register_type(name,obj);
 
+    env->register_id(obj->id, obj);
+    
     return obj;
 }
 
@@ -163,7 +152,7 @@ antl4_parser_t::walk_chain_declaration( environment_ptr_t env, aloeParser::Inher
         {
             type_node_ptr_t t = walk_type(env, typeCtx);
 
-            if (t->type_type != OBJECT)
+            if (t->type_type != TYPE_OBJECT)
             {
                 loginl("error on (line:%zu, pos:%zu) - wrong base type '%s' for inheritance", chainCtx->getStart()->getLine(), chainCtx->getStart()->getStartIndex(), typeCtx->getText().c_str());
                 throw parse_exeption_t();
@@ -187,97 +176,95 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
     else if (ctx->objectDeclaration())
     {
         auto obj  = walk_object_declaration(env, ctx->objectDeclaration());
-        return type_node_ptr_t(new type_node_t(OBJECT, obj));
+        return type_node_ptr_t(new type_node_t(TYPE_OBJECT, obj));
+    }
+    else if (ctx->funDeclaration())
+    {
+        auto obj = walk_function_decalaration(env, ctx->funDeclaration());
+        return type_node_ptr_t(new type_node_t(TYPE_OBJECT, obj));
     }
     else if (ctx->builtinType())
     {
         if (ctx->builtinType()->int_())
         {
-            return type_node_ptr_t(new type_node_t(INT));
+            return type_node_ptr_t(new type_node_t(TYPE_INT));
         }
         else if (ctx->builtinType()->void_())
         {
-            return type_node_ptr_t(new type_node_t(VOID));
+            return type_node_ptr_t(new type_node_t(TYPE_VOID));
         }
         else if (ctx->builtinType()->char_())
         {
-            return type_node_ptr_t(new type_node_t(CHAR));
+            return type_node_ptr_t(new type_node_t(TYPE_CHAR));
         }
         else if (ctx->builtinType()->double_())
         {
-            return type_node_ptr_t(new type_node_t(DOUBLE));
+            return type_node_ptr_t(new type_node_t(TYPE_DOUBLE));
         }
         else if (ctx->builtinType()->opaque())
         {
-            return type_node_ptr_t(new type_node_t(OPAQUE));
+            return type_node_ptr_t(new type_node_t(TYPE_OPAQUE));
         }
     }
     else if (ctx->identifier())
     {
-        node_ptr_t type_def = env->find_type_definition_by_name(ctx->identifier()->getText());
-        if (!type_def)
-        {
-            loginl("error on (line:%zu, pos:%zu) - unknown type %s", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), ctx->identifier()->getText().c_str());
-            throw parse_exeption_t();
-        }
+        identifier_node_ptr_t id_node = walk_identifier(env, ctx->identifier(), false, ID_TYPE);
 
-        switch (type_def->type)
+        type_node_ptr_t type_node(new type_node_t(TYPE_OBJECT, env->find_id(id_node)));
+        type_node->id = id_node;
+
+        node_ptr_t def = env->find_id(id_node);
+
+        switch (def->type)
         {
         case OBJECT_NODE:
-            return type_node_ptr_t(new type_node_t(OBJECT, type_def));
+            return type_node_ptr_t(new type_node_t(TYPE_OBJECT, def));
         case FUNCTION_NODE:
-            return type_node_ptr_t(new type_node_t(FUNCTION, type_def));
+            return type_node_ptr_t(new type_node_t(TYPE_FUNCTION, def));
         default: {}
         }
     }
+    else
+    {
+        throw parse_exeption_t();
+    }
   
-   throw parse_exeption_t();
+    throw parse_exeption_t();
 }
 
 
 fun_node_ptr_t
 antl4_parser_t::walk_function_decalaration( environment_ptr_t env, aloeParser::FunDeclarationContext* ctx)
 {
-    string name = ctx->identifier() ? ctx->identifier()->getText() : string("$anonymous_function_") + std::to_string(++function_id);
-
-    if (env->find_type_definition_by_name(name))
-    {
-        loginl("error on (line:%zu, pos:%zu) - function %s already defined", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), name.c_str());
-        throw parse_exeption_t();
-    }
-
-    fun_node_ptr_t fun = fun_node_ptr_t(new fun_node_t());
-
-    fun->ret_type  = walk_type(env, ctx->funType()->type());
-
-    // NEW SCOPE
-    {
-       environment_ptr_t new_env(new environment_t(env));
-       fun->params = walk_var_list(new_env, ctx->funType()->varList());
+   
+    environment_ptr_t new_env(new environment_t(env));
+    fun_node_ptr_t fun_node = fun_node_ptr_t(new fun_node_t());
+    fun_node->id = walk_identifier(env, ctx->identifier(), true, ID_TYPE);
+    fun_node->ret_type  = walk_type(env, ctx->funType()->type());
+    fun_node->params = walk_var_list(new_env, ctx->funType()->varList());
     
-       for (auto& exec_ctx : ctx->executionStatement())
-       {
-           if (exec_ctx->varDeclaration())
-           {
-               walk_var(new_env, exec_ctx->varDeclaration());
-           }
-           else if (exec_ctx->funDeclaration())
-           {
-               walk_function_decalaration(new_env, exec_ctx->funDeclaration());
-           }
-           else if (exec_ctx->objectDeclaration())
-           {
-               walk_object_declaration(new_env, exec_ctx->objectDeclaration());
-           }
-           else if (exec_ctx->expression())
-           {
-              walk_expression(new_env, exec_ctx->expression());
+    for (auto& exec_ctx : ctx->executionStatement())
+    {
+        if (exec_ctx->varDeclaration())
+        {
+            walk_var(new_env, exec_ctx->varDeclaration());
+        }
+        else if (exec_ctx->funDeclaration())
+        {
+            walk_function_decalaration(new_env, exec_ctx->funDeclaration());
+        }
+        else if (exec_ctx->objectDeclaration())
+        {
+            walk_object_declaration(new_env, exec_ctx->objectDeclaration());
+        }
+        else if (exec_ctx->expression())
+        {
+            walk_expression(new_env, exec_ctx->expression());
         
-           }
-       } // for 
-    } // SCOPE
+        }
+    } // for 
 
-    return fun;
+    return fun_node;
 }
 
 var_list_node_ptr_t
@@ -285,35 +272,87 @@ antl4_parser_t::walk_var_list( environment_ptr_t env, aloeParser::VarListContext
 {
     var_list_node_ptr_t var_list(new var_node_list_t());
     
-
     bool err = false;
     for (auto& varCtx : ctx->varDeclaration())
     {
         auto var_ptr = walk_var(env, varCtx);
-        env->register_var(var_ptr->name, var_ptr);
+        
     };
     
     return var_list;
 }
 
 var_node_ptr_t 
-antl4_parser_t::walk_var( environment_ptr_t env, aloeParser::VarDeclarationContext* ctx)
+antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContext* ctx)
 {
-    string name = ctx->identifier() ? ctx->identifier()->getText() : string("$anonymous_var_") + std::to_string(++function_id);
-    if (env->find_type_definition_by_name(name))
+  
+    var_node_ptr_t var_node  = var_node_ptr_t(new var_node_t());
+    var_node->id = walk_identifier(env, ctx->identifier(), true, ID_VAR);
+    var_node->type           = walk_type(env, ctx->type());
+    env->register_id(var_node->id, var_node);
+
+    return var_node;
+}
+
+identifier_node_ptr_t  
+antl4_parser_t::walk_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, bool id_declaration, identifier_type_e expected_id_type)
+{
+    if (!ctx)
+        return identifier_node_ptr_t();
+
+    identifier_node_ptr_t id_node = identifier_node_ptr_t(new identifier_node_t());
+
+    id_node->name    =ctx->getText() ;
+    id_node->id_type = expected_id_type;
+
+    auto already_exists_node_ptr = env->find_id(id_node);
+        
+    if (id_declaration && already_exists_node_ptr)
     {
-        loginl("error on (line:%zu, pos:%zu) - var %s already defined", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), name.c_str());
+        loginl("error on (line:%zu, pos:%zu) - identifier %s was already defined", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), id_node->name.c_str());
+        throw parse_exeption_t();
+    }
+    else if (!id_declaration && !already_exists_node_ptr)
+    {
+        loginl("error on (line:%zu, pos:%zu) - identifier %s was not defined", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), id_node->name.c_str());
+        throw parse_exeption_t();
+    }
+    
+    return id_node;
+    
+}
+
+literal_node_ptr_t 
+antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* ctx)
+{
+    literal_node_ptr_t literal_node(new literal_node_t());
+
+    if (ctx->DigitSequence())
+    {
+        literal_node->value = std::stoi(ctx->DigitSequence()->getText());
+    }
+    else if (ctx->StringLiteral().size() > 0)
+    {
+        string sf;
+        for (auto& s :ctx->StringLiteral())
+        {
+            sf += s->getText();
+        }
+        literal_node->value = unescape(sf.substr(1, sf.size() - 2));
+    }
+    else if (ctx->CharacterConstant())
+    {
+        
+        literal_node->value = unescape(ctx->CharacterConstant()->getText())[0];
+    }
+    else
+    {
+        loginl("parse error (line:%zu, pos:%zu): Cannot parse literal %s", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), ctx->getText().c_str());
         throw parse_exeption_t();
     }
 
-    var_node_ptr_t var = var_node_ptr_t(new var_node_t());
-  
-    var->name = name;
-    var->type = walk_type(env, ctx->type());
-
-    return var;
+    return literal_node;
 }
-
 
 
 expr_node_ptr_t 
@@ -325,35 +364,13 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
    expr_node_ptr_t expr_node(new expr_node_t());
 
    if (INSTANCE_OF(aloeParser::Expr_identifierContext)) {
-
+       expr_node->op = OP_IDENTIFIER;
+       //expr_node->value = walk_var (env,)
    }
    else if (INSTANCE_OF(aloeParser::Expr_literalContext)) {
 
-       if (e->literal()->DigitSequence())
-       {
-           expr_node->op = OP_LITERAL_INTEGER;
-           expr_node->value = std::stoi(e->literal()->DigitSequence()->getText());
-       }
-       else if (e->literal()->StringLiteral().size() > 0)
-       {
-           expr_node->op = OP_LITERAL_STRING;
-           string sf;
-           for (auto& s : e->literal()->StringLiteral())
-           {
-                sf += s->getText();
-           }
-           expr_node->value = unescape(sf.substr(1, sf.size() - 2));
-       }
-       else if (e->literal()->CharacterConstant())
-       {
-           expr_node->op = OP_LITERAL_CHAR;
-           expr_node->value = unescape(e->literal()->CharacterConstant()->getText())[0];
-       }
-       else
-       {
-           loginl("parse error (line:%zu, pos:%zu): Cannot parse literal %s", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), e->literal()->getText().c_str());
-           throw parse_exeption_t();
-       }
+       expr_node->op = OP_LITERAL;
+       expr_node->operands.push_back(walk_literal(env, e->literal()));
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_bracketedContext)) {
@@ -368,9 +385,13 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
    else if (INSTANCE_OF(aloeParser::Expr_funcallContext)) {
 
        expr_node->op = OP_FUN_CALL;
-       for (auto& arg_ctx : e->argumentExpressionList()->expression())
+       if (e->argumentExpressionList())
        {
-           expr_node->operands.push_back(walk_expression(env, arg_ctx));
+           for (auto& arg_ctx : e->argumentExpressionList()->expression())
+           {
+               expr_node->operands.push_back(walk_expression(env, arg_ctx));
+           }
+
        }
        
    }

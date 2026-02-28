@@ -15,10 +15,11 @@ namespace aloe
 		FUNCTION_NODE,
 		TYPE_NODE,
 		VAR_NODE,
+		IDENTFIER_NODE,
 		VAR_LIST_NODE,
 		/* execution nodes */
 		EXPRESSION_NODE,
-		PARAM_NODE,
+		LITERAL_NODE
 	};
 
 	struct node_t;

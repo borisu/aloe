@@ -1,5 +1,6 @@
 #pragma once
 #include "node.h"
+#include "identifier.h"
 
 using namespace std;
 
@@ -7,14 +8,14 @@ namespace aloe
 {
 	enum type_e
 	{
-		UNKNOWN,
-		INT,
-		VOID,
-		DOUBLE,
-		OPAQUE,
-		CHAR,
-		OBJECT,
-		FUNCTION
+		TYPE_UNKNOWN,
+		TYPE_INT,
+		TYPE_VOID,
+		TYPE_DOUBLE,
+		TYPE_OPAQUE,
+		TYPE_CHAR,
+		TYPE_OBJECT,
+		TYPE_FUNCTION
 	};
 
 	struct type_node_t
@@ -24,7 +25,7 @@ namespace aloe
 
 		size_t     ref_count;
 		type_e	   type_type;
-		string	   name;
+		identifier_node_ptr_t id;
 		node_ptr_t definition;
 	};
 

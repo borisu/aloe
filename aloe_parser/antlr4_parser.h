@@ -8,7 +8,13 @@ using namespace std;
 
 namespace aloe
 {
-	struct parse_exeption_t : public std::exception	{ };
+	struct parse_exeption_t : public std::exception	{ 
+	
+		parse_exeption_t()
+		{
+
+		}
+	};
 
 	class antl4_parser_t : public parser_t, public antlr4::BaseErrorListener, private aloeBaseListener
 	{
@@ -41,6 +47,10 @@ namespace aloe
 		virtual fun_node_ptr_t walk_function_decalaration(environment_ptr_t env,  aloeParser::FunDeclarationContext* ctx);
 
 		virtual expr_node_ptr_t walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx);
+
+		virtual literal_node_ptr_t  walk_literal(environment_ptr_t env, aloeParser::LiteralContext* ctx);
+
+		virtual identifier_node_ptr_t  walk_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, bool declaration, identifier_type_e expected_type);
 		
 
 	};

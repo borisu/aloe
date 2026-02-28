@@ -13,7 +13,7 @@ namespace aloe
 	{
 		object_node_t() :node_t(OBJECT_NODE) {}
 
-		string           name;
+		identifier_node_ptr_t id;
 
 		inh_chain_node_ptr_t inh_chain;
 
