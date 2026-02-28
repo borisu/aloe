@@ -365,7 +365,9 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
    if (INSTANCE_OF(aloeParser::Expr_identifierContext)) {
        expr_node->op = OP_IDENTIFIER;
-       //expr_node->value = walk_var (env,)
+       identifier_node_ptr_t id = walk_identifier(env, e->identifier(), false,ID_VAR);
+       node_ptr_t var = env->find_id(id);
+       expr_node->operands.push_back(var);
    }
    else if (INSTANCE_OF(aloeParser::Expr_literalContext)) {
 

@@ -77,6 +77,7 @@ tests_cmd_t::parse_string_tests()
 
     TEST_PARSE_STRING(R"( fun foo:void() { foo(); })", true);
     TEST_PARSE_STRING(R"( fun foo:void() { fun:int(){}();})", true);
+    TEST_PARSE_STRING(R"( object A(); fun foo:void(var a:A) { a;})", true);
 
 
 }
@@ -85,6 +86,7 @@ tests_cmd_t::parse_string_tests()
 void
 tests_cmd_t::run_tests()
 {
+    
     parse_string_tests();
     parse_file_tests();
     compile_file_tests();
