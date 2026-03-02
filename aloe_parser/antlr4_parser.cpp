@@ -354,186 +354,506 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
     return literal_node;
 }
 
+arglist_node_ptr_t 
+antl4_parser_t::walk_arglist(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx)
+{
+    arglist_node_ptr_t arg_list(new arglist_node_t());
+    for (auto& exprCtx : ctx->expression())
+    {
+        arg_list->args.push_back(walk_expression(env, exprCtx));
+    }
+    return arg_list;
+}
 
 expr_node_ptr_t 
 antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx)
 {
 
 #define INSTANCE_OF(C) C* e = dynamic_cast<C*>(ctx)    
-    
-   expr_node_ptr_t expr_node(new expr_node_t());
 
    if (INSTANCE_OF(aloeParser::Expr_identifierContext)) {
-       expr_node->op = OP_IDENTIFIER;
-       identifier_node_ptr_t id = walk_identifier(env, e->identifier(), false,ID_VAR);
-       node_ptr_t var = env->find_id(id);
-       expr_node->operands.push_back(var);
+       NEW_EXPR_NODE(expr_node, identifier);
+
+       expr_node->id = walk_identifier(env, e->identifier(), false,ID_VAR);
+	   expr_node->id_def = env->find_id(expr_node->id);
+
+       return expr_node;
    }
    else if (INSTANCE_OF(aloeParser::Expr_literalContext)) {
+       NEW_EXPR_NODE(expr_node, literal);
 
-       expr_node->op = OP_LITERAL;
-       expr_node->operands.push_back(walk_literal(env, e->literal()));
+       expr_node->literal  = walk_literal(env, e->literal());
 
+       return expr_node;
    }
    else if (INSTANCE_OF(aloeParser::Expr_bracketedContext)) {
-
+      
+       return walk_expression(env, e->expression());
+       
    }
    else if (INSTANCE_OF(aloeParser::Expr_sfxplusplusContext)) {
+       NEW_EXPR_NODE(expr_node, sfxplusplus);
 
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
    }
    else if (INSTANCE_OF(aloeParser::Expr_sfxminminContext)) {
 
+       NEW_EXPR_NODE(expr_node, sfxminmin);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_funcallContext)) {
+       NEW_EXPR_NODE(expr_node, funcall);
 
-       expr_node->op = OP_FUN_CALL;
+	   expr_node->function = walk_expression(env, e->expression());
+
        if (e->argumentExpressionList())
        {
-           for (auto& arg_ctx : e->argumentExpressionList()->expression())
-           {
-               expr_node->operands.push_back(walk_expression(env, arg_ctx));
-           }
-
+		   expr_node->arg_list = walk_arglist(env, e->argumentExpressionList());
        }
+
+       return expr_node;
        
    }
    else if (INSTANCE_OF(aloeParser::Expr_indexContext)) {
+	   NEW_EXPR_NODE(expr_node, index);
 
+	   expr_node->operand1 = walk_expression(env, e->expression(0));
+       expr_node->operand2 = walk_expression(env, e->expression(0));
+
+       return expr_node;
    }
    else if (INSTANCE_OF(aloeParser::Expr_dotContext)) {
+
+       NEW_EXPR_NODE(expr_node, dot);
+
+       expr_node->operand   = walk_expression(env, e->expression());
+       expr_node->id        = walk_identifier(env, e->identifier(), false, ID_VAR);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_arrowContext)) {
 
+       NEW_EXPR_NODE(expr_node, arrow);
+
+       expr_node->operand   = walk_expression(env, e->expression());
+       expr_node->id        = walk_identifier(env, e->identifier(), false, ID_VAR);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_preplusplusContext)) {
+       NEW_EXPR_NODE(expr_node, preplusplus);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_preminminContext)) {
+       NEW_EXPR_NODE(expr_node, preminmin);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_plusContext)) {
 
+       NEW_EXPR_NODE(expr_node, plus);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_minContext)) {
+
+       NEW_EXPR_NODE(expr_node, min);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_notContext)) {
 
+       NEW_EXPR_NODE(expr_node, not);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_bwsnotContext)) {
+
+       NEW_EXPR_NODE(expr_node, bwsnot);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_castContext)) {
 
+       NEW_EXPR_NODE(expr_node, cast);
+
+       expr_node->type_node = walk_type(env, e->type());
+       expr_node->operand   = walk_expression(env, e->expression());
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_derefContext)) {
+
+       NEW_EXPR_NODE(expr_node, deref);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_addressofContext)) {
 
+       NEW_EXPR_NODE(expr_node, addressof);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_sizeofexprContext)) {
+
+       NEW_EXPR_NODE(expr_node, sizeofexpr);
+
+       expr_node->operand = walk_expression(env, e->expression());
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_sizeoftypeContext)) {
 
+       NEW_EXPR_NODE(expr_node, sizeoftype);
+
+       expr_node->type_node = walk_type(env, e->type());
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_multContext)) {
+
+       NEW_EXPR_NODE(expr_node, mult);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_divContext)) {
 
+       NEW_EXPR_NODE(expr_node, div);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_modContext)) {
+
+       NEW_EXPR_NODE(expr_node, mod);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_addContext)) {
 
+       NEW_EXPR_NODE(expr_node, add);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_subContext)) {
+
+       NEW_EXPR_NODE(expr_node, sub);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_shiftleftContext)) {
 
+       NEW_EXPR_NODE(expr_node, shiftleft);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_shiftrightContext)) {
+
+       NEW_EXPR_NODE(expr_node, shiftright);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_lessContext)) {
 
+       NEW_EXPR_NODE(expr_node, less);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_lesseeqContext)) {
+
+       NEW_EXPR_NODE(expr_node, lesseeq);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_moreContext)) {
 
+       NEW_EXPR_NODE(expr_node, more);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_moreeqContext)) {
+
+       NEW_EXPR_NODE(expr_node, moreeq);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_logicaleqContext)) {
 
+       NEW_EXPR_NODE(expr_node, logicaleq);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_noteqContext)) {
+
+       NEW_EXPR_NODE(expr_node, noteq);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_andContext)) {
 
+       NEW_EXPR_NODE(expr_node, and);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_xorContext)) {
+
+       NEW_EXPR_NODE(expr_node, xor);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_orContext)) {
 
+       NEW_EXPR_NODE(expr_node, or);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_logicalandContext)) {
+
+       NEW_EXPR_NODE(expr_node, logicaland);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_logicalorContext)) {
 
+       NEW_EXPR_NODE(expr_node, logicalor);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_ternaryContext)) {
+       NEW_EXPR_NODE(expr_node, ternary);
+
+       expr_node->condition  = walk_expression(env, e->expression()[0]);
+       expr_node->true_expr  = walk_expression(env, e->expression()[1]);
+       expr_node->false_expr = walk_expression(env, e->expression()[2]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_assignContext)) {
 
+       NEW_EXPR_NODE(expr_node, assign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_addassignContext)) {
+       NEW_EXPR_NODE(expr_node, addassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_subassignContext)) {
+       NEW_EXPR_NODE(expr_node, subassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_multassignContext)) {
+       NEW_EXPR_NODE(expr_node, multassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_divassignContext)) {
+       NEW_EXPR_NODE(expr_node, divassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_modassignContext)) {
+       NEW_EXPR_NODE(expr_node, modassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_shiftleftassignContext)) {
+       NEW_EXPR_NODE(expr_node, shiftleftassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_shiftrightassignContext)) {
+       NEW_EXPR_NODE(expr_node, shiftrightassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_andassignContext)) {
+       NEW_EXPR_NODE(expr_node, andassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_xorassignContext)) {
 
+       NEW_EXPR_NODE(expr_node, xorassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_orassignContext)) {
 
+       NEW_EXPR_NODE(expr_node, orassign);
+
+       expr_node->operand1 = walk_expression(env, e->expression()[0]);
+       expr_node->operand2 = walk_expression(env, e->expression()[1]);
+
+       return expr_node;
+
    }
    else if (INSTANCE_OF(aloeParser::Expr_commaContext)) {
+       NEW_EXPR_NODE(expr_node, comma);
+
+       if (e->argumentExpressionList())
+       {
+           expr_node->arg_list = walk_arglist(env, e->argumentExpressionList());
+       }
+
+       return expr_node;
 
    }
  
-    return nullptr;
+   return nullptr;
 
 #undef INSTANCE_OF
 }

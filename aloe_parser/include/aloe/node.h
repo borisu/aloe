@@ -17,6 +17,7 @@ namespace aloe
 		VAR_NODE,
 		IDENTFIER_NODE,
 		VAR_LIST_NODE,
+		ARG_LIST_NODE,    
 		/* execution nodes */
 		EXPRESSION_NODE,
 		LITERAL_NODE
@@ -28,6 +29,7 @@ namespace aloe
 	struct node_t
 	{
 		node_t(node_type_e type) : type(type) {}
+
 		node_type_e type;
 
 		virtual ~node_t() {}

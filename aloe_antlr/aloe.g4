@@ -150,7 +150,7 @@ expression
     | '!' expression                                       #expr_not
     | '~' expression                                       #expr_bwsnot
     | '(' type ')' expression                              #expr_cast
-    | '*' expression                                       #expr_deref
+    | '@' expression                                       #expr_deref
     | '&' expression                                       #expr_addressof
     | 'sizeof'  '(' expression ')'                         #expr_sizeofexpr
     | 'sizeof'  '(' type ')'                               #expr_sizeoftype

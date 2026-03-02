@@ -51,6 +51,8 @@ namespace aloe
 		virtual literal_node_ptr_t  walk_literal(environment_ptr_t env, aloeParser::LiteralContext* ctx);
 
 		virtual identifier_node_ptr_t  walk_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, bool declaration, identifier_type_e expected_type);
+
+		virtual arglist_node_ptr_t walk_arglist(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx);
 		
 
 	};

@@ -77,7 +77,14 @@ tests_cmd_t::parse_string_tests()
 
     TEST_PARSE_STRING(R"( fun foo:void() { foo(); })", true);
     TEST_PARSE_STRING(R"( fun foo:void() { fun:int(){}();})", true);
+
+
     TEST_PARSE_STRING(R"( object A(); fun foo:void(var a:A) { a;})", true);
+    TEST_PARSE_STRING(R"( object A(); fun foo:void() { "a";})", true);
+    TEST_PARSE_STRING(R"( object A(); fun foo:void() { '\n';})", true);
+    TEST_PARSE_STRING(R"( object A(); fun foo:void() { 12345;})", true);
+    TEST_PARSE_STRING(R"( object A(); fun foo:void() { (12345);})", true);
+    TEST_PARSE_STRING(R"( object A(); fun foo:void(var a:A) { a++;})", true);
 
 
 }
