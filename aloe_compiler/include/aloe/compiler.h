@@ -14,7 +14,7 @@ namespace aloe
 	};
 	
 	class compiler_t
-	{
+	{	
 	public:
 
 		virtual bool compile(
@@ -24,6 +24,7 @@ namespace aloe
 			object_type_e obj_type,
 			string& out) = 0;
 
+	
 	};
 
 	typedef shared_ptr<compiler_t> compiler_ptr_t;

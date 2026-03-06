@@ -239,32 +239,62 @@ antl4_parser_t::walk_function_decalaration( environment_ptr_t env, aloeParser::F
    
     environment_ptr_t new_env(new environment_t(env));
     fun_node_ptr_t fun_node = fun_node_ptr_t(new fun_node_t());
+
+    
+	fun_node->is_defined = ctx->expect() == nullptr;
+    
+    
     fun_node->id = walk_identifier(env, ctx->identifier(), true, ID_TYPE);
     fun_node->ret_type  = walk_type(env, ctx->funType()->type());
     fun_node->params = walk_var_list(new_env, ctx->funType()->varList());
+
+	if (ctx->expect() && ctx->executionBlock())
+    {
+        loginl("error on (line:%zu, pos:%zu) - function %s was declared as 'expect' but has body", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), fun_node->id->name.c_str());
+		throw parse_exeption_t();
+    }
+
+    if (!ctx->expect() && !ctx->executionBlock())
+    {
+        loginl("error on (line:%zu, pos:%zu) - function %s was not declared as 'expect' but has no body", ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), fun_node->id->name.c_str());
+        throw parse_exeption_t();
+    }
+
+    if (fun_node->is_defined)
+    {
+        fun_node->exec_block = walk_execution_block(new_env, ctx->executionBlock());
+    }
     
+   
+    return fun_node;
+}
+
+execution_block_node_ptr_t
+antl4_parser_t::walk_execution_block(environment_ptr_t env, aloeParser::ExecutionBlockContext* ctx)
+{
+    execution_block_node_ptr_t block_node = execution_block_node_ptr_t(new execution_block_node_t());
+
     for (auto& exec_ctx : ctx->executionStatement())
     {
         if (exec_ctx->varDeclaration())
         {
-            walk_var(new_env, exec_ctx->varDeclaration());
+            block_node->statements.push_back(walk_var(env, exec_ctx->varDeclaration()));
         }
         else if (exec_ctx->funDeclaration())
         {
-            walk_function_decalaration(new_env, exec_ctx->funDeclaration());
+            block_node->statements.push_back(walk_function_decalaration(env, exec_ctx->funDeclaration()));
         }
         else if (exec_ctx->objectDeclaration())
         {
-            walk_object_declaration(new_env, exec_ctx->objectDeclaration());
+            block_node->statements.push_back(walk_object_declaration(env, exec_ctx->objectDeclaration()));
         }
         else if (exec_ctx->expression())
         {
-            walk_expression(new_env, exec_ctx->expression());
-        
+            block_node->statements.push_back(walk_expression(env, exec_ctx->expression()));
         }
     } // for 
 
-    return fun_node;
+	return block_node;
 }
 
 var_list_node_ptr_t
@@ -355,7 +385,7 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
 }
 
 arglist_node_ptr_t 
-antl4_parser_t::walk_arglist(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx)
+antl4_parser_t::walk_arg_list(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx)
 {
     arglist_node_ptr_t arg_list(new arglist_node_t());
     for (auto& exprCtx : ctx->expression())
@@ -414,7 +444,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        if (e->argumentExpressionList())
        {
-		   expr_node->arg_list = walk_arglist(env, e->argumentExpressionList());
+		   expr_node->arg_list = walk_arg_list(env, e->argumentExpressionList());
        }
 
        return expr_node;
@@ -846,7 +876,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        if (e->argumentExpressionList())
        {
-           expr_node->arg_list = walk_arglist(env, e->argumentExpressionList());
+           expr_node->arg_list = walk_arg_list(env, e->argumentExpressionList());
        }
 
        return expr_node;

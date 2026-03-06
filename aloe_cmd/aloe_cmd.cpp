@@ -25,8 +25,6 @@ void aloe::log1nl(FILE* stream)
     fprintf(stream, ";");
 }
 
-
-
 enum ALOE_CMD_MODE
 {
     MODE_UNKNOWN,

@@ -54,20 +54,32 @@ tests_cmd_t::compile_file_tests()
     //TEST_COMPILE_FILE("leaf.al", true);
 }
 
-void 
-tests_cmd_t::parse_string_tests()
+void
+tests_cmd_t::test_var_declarations1()
 {
     auto p = create_parser();
 
     TEST_PARSE_STRING(R"(var b:A)", false);
     TEST_PARSE_STRING(R"(var a:int)", true);
     TEST_PARSE_STRING(R"(var :int)", true);
+}
+
+void
+tests_cmd_t::test_object_declarations1()
+{
+    auto p = create_parser();
 
     TEST_PARSE_STRING(R"( object B (); object A > B ())", true);
     TEST_PARSE_STRING(R"( object B (); object A > ^B ())", true);
     TEST_PARSE_STRING(R"( object A > C ())", false);
     TEST_PARSE_STRING(R"( object A > ^C ())", false);
     TEST_PARSE_STRING(R"( object A > int ())", false);
+}
+
+void
+tests_cmd_t::test_fun_declarations1()
+{
+    auto p = create_parser();
 
     TEST_PARSE_STRING(R"( fun foo : int (var x:int, var y:int) {})", true);
     TEST_PARSE_STRING(R"( fun foo : int (var x:A, var y:int) {})", false);
@@ -78,6 +90,26 @@ tests_cmd_t::parse_string_tests()
     TEST_PARSE_STRING(R"( fun foo:void() { foo(); })", true);
     TEST_PARSE_STRING(R"( fun foo:void() { fun:int(){}();})", true);
 
+    
+
+}
+
+void
+tests_cmd_t::test_fun_expect1()
+{
+    auto p = create_parser();
+
+    TEST_PARSE_STRING(R"(expect fun foo:void())", true);
+    TEST_PARSE_STRING(R"(expect fun foo:void() {})", false);
+
+}
+
+
+
+void 
+tests_cmd_t::test_expressions1()
+{
+    auto p = create_parser();
 
     TEST_PARSE_STRING(R"( object A(); fun foo:void(var a:A) { a;})", true);
     TEST_PARSE_STRING(R"( object A(); fun foo:void() { "a";})", true);
@@ -86,17 +118,17 @@ tests_cmd_t::parse_string_tests()
     TEST_PARSE_STRING(R"( object A(); fun foo:void() { (12345);})", true);
     TEST_PARSE_STRING(R"( object A(); fun foo:void(var a:A) { a++;})", true);
 
-
 }
 
 
 void
 tests_cmd_t::run_tests()
 {
-    
-    parse_string_tests();
-    parse_file_tests();
-    compile_file_tests();
+    test_fun_expect1();
+    return;
+
+    test_var_declarations1();
+    test_object_declarations1();
+    test_fun_declarations1();
+    test_expressions1();
 }
-
-

@@ -90,7 +90,7 @@ pointerType
 /********************/
 
 varDeclaration
-    : 'var' identifier? ':' type
+    : ('var')? identifier? ':' type
     ;
 
 varList
@@ -104,12 +104,21 @@ varList
 /********************/
 
 funDeclaration  
-    : 'fun' identifier? ':' funType '{' (executionStatement ';'? )* '}'
-    ; 
+    : (expect)? 'fun' identifier? ':' funType (executionBlock)?
+    ;
+
+executionBlock
+    : '{' (executionStatement ';'? )* '}'
+    ;
 
 funType
     :  type '(' varList ')'
     ;
+
+expect 
+    : 'expect'
+    ;
+
 
 /*****************************/
 /*   Identifiers & Literals  */

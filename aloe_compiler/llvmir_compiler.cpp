@@ -15,18 +15,16 @@ aloe::create_compiler()
 bool 
 llvmir_compiler_t::compile(
     const string& file_name,
-    const string& module_name, ast_ptr_t ast, object_type_e obj_type, string& out)
+    const string& module_name, 
+    ast_ptr_t ast, 
+    object_type_e obj_type, 
+    string& out)
 {
     LLVMContext ctx;
     Module module(module_name, ctx);
     DIBuilder dib(module);
 
-    module.addModuleFlag(
-        Module::Warning,
-        "CodeView",
-        1
-    );
-
+    module.addModuleFlag(Module::Warning, "CodeView",1);
     module.addModuleFlag(Module::Warning, "Dwarf Version", 4);
     module.addModuleFlag(Module::Warning, "Debug Info Version", DEBUG_METADATA_VERSION);
 

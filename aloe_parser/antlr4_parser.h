@@ -52,7 +52,10 @@ namespace aloe
 
 		virtual identifier_node_ptr_t  walk_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, bool declaration, identifier_type_e expected_type);
 
-		virtual arglist_node_ptr_t walk_arglist(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx);
+		virtual arglist_node_ptr_t walk_arg_list(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx);
+
+		virtual execution_block_node_ptr_t walk_execution_block(environment_ptr_t env, aloeParser::ExecutionBlockContext* ctx);
+
 		
 
 	};

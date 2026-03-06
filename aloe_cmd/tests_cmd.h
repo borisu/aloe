@@ -9,7 +9,13 @@ namespace aloe
 		
 		void parse_file_tests();
 		void compile_file_tests();
-		void parse_string_tests();
+
+		void test_var_declarations1();
+		void test_object_declarations1(); 
+		void test_fun_declarations1();
+		void test_expressions1();
+		void test_fun_expect1();
+
 
 		
 		bool parse_string(const char* al);
