@@ -2,9 +2,20 @@
 #include "aloe\compiler.h"
 #include "llvmir_compiler.h"
 
-
 using namespace aloe;
 using namespace llvm;
+using namespace llvm::dwarf;
+
+aloe::compiler_exeption_t::compiler_exeption_t(const char* format, ...)
+{
+    
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+}
+
+#define DW_LANG_ALOE (DW_LANG_lo_user+1)
 
 compiler_ptr_t
 aloe::create_compiler()
@@ -14,81 +25,115 @@ aloe::create_compiler()
     
 bool 
 llvmir_compiler_t::compile(
-    const string& file_name,
-    const string& module_name, 
     ast_ptr_t ast, 
-    object_type_e obj_type, 
     string& out)
 {
     LLVMContext ctx;
-    Module module(module_name, ctx);
+    Module module(ast->source_id, ctx);
+
     DIBuilder dib(module);
+    std::filesystem::path pth(ast->source_id);
+    DIFile* di_file = dib.createFile(pth.filename().string(), pth.parent_path().string());
 
-    module.addModuleFlag(Module::Warning, "CodeView",1);
-    module.addModuleFlag(Module::Warning, "Dwarf Version", 4);
-    module.addModuleFlag(Module::Warning, "Debug Info Version", DEBUG_METADATA_VERSION);
-
-    std::filesystem::path pth(file_name);
-
-    DIFile* file = dib.createFile(pth.filename().string(), pth.parent_path().string());
 
     DICompileUnit* cu = dib.createCompileUnit(
-        dwarf::DW_LANG_C,   // or DW_LANG_C_plus_plus
-        file,
+        DW_LANG_ALOE,   
+        di_file,
         "aloe-frontend",    // producer
         false,              // isOptimized
         "",                 // flags
         0                   // runtime version
     );
 
-    auto* intTy = dib.createBasicType(
-        "int",
-        32,
-        dwarf::DW_ATE_signed
-    );
+    module.addModuleFlag(Module::Warning, "CodeView", 1);
+    module.addModuleFlag(Module::Warning, "Dwarf Version", 4);
+    module.addModuleFlag(Module::Warning, "Debug Info Version", DEBUG_METADATA_VERSION);
 
-    auto* fnType = dib.createSubroutineType(
-        dib.getOrCreateTypeArray({ intTy })
-    );
-
- 
-    // int xmain()
-    FunctionType* FT = FunctionType::get(Type::getInt32Ty(ctx), false);
-    Function* fn =
-        Function::Create(FT, Function::ExternalLinkage, "xmain", module);
-
-    DISubprogram* sp = dib.createFunction(
-        file,               // scope
-        "xmain",            // source name
-        "xmain",            // linkage name
-        file,
-        1,                  // line number
-        fnType,
-        1,                  // scope line
-        DINode::FlagZero,
-        DISubprogram::SPFlagDefinition
-    );
-
-    fn->setSubprogram(sp);
-
-    // Create entry block
-    BasicBlock* bb = BasicBlock::Create(ctx, "entry", fn);
     IRBuilder<> ir(ctx);
-    ir.SetInsertPoint(bb);
+    
+    compiler_ctx_t compiler_ctx;
 
-    ir.SetCurrentDebugLocation(
-        DILocation::get(ctx, 1, 1, sp)
-    );
+    compiler_ctx.llvm_ctx       = &ctx;
+	compiler_ctx.llvm_ir        = &ir;
+	compiler_ctx.llvm_module    = &module;
+	compiler_ctx.ast            = ast;
 
-    // return 0;
-    ir.CreateRet(ConstantInt::get(Type::getInt32Ty(ctx), 0));
+	bool res = false;
+    try
+    {
+        walk_prog(&compiler_ctx, ast->prog);
+		res = true;
+    }
+    catch (std::exception& e)
+    {
+        loginl("Error during code generation: %s", e.what());
+    }
 
     dib.finalize();
 
-   
     // Print LLVM IR
     llvm::raw_string_ostream llvmOs(out);
     module.print(llvmOs, nullptr);
 
-    return true;
+    return res;
+}
+
+void 
+llvmir_compiler_t::get_llvm_type(compiler_ctx_t* ctx, type_node_ptr_t node, Type*& type)
+{
+    switch (node->type_type)
+    {
+        case TYPE_INT:
+        {
+            type = Type::getInt32Ty(*ctx->llvm_ctx);
+            break;
+        }
+		case TYPE_CHAR:       
+        {
+            if (node->ref_count > 0)
+                type = PointerType::getInt8Ty(*ctx->llvm_ctx);
+            else
+				type = Type::getInt8Ty(*ctx->llvm_ctx);
+            break;
+        }
+        default:
+        {
+            throw compiler_exeption_t("%d:%zu:%zu error: unsupported type  %d",ctx->ast->source_id.c_str(), node->line, node->pos, node->type_type);
+        }
+            
+    }
+}
+
+void 
+llvmir_compiler_t::get_fun_llvm_type(compiler_ctx_t* ctx, fun_node_ptr_t node, Type*& ret_type, std::vector<Type*>& param_types)
+{
+
+}
+
+void 
+llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
+{
+
+    // create function with external linkage
+    if (!fun->is_defined)
+    {
+
+    }
+		
+}
+
+
+void 
+llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
+{
+    for (auto& decl : prog->declarations)
+    {
+        switch (decl->type)
+        {
+        case FUNCTION_NODE:
+            walk_func(ctx, static_pointer_cast<fun_node_t>(decl));
+			break;
+        }
+    }
+
 }

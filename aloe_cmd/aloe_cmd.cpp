@@ -15,6 +15,8 @@
 
 using namespace aloe;
 
+char G_NL[1] = { '\n' };
+
 void aloe::log1(FILE* stream, const char* text)
 {
     fprintf(stream, text);
@@ -22,7 +24,7 @@ void aloe::log1(FILE* stream, const char* text)
 
 void aloe::log1nl(FILE* stream)
 {
-    fprintf(stream, ";");
+    fprintf(stream, G_NL);
 }
 
 enum ALOE_CMD_MODE
@@ -58,6 +60,9 @@ int main(int argc, char* argv[])
             output_file = argv[++i]; // consume next argument
         }
         else if (arg == "-t") {
+
+            G_NL[0] = ';';
+
             if (mode != MODE_UNKNOWN)
             {
                 std::cerr << "Options error: multiple modes set.";

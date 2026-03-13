@@ -5,7 +5,7 @@ using namespace aloe;
 
 environment_t::environment_t(environment_ptr_t env) :prev(env) 
 {
-
+	this->source_id = env ? env->source_id : "";
 };
 
 bool
@@ -35,5 +35,6 @@ environment_t::find_id(identifier_node_ptr_t id)
         curr_env = curr_env->prev;
     }
     return nullptr;
+
 }
 

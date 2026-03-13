@@ -5,7 +5,7 @@
 #include "node.h"
 #include "type.h"
 #include "var.h"
-#include "scope.h"
+
 
 using namespace std;
 

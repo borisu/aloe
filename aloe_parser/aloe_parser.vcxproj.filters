@@ -16,9 +16,6 @@
     <ClInclude Include="include\aloe\node.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
-    <ClInclude Include="include\aloe\scope.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
     <ClInclude Include="include\aloe\object.h">
       <Filter>include\aloe</Filter>
     </ClInclude>

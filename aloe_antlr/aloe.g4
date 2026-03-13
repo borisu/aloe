@@ -6,7 +6,11 @@ options
 }
 
 prog
-    : declarationStatementList EOF
+    : (moduleStatement)? declarationStatementList EOF
+    ;
+
+moduleStatement
+    : ' module' identifier (';')?
     ;
 
 declarationStatementList

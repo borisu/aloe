@@ -17,6 +17,7 @@
 #include <iostream>
 #include <filesystem>
 #include <string>
+#include <stdarg.h>
 
 
 #include <llvm/IR/IRBuilder.h>
@@ -24,8 +25,9 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/DIBuilder.h>
-
-
+#include <llvm/BinaryFormat/Dwarf.h>
+#include <llvm/IR/Type.h>
+#include <aloe/logger.h>
 
 
 #endif //PCH_H

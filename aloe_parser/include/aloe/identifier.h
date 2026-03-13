@@ -13,6 +13,7 @@ namespace aloe
 		ID_UNKNOWN,
 		ID_VAR,
 		ID_TYPE,
+		ID_MODULE,
 	};
 
 	struct identifier_node_t : public node_t

@@ -19,6 +19,8 @@ namespace aloe
 
 		node_ptr_t find_id(identifier_node_ptr_t id);
 
+		string source_id;
+
 	private:
 
 		struct id_ptr_cmp

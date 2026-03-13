@@ -10,9 +10,12 @@ namespace aloe
 {
 	struct parse_exeption_t : public std::exception	{ 
 	
-		parse_exeption_t()
-		{
+		parse_exeption_t(const char* format, ...);
 
+		char buffer[ALOE_MAX_LOG_LEN];
+
+		virtual const char* what() const noexcept override {
+			return buffer;
 		}
 	};
 
@@ -24,7 +27,7 @@ namespace aloe
 
 		virtual bool parse_from_string(const string& str, ast_ptr_t& ast) override;
 
-		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast) override;
+		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast, const string &source_id) override;
 
 		virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
 			size_t line, size_t charPositionInLine, const std::string& msg,

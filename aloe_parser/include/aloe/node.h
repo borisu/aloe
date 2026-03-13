@@ -29,9 +29,12 @@ namespace aloe
 
 	struct node_t
 	{
-		node_t(node_type_e type) : type(type) {}
+		node_t(node_type_e type) : type(type), line(-1), pos(-1) {}
 
 		node_type_e type;
+
+		int line;
+		int pos;
 
 		virtual ~node_t() {}
 	};

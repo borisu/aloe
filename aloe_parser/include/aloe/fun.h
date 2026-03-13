@@ -4,7 +4,6 @@
 #include "node.h"
 #include "type.h"
 #include "var.h"
-#include "scope.h"
 
 using namespace std;
 
@@ -16,11 +15,12 @@ namespace aloe
 		execution_block_node_t() :node_t(EXECUTION_BLOCK_NODE) {}
 		vector<node_ptr_t> statements;
 	};
+
 	typedef shared_ptr<execution_block_node_t> execution_block_node_ptr_t;
 
-	struct fun_node_t : public scope_node_t
+	struct fun_node_t : public node_t
 	{
-		fun_node_t() :scope_node_t(FUNCTION_NODE),
+		fun_node_t() :node_t(FUNCTION_NODE),
 			is_defined(false) {}
 		identifier_node_ptr_t	id;
 		type_node_ptr_t			ret_type;
@@ -28,5 +28,6 @@ namespace aloe
 		execution_block_node_ptr_t	exec_block;
 		bool is_defined;
 	};
+
 	typedef shared_ptr<fun_node_t> fun_node_ptr_t;
 }

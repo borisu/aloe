@@ -17,6 +17,7 @@
 #include <memory>
 #include <typeindex>
 #include <typeinfo>
+#include <stdarg.h>
 
 #include "aloe/aloe-antlr4.h"
 #include "aloe/logger.h"

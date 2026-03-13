@@ -1,8 +1,6 @@
 #pragma once
-
 #include "node.h"
 #include "type.h"
-#include "scope.h"
 #include "var.h"
 #include "fun.h"
 #include "object.h"
@@ -11,8 +9,6 @@
 #include "expression.h"
 #include "literal.h"
 #include "identifier.h"
-
-
 
 using namespace std;
 
@@ -23,6 +19,8 @@ namespace aloe
 		ast_t() : node_t(AST_ROOT_NODE) {}
 
 		prog_node_ptr_t prog;
+
+		string source_id;
 
 		virtual ~ast_t() {};
 	};

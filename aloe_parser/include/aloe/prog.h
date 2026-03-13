@@ -1,15 +1,18 @@
 #pragma once
 #include <list>
 #include "node.h"
-#include "scope.h"
 
 using namespace std;
 
 namespace aloe
 {
-	struct prog_node_t : public scope_node_t
+	struct prog_node_t : public node_t
 	{
-		prog_node_t() :scope_node_t(PROG_NODE) {}
+		prog_node_t() :node_t(PROG_NODE) {}
+
+		identifier_node_ptr_t module_name;
+
+		vector<node_ptr_t> declarations;
 
 	};
 

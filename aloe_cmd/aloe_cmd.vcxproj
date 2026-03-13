@@ -149,7 +149,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="leaf.al" />
+    <None Include="leaf.alo" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tests_cmd.h" />

@@ -18,10 +18,7 @@ namespace aloe
 	public:
 
 		virtual bool compile(
-			const string& file_name,
-			const string& module_name,
 			ast_ptr_t ast,
-			object_type_e obj_type,
 			string& out) = 0;
 
 	

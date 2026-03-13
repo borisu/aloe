@@ -11,21 +11,21 @@
 using namespace aloe;
 
 bool
-compile_cmd_t::compile_file(const char* al,  const char* out_filename)
+compile_cmd_t::compile_file(const char* in_filename,  const char* out_filename)
 {
     auto p = create_parser();
 
     ast_ptr_t ast;
 
-    if (!p->parse_from_file(al, ast))
+    if (!p->parse_from_file(in_filename, ast))
         return false;
 
     auto c = create_compiler();
     string ir_str;
 
-    std::filesystem::path pth(al);
+    std::filesystem::path pth(in_filename);
 
-    if (!c->compile(al, pth.filename().string(), ast, LLVM_IR, ir_str))
+    if (!c->compile(ast, ir_str))
         return false;
 
     std::ofstream out(out_filename);
