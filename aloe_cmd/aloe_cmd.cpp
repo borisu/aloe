@@ -39,9 +39,8 @@ int main(int argc, char* argv[])
 {
     std::string input_file;
     std::string output_file;
-    std::string output_dir;
-    bool verbose = false;
 
+    bool verbose = false;
     auto mode = MODE_UNKNOWN;
 
     for (int i = 1; i < argc; ++i) {
@@ -86,7 +85,33 @@ int main(int argc, char* argv[])
     }
     case MODE_COMPILE:
     {
-        err_code =  compile_cmd_t().compile_file(input_file.c_str(), output_file.c_str()) ? 0 : 1;
+        std::ifstream ifs;
+        std::istream* in;
+
+        if (input_file.empty()) {
+            in = &std::cin;
+        }
+        else {
+            ifs.open(input_file);
+            in = &ifs;
+        }
+
+        std::ofstream ofs;
+        std::ostream* out;
+
+        if (output_file.empty()) {
+            out = &std::cout;
+        }
+        else {
+            ofs.open(output_file);
+            out = &ofs;
+        }
+
+       err_code = compile_cmd_t().compile_cmd(
+             *in,
+			 *out,
+             input_file.empty () ? "<source>" : input_file);
+	   
         break;
     }
     case MODE_TEST:

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 
 #include "aloe/logger.h"
@@ -18,7 +19,7 @@ using namespace std;
 
 #define TEST_PARSE_FILE(CMD,E)   { printf("TEST PARSE FILE \"%-50s\"", CMD);   parse_file(CMD) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
 
-#define TEST_COMPILE_FILE(CMD,E) { printf("TEST COMPILE FILE \"%-50s\"", CMD); compile_cmd_t().compile_file(CMD,nullptr) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
+#define TEST_COMPILE_FILE(CMD,E) { printf("TEST COMPILE FILE \"%-50s\"", CMD); compile_cmd_t().compile_cmd(CMD,nullptr) == true ? printf("...[OK]\n") : printf("...[FAIL]\n"); }
 
 
 
@@ -29,7 +30,9 @@ tests_cmd_t::parse_file(const char* al)
 
     ast_ptr_t ast;
 
-    return p->parse_from_file(al, ast);
+	ifstream ifs(al);
+
+    return p->parse_from_stream(ifs, ast, al);
 }
 
 bool 
@@ -39,7 +42,9 @@ tests_cmd_t::parse_string(const char* al)
 
     ast_ptr_t ast;
 
-    return p->parse_from_string(al, ast);
+	istringstream iss(string("al"));
+
+    return p->parse_from_stream(iss,  ast, al);
 }
 
 void 

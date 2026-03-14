@@ -24,42 +24,6 @@ aloe::parse_exeption_t::parse_exeption_t(const char* format, ...)
 	va_end(args);
 }
 
-bool 
-antl4_parser_t::parse_from_string(const string& str, ast_ptr_t& ast)
-{
-    std::istringstream stream(str);
-    bool res = parse_from_stream(stream, ast, "<source>");
-    return  res;
-}
-
-bool
-antl4_parser_t::parse_from_file(const string& file_name, ast_ptr_t& ast)
-{
-    bool success = true;
-
-    try {
-
-        std::ifstream stream;
-        stream.open(file_name, std::ifstream::in);
-
-        if (!stream.is_open())
-        {
-            loginl("error:cannot open file:%s\n", file_name.c_str());
-            return false;
-        }
-
-        success = parse_from_stream(stream, ast, file_name);
-        
-    }
-    catch (std::exception& e)
-    {
-        loginl("error:%s", e.what());
-        success = false;
-    }
-
-    return success;
-}
-
 bool
 antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast, const string& source_id)
 {
@@ -90,7 +54,7 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast, const string&
     }
     catch (std::exception& e)
     {
-        loginl("error:%s", e.what());
+        loginl("panic:%s", e.what());
         success = false;
     }
 
@@ -131,7 +95,7 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
             }
             else if (stmt->funDeclaration() != nullptr)
             {
-                prog->declarations.push_back(walk_function_decalaration(env, stmt->funDeclaration()));
+                prog->declarations.push_back(walk_func_declaration(env, stmt->funDeclaration()));
             }
             else if (stmt->objectDeclaration() != nullptr)
             {
@@ -214,7 +178,7 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
     }
     else if (ctx->funDeclaration())
     {
-        auto obj = walk_function_decalaration(env, ctx->funDeclaration());
+        auto obj = walk_func_declaration(env, ctx->funDeclaration());
         type_node_ptr_t type_node(new type_node_t(TYPE_OBJECT, obj));
         INIT_POS(type_node, ctx);
         return type_node;
@@ -312,19 +276,19 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
 }
 
 fun_node_ptr_t
-antl4_parser_t::walk_function_decalaration( environment_ptr_t env, aloeParser::FunDeclarationContext* ctx)
+antl4_parser_t::walk_func_declaration( environment_ptr_t env, aloeParser::FunDeclarationContext* ctx)
 {
-   
-    environment_ptr_t new_env(new environment_t(env));
     fun_node_ptr_t fun_node = fun_node_ptr_t(new fun_node_t());
     INIT_POS(fun_node, ctx);
 
     
 	fun_node->is_defined = ctx->expect() == nullptr;
-    
-    
-    fun_node->id = walk_identifier(env, ctx->identifier(), true, ID_TYPE);
-    fun_node->ret_type  = walk_type(env, ctx->funType()->type());
+    fun_node->id         = walk_identifier(env, ctx->identifier(), true, ID_VAR);
+    fun_node->ret_type   = walk_type(env, ctx->funType()->type());
+
+	env->register_id(fun_node->id, fun_node);
+
+    environment_ptr_t new_env(new environment_t(env));
     fun_node->params = walk_var_list(new_env, ctx->funType()->varList());
 
 	if (ctx->expect() && ctx->executionBlock())
@@ -368,7 +332,7 @@ antl4_parser_t::walk_execution_block(environment_ptr_t env, aloeParser::Executio
         }
         else if (exec_ctx->funDeclaration())
         {
-            block_node->statements.push_back(walk_function_decalaration(env, exec_ctx->funDeclaration()));
+            block_node->statements.push_back(walk_func_declaration(env, exec_ctx->funDeclaration()));
         }
         else if (exec_ctx->objectDeclaration())
         {
@@ -437,7 +401,7 @@ antl4_parser_t::walk_identifier(environment_ptr_t env, aloeParser::IdentifierCon
     }
     else if (!id_declaration && !already_exists_node_ptr)
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: unknown identifier %s", 
+        throw parse_exeption_t("%s:%zu:%zu: error: unknown identifier '%s'", 
             env->source_id.c_str(), 
             ctx->getStart()->getLine(), 
             ctx->getStart()->getStartIndex(), 

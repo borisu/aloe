@@ -25,8 +25,8 @@ aloe::create_compiler()
     
 bool 
 llvmir_compiler_t::compile(
-    ast_ptr_t ast, 
-    string& out)
+    ast_ptr_t ast,
+    ostream& out)
 {
     LLVMContext ctx;
     Module module(ast->source_id, ctx);
@@ -72,7 +72,7 @@ llvmir_compiler_t::compile(
     dib.finalize();
 
     // Print LLVM IR
-    llvm::raw_string_ostream llvmOs(out);
+    llvm::raw_os_ostream  llvmOs(out);
     module.print(llvmOs, nullptr);
 
     return res;

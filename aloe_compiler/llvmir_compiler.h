@@ -27,7 +27,7 @@ namespace aloe
 	{
 		virtual bool compile(
 			ast_ptr_t ast,
-			string& out) override;
+			ostream& out) override;
 
 	protected:
 

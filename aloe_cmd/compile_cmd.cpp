@@ -9,34 +9,28 @@
 #include "aloe/compiler.h"
 
 using namespace aloe;
+using namespace std;
+
 
 bool
-compile_cmd_t::compile_file(const char* in_filename,  const char* out_filename)
+compile_cmd_t::compile_cmd(istream& is, ostream& os, const string& source_id)
 {
     auto p = create_parser();
 
     ast_ptr_t ast;
 
-    if (!p->parse_from_file(in_filename, ast))
+    if (!p->parse_from_stream(is, ast, source_id))
+    {
         return false;
-
-    auto c = create_compiler();
-    string ir_str;
-
-    std::filesystem::path pth(in_filename);
-
-    if (!c->compile(ast, ir_str))
-        return false;
-
-    std::ofstream out(out_filename);
-    if (!out) {
-        // handle error
-        return 1;
     }
 
-    out << ir_str;
-    out.close(); // optional; RAII handles it
-
+    auto c = create_compiler();
+    
+    if (!c->compile(ast, os))
+    {
+        return false;
+    }
+    
     return true;
 
 }

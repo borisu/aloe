@@ -2,7 +2,6 @@
 #include <string>
 #include "aloe\ast.h"
 
-
 using namespace std;
 
 namespace aloe
@@ -19,8 +18,7 @@ namespace aloe
 
 		virtual bool compile(
 			ast_ptr_t ast,
-			string& out) = 0;
-
+			ostream& out) = 0;
 	
 	};
 

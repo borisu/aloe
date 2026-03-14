@@ -23,10 +23,6 @@ namespace aloe
 	{
 	public:
 
-		virtual bool parse_from_file(const string& file_name, ast_ptr_t& ast) override;
-
-		virtual bool parse_from_string(const string& str, ast_ptr_t& ast) override;
-
 		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast, const string &source_id) override;
 
 		virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
@@ -47,7 +43,7 @@ namespace aloe
 
 		virtual var_node_ptr_t walk_var(environment_ptr_t env, aloeParser::VarDeclarationContext* ctx);
 
-		virtual fun_node_ptr_t walk_function_decalaration(environment_ptr_t env,  aloeParser::FunDeclarationContext* ctx);
+		virtual fun_node_ptr_t walk_func_declaration(environment_ptr_t env,  aloeParser::FunDeclarationContext* ctx);
 
 		virtual expr_node_ptr_t walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx);
 

@@ -28,6 +28,7 @@
 #include <llvm/BinaryFormat/Dwarf.h>
 #include <llvm/IR/Type.h>
 #include <aloe/logger.h>
+#include <llvm/Support/raw_os_ostream.h>
 
 
 #endif //PCH_H
