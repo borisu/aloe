@@ -289,7 +289,7 @@ antl4_parser_t::walk_func_declaration( environment_ptr_t env, aloeParser::FunDec
 	env->register_id(fun_node->id, fun_node);
 
     environment_ptr_t new_env(new environment_t(env));
-    fun_node->params = walk_var_list(new_env, ctx->funType()->varList());
+    fun_node->var_list = walk_var_list(new_env, ctx->funType()->varList());
 
 	if (ctx->expect() && ctx->executionBlock())
     {

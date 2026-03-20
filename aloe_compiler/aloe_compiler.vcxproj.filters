@@ -18,10 +18,16 @@
     <ClInclude Include="include\aloe\compiler.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
-    <ClInclude Include="llvmir_compiler.h" />
+    <ClInclude Include="ir_compiler.h" />
+    <ClInclude Include="di_mapper.h" />
+    <ClInclude Include="compiler_exception.h" />
+    <ClInclude Include="type_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="llvmir_compiler.cpp" />
+    <ClCompile Include="ir_compiler.cpp" />
+    <ClCompile Include="di_mapper.cpp" />
+    <ClCompile Include="compiler_exception.cpp" />
+    <ClCompile Include="type_utils.cpp" />
   </ItemGroup>
 </Project>

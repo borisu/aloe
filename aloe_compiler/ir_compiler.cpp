@@ -1,19 +1,12 @@
 #include "pch.h"
 #include "aloe\compiler.h"
-#include "llvmir_compiler.h"
+#include "compiler_exception.h"
+#include "ir_compiler.h"
 
 using namespace aloe;
 using namespace llvm;
 using namespace llvm::dwarf;
 
-aloe::compiler_exeption_t::compiler_exeption_t(const char* format, ...)
-{
-    
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-}
 
 #define DW_LANG_ALOE (DW_LANG_lo_user+1)
 
@@ -56,72 +49,69 @@ llvmir_compiler_t::compile(
     compiler_ctx.llvm_ctx       = &ctx;
 	compiler_ctx.llvm_ir        = &ir;
 	compiler_ctx.llvm_module    = &module;
-	compiler_ctx.ast            = ast;
+	compiler_ctx.llvm_di        = &dib;
+    compiler_ctx.llvm_di_file   = di_file;
+
+    compiler_ctx.ast = ast;
+
+    di_mapper_t mapper(dib, module, ctx);
+
+    compiler_ctx.di_mapper = &mapper;
+    
 
 	bool res = false;
     try
     {
         walk_prog(&compiler_ctx, ast->prog);
 		res = true;
+
+        dib.finalize();
+
+        // Print LLVM IR
+        llvm::raw_os_ostream  llvmOs(out);
+        module.print(llvmOs, nullptr);
     }
     catch (std::exception& e)
     {
-        loginl("Error during code generation: %s", e.what());
+        loginl("%s", e.what());
     }
-
-    dib.finalize();
-
-    // Print LLVM IR
-    llvm::raw_os_ostream  llvmOs(out);
-    module.print(llvmOs, nullptr);
 
     return res;
 }
 
 void 
-llvmir_compiler_t::get_llvm_type(compiler_ctx_t* ctx, type_node_ptr_t node, Type*& type)
-{
-    switch (node->type_type)
-    {
-        case TYPE_INT:
-        {
-            type = Type::getInt32Ty(*ctx->llvm_ctx);
-            break;
-        }
-		case TYPE_CHAR:       
-        {
-            if (node->ref_count > 0)
-                type = PointerType::getInt8Ty(*ctx->llvm_ctx);
-            else
-				type = Type::getInt8Ty(*ctx->llvm_ctx);
-            break;
-        }
-        default:
-        {
-            throw compiler_exeption_t("%d:%zu:%zu error: unsupported type  %d",ctx->ast->source_id.c_str(), node->line, node->pos, node->type_type);
-        }
-            
-    }
-}
-
-void 
-llvmir_compiler_t::get_fun_llvm_type(compiler_ctx_t* ctx, fun_node_ptr_t node, Type*& ret_type, std::vector<Type*>& param_types)
-{
-
-}
-
-void 
 llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
 {
+  
+    auto ir_fun_type = ctx->di_mapper->fun_to_ir(fun);
 
-    // create function with external linkage
-    if (!fun->is_defined)
+    Function* ir_func =
+        Function::Create(ir_fun_type, 
+            Function::ExternalLinkage, fun->id->name, ctx->llvm_module);
+   
+    if (fun->is_defined)
     {
+        BasicBlock* ir_entry = BasicBlock::Create(*ctx->llvm_ctx, fun->id->name, ir_func);
+        ctx->llvm_ir->SetInsertPoint(ir_entry);
 
+        ctx->llvm_ir->CreateRet(ConstantInt::get(Type::getInt32Ty(*ctx->llvm_ctx), 0));
     }
+   
+    DISubprogram* sp = ctx->llvm_di->createFunction(
+        ctx->llvm_di_file,        // Function scope.  
+        fun->id->name,            // Function name.
+        fun->id->name,            // Mangled function name.
+        ctx->llvm_di_file,        // File where this variable is defined.
+        fun->line,                // Line number.
+        ctx->di_mapper->fun_to_di(fun), // fnType
+        fun->line,                 // scope line
+        DINode::FlagZero,
+        DISubprogram::SPFlagDefinition
+	);
+
+    ir_func->setSubprogram(sp);
 		
 }
-
 
 void 
 llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
