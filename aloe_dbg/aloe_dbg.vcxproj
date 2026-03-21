@@ -129,15 +129,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="aloe_dbg.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="a.ll">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"%LLVM%\llc" -filetype=obj %(FullPath) -o $(IntDirFullPath)%(Filename).obj</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDirFullPath)%(Filename).obj</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\a.alo</AdditionalInputs>
-    </CustomBuild>
+    <ClCompile Include="aloe_dbg.cpp">
+      <AdditionalModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </AdditionalModuleDependencies>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\aloe_cmd\aloe_cmd.vcxproj">
@@ -150,10 +145,22 @@
   <ItemGroup>
     <CustomBuild Include="a.alo">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetDir)\aloe_cmd.exe -c  %(FullPath)  -o $(ProjectDir)\a.ll</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\a.ll</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo $(TargetDir)\aloe.exe -c  %(FullPath)  -o $(ProjectDir)\gengen\a.ll
+$(TargetDir)\aloe.exe -c  %(FullPath)  -o $(ProjectDir)\gengen\a.ll</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\gengen\a.ll</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </AdditionalInputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="gengen\a.ll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo "%LLVM%\llc" -filetype=obj %(FullPath) -o $(IntDirFullPath)%(Filename).obj
+"%LLVM%\llc" -filetype=obj %(FullPath) -o $(IntDirFullPath)%(Filename).obj</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\a.alo;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDirFullPath)%(Filename).obj</Outputs>
     </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

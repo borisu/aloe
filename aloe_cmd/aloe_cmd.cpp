@@ -111,7 +111,8 @@ int main(int argc, char* argv[])
              *in,
 			 *out,
              input_file.empty () ? "<source>" : input_file);
-	   
+
+        err_code = 0;
         break;
     }
     case MODE_TEST:

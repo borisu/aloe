@@ -1,6 +1,6 @@
 expect fun log:void(var msg: ^char)
 
-fun main:int()
+fun root:int()
 {
 	log("Hello World!");
 }

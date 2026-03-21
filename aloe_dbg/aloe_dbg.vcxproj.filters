@@ -5,12 +5,17 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="gengen">
+      <UniqueIdentifier>{ae5593f9-a2e0-45bd-a0c9-fc6cb32d9b94}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aloe_dbg.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="a.ll" />
     <CustomBuild Include="a.alo" />
+    <CustomBuild Include="gengen\a.ll">
+      <Filter>gengen</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

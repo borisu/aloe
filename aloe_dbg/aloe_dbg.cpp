@@ -3,11 +3,11 @@
 
 #include <iostream>
 
-extern "C" int32_t xmain();
+extern "C" int32_t root();
 
 int main()
 {
-    xmain();
+    root();
     std::cout << "Hello World!\n";
 }
 

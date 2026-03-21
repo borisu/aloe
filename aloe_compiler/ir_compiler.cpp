@@ -30,7 +30,7 @@ llvmir_compiler_t::compile(
 
 
     DICompileUnit* cu = dib.createCompileUnit(
-        DW_LANG_ALOE,   
+        DW_LANG_C,   
         di_file,
         "aloe-frontend",    // producer
         false,              // isOptimized
@@ -95,21 +95,29 @@ llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
         ctx->llvm_ir->SetInsertPoint(ir_entry);
 
         ctx->llvm_ir->CreateRet(ConstantInt::get(Type::getInt32Ty(*ctx->llvm_ctx), 0));
-    }
    
-    DISubprogram* sp = ctx->llvm_di->createFunction(
-        ctx->llvm_di_file,        // Function scope.  
-        fun->id->name,            // Function name.
-        fun->id->name,            // Mangled function name.
-        ctx->llvm_di_file,        // File where this variable is defined.
-        fun->line,                // Line number.
-        ctx->di_mapper->fun_to_di(fun), // fnType
-        fun->line,                 // scope line
-        DINode::FlagZero,
-        DISubprogram::SPFlagDefinition
-	);
+   
+        DISubprogram* sp = ctx->llvm_di->createFunction(
+            ctx->llvm_di_file,        // Function scope.  
+            fun->id->name,            // Function name.
+            fun->id->name,            // Mangled function name.
+            ctx->llvm_di_file,        // File where this variable is defined.
+            fun->line,                // Line number.
+            ctx->di_mapper->fun_to_di(fun), // fnType
+            fun->line,                 // scope line
+            DINode::FlagZero,
+            DISubprogram::SPFlagDefinition
+	    );
 
-    ir_func->setSubprogram(sp);
+    
+        for (auto& statement : fun->exec_block->statements)
+        {
+            walk_exec_statement(ctx, statement);
+        }
+
+        ir_func->setSubprogram(sp);
+
+    }
 		
 }
 
@@ -126,4 +134,57 @@ llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
         }
     }
 
+}
+
+void 
+llvmir_compiler_t::walk_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
+{
+    switch (node->type)
+    {
+        case EXPRESSION_NODE:
+        {
+			walk_expression(ctx, static_pointer_cast<expr_node_t>(node));
+            break;
+		}
+    default:
+        break;
+    }
+}
+
+void 
+llvmir_compiler_t::walk_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
+{
+    switch (node->op)
+    {
+    case expr_literal:
+    {
+        walk_literal(ctx, static_pointer_cast<literal_expr_node_t>(node));
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void 
+llvmir_compiler_t::walk_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node)
+{
+    
+   /* auto& value = node->literal->value;
+    if (std::holds_alternative<int>(value))
+    {
+        int int_value = std::get<int>(value);
+        ctx->llvm_ir->CreateAdd(ConstantInt::get(Type::getInt32Ty(*ctx->llvm_ctx), int_value), ConstantInt::get(Type::getInt32Ty(*ctx->llvm_ctx), 0));
+    }
+    else if (std::holds_alternative<string>(value))
+    {
+        string str_value = std::get<string>(value);
+        ctx->llvm_ir->CreateGlobalStringPtr(str_value);
+    }
+    else if (std::holds_alternative<char>(value))
+    {
+        char char_value = std::get<char>(value);
+        ctx->llvm_ir->CreateAdd(ConstantInt::get(Type::getInt8Ty(*ctx->llvm_ctx), char_value), ConstantInt::get(Type::getInt8Ty(*ctx->llvm_ctx), 0));
+    }*/
+        
 }
