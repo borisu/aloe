@@ -13,7 +13,7 @@ namespace aloe
 	struct execution_block_node_t : public node_t
 	{
 		execution_block_node_t() :node_t(EXECUTION_BLOCK_NODE) {}
-		vector<node_ptr_t> statements;
+		vector<node_ptr_t> exec_statements;
 	};
 
 	typedef shared_ptr<execution_block_node_t> execution_block_node_ptr_t;

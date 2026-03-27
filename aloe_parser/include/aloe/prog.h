@@ -12,7 +12,7 @@ namespace aloe
 
 		identifier_node_ptr_t module_name;
 
-		vector<node_ptr_t> declarations;
+		vector<node_ptr_t> decl_statements;
 
 	};
 

@@ -10,7 +10,7 @@ prog
     ;
 
 moduleStatement
-    : ' module' identifier (';')?
+    : 'module' identifier (';')?
     ;
 
 declarationStatementList
@@ -28,6 +28,7 @@ executionStatement
     : objectDeclaration 
     | varDeclaration
     | funDeclaration 
+    | returnStatement
     | expression
     ;
 
@@ -123,6 +124,9 @@ expect
     : 'expect'
     ;
 
+returnStatement
+    : 'return' expression?
+    ;
 
 /*****************************/
 /*   Identifiers & Literals  */

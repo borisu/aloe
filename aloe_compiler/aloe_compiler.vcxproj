@@ -154,23 +154,24 @@
   <ItemGroup>
     <ClInclude Include="compiler_exception.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="fun_desc.h" />
     <ClInclude Include="include\aloe\compiler.h" />
     <ClInclude Include="ir_compiler.h" />
-    <ClInclude Include="di_mapper.h" />
+    <ClInclude Include="type_mapper.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="type_utils.h" />
+    <ClInclude Include="type.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="compiler_exception.cpp" />
     <ClCompile Include="ir_compiler.cpp" />
-    <ClCompile Include="di_mapper.cpp" />
+    <ClCompile Include="type_mapper.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="type_utils.cpp" />
+    <ClCompile Include="type.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\aloe_parser\aloe_parser.vcxproj">

@@ -1,5 +1,5 @@
 #pragma once
-#include "di_mapper.h"
+#include "type_mapper.h"
 
 using namespace llvm;
 
@@ -12,7 +12,7 @@ namespace aloe
 		DIBuilder* llvm_di	    = nullptr;
 		DIFile* llvm_di_file	= nullptr;
 
-		di_mapper_t* di_mapper  = nullptr;
+		type_mapper_t* type_mapper  = nullptr;
 		ast_ptr_t ast;
 	};
 
@@ -32,7 +32,15 @@ namespace aloe
 
 		virtual void walk_expression(compiler_ctx_t* ctx, expr_node_ptr_t node);
 
-		virtual void walk_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node);
+		virtual Value* walk_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node);
+
+		virtual Value* walk_literal(compiler_ctx_t* ctx, literal_node_ptr_t node);
+
+	private:
+
+		std::map<node_ptr_t, DIType*> type_cache;
+
+		std::map<string, Function*> func_cache;
 		
 	};
 

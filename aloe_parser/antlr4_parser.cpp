@@ -91,15 +91,15 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
         {
             if (stmt->varDeclaration() != nullptr)
             {
-                prog->declarations.push_back(walk_var(env, stmt->varDeclaration()));
+                prog->decl_statements.push_back(walk_var(env, stmt->varDeclaration()));
             }
             else if (stmt->funDeclaration() != nullptr)
             {
-                prog->declarations.push_back(walk_func_declaration(env, stmt->funDeclaration()));
+                prog->decl_statements.push_back(walk_func_declaration(env, stmt->funDeclaration()));
             }
             else if (stmt->objectDeclaration() != nullptr)
             {
-                prog->declarations.push_back(walk_object_declaration(env, stmt->objectDeclaration()));
+                prog->decl_statements.push_back(walk_object_declaration(env, stmt->objectDeclaration()));
             }
         }
         catch (parse_exeption_t &e)
@@ -145,7 +145,7 @@ antl4_parser_t::walk_chain_declaration( environment_ptr_t env, aloeParser::Inher
         {
             type_node_ptr_t t = walk_type(env, typeCtx);
 
-            if (t->type_type != TYPE_OBJECT)
+            if (t->syn_type != SYN_OBJECT)
             {
                 throw parse_exeption_t("%s:%zu:%zu: error: wrong base type '%s' for inheritance", 
                     env->source_id.c_str(), 
@@ -172,14 +172,14 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
     else if (ctx->objectDeclaration())
     {
         auto obj = walk_object_declaration(env, ctx->objectDeclaration());
-        type_node_ptr_t type_node(new type_node_t(TYPE_OBJECT, obj));
+        type_node_ptr_t type_node(new type_node_t(SYN_OBJECT, obj));
         INIT_POS(type_node, ctx);
         return type_node;
     }
     else if (ctx->funDeclaration())
     {
         auto obj = walk_func_declaration(env, ctx->funDeclaration());
-        type_node_ptr_t type_node(new type_node_t(TYPE_OBJECT, obj));
+        type_node_ptr_t type_node(new type_node_t(SYN_OBJECT, obj));
         INIT_POS(type_node, ctx);
         return type_node;
     }
@@ -187,31 +187,31 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
     {
         if (ctx->builtinType()->int_())
         {
-            type_node_ptr_t type_node(new type_node_t(TYPE_INT));
+            type_node_ptr_t type_node(new type_node_t(SYN_INT));
             INIT_POS(type_node, ctx);
             return type_node;
         }
         else if (ctx->builtinType()->void_())
         {
-            type_node_ptr_t type_node(new type_node_t(TYPE_VOID));
+            type_node_ptr_t type_node(new type_node_t(SYN_VOID));
             INIT_POS(type_node, ctx);
             return type_node;
         }
         else if (ctx->builtinType()->char_())
         {
-            type_node_ptr_t type_node(new type_node_t(TYPE_CHAR));
+            type_node_ptr_t type_node(new type_node_t(SYN_CHAR));
             INIT_POS(type_node, ctx);
             return type_node;
         }
         else if (ctx->builtinType()->double_())
         {
-            type_node_ptr_t type_node(new type_node_t(TYPE_DOUBLE));
+            type_node_ptr_t type_node(new type_node_t(SYN_DOUBLE));
             INIT_POS(type_node, ctx);
             return type_node;
         }
         else if (ctx->builtinType()->opaque())
         {
-            type_node_ptr_t type_node(new type_node_t(TYPE_OPAQUE));
+            type_node_ptr_t type_node(new type_node_t(SYN_OPAQUE));
             INIT_POS(type_node, ctx);
             return type_node;
         }
@@ -227,7 +227,7 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
     else if (ctx->identifier())
     {
         identifier_node_ptr_t id_node = walk_identifier(env, ctx->identifier(), false, ID_TYPE);
-        type_node_ptr_t tmp_type(new type_node_t(TYPE_OBJECT, env->find_id(id_node)));
+        type_node_ptr_t tmp_type(new type_node_t(SYN_OBJECT, env->find_id(id_node)));
         tmp_type->id = id_node;
 
         INIT_POS(tmp_type, ctx);
@@ -245,12 +245,12 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
         switch (def->type)
         {
         case OBJECT_NODE: {
-            type_node_ptr_t out(new type_node_t(TYPE_OBJECT, def));
+            type_node_ptr_t out(new type_node_t(SYN_OBJECT, def));
             INIT_POS(out, ctx);
             return out;
         }
         case FUNCTION_NODE: {
-            type_node_ptr_t out(new type_node_t(TYPE_FUNCTION, def));
+            type_node_ptr_t out(new type_node_t(SYN_FUNCTION, def));
             INIT_POS(out, ctx);
             return out;
         }
@@ -328,19 +328,19 @@ antl4_parser_t::walk_execution_block(environment_ptr_t env, aloeParser::Executio
     {
         if (exec_ctx->varDeclaration())
         {
-            block_node->statements.push_back(walk_var(env, exec_ctx->varDeclaration()));
+            block_node->exec_statements.push_back(walk_var(env, exec_ctx->varDeclaration()));
         }
         else if (exec_ctx->funDeclaration())
         {
-            block_node->statements.push_back(walk_func_declaration(env, exec_ctx->funDeclaration()));
+            block_node->exec_statements.push_back(walk_func_declaration(env, exec_ctx->funDeclaration()));
         }
         else if (exec_ctx->objectDeclaration())
         {
-            block_node->statements.push_back(walk_object_declaration(env, exec_ctx->objectDeclaration()));
+            block_node->exec_statements.push_back(walk_object_declaration(env, exec_ctx->objectDeclaration()));
         }
         else if (exec_ctx->expression())
         {
-            block_node->statements.push_back(walk_expression(env, exec_ctx->expression()));
+            block_node->exec_statements.push_back(walk_expression(env, exec_ctx->expression()));
         }
     } // for 
 
@@ -354,10 +354,12 @@ antl4_parser_t::walk_var_list( environment_ptr_t env, aloeParser::VarListContext
     INIT_POS(var_list, ctx);
     
     bool err = false;
+    
     for (auto& varCtx : ctx->varDeclaration())
     {
         auto var_ptr = walk_var(env, varCtx);
-        
+		var_list->vars_m[var_ptr->id] = var_ptr;
+		var_list->vars_v.push_back(var_id_t(var_ptr->id, var_ptr));
     };
     
     return var_list;
@@ -416,14 +418,17 @@ literal_node_ptr_t
 antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* ctx)
 {
     literal_node_ptr_t literal_node(new literal_node_t());
+
     INIT_POS(literal_node, ctx);
 
     if (ctx->DigitSequence())
     {
+		literal_node->lit_type = LIT_INT;
         literal_node->value = std::stoi(ctx->DigitSequence()->getText());
     }
     else if (ctx->StringLiteral().size() > 0)
     {
+		literal_node->lit_type = LIT_STRING;
         string sf;
         for (auto& s :ctx->StringLiteral())
         {
@@ -433,7 +438,7 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
     }
     else if (ctx->CharacterConstant())
     {
-        
+		literal_node->lit_type = LIT_CHAR;
         literal_node->value = unescape(ctx->CharacterConstant()->getText())[0];
     }
     else

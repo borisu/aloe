@@ -6,6 +6,9 @@
     <ClInclude Include="include\aloe\logger.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="include\aloe\defs.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

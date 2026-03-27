@@ -15,9 +15,19 @@ namespace aloe
 	struct literal_node_t;
 	typedef shared_ptr<literal_node_t> literal_node_ptr_t;
 
+	enum literal_type_e
+	{
+		LIT_UNKNOWN,
+		LIT_STRING,
+		LIT_INT,
+		LIT_CHAR
+	};
+
 	struct literal_node_t : public node_t
 	{
-		literal_node_t() :node_t(LITERAL_NODE) {}
+		literal_node_t() :node_t(LITERAL_NODE), lit_type(LIT_UNKNOWN){}
+
+		literal_type_e lit_type;
 
 		variant<string, int, char> value;
 
