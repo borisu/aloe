@@ -145,15 +145,20 @@ namespace aloe
 	struct identifier_expression_node_t : public expr_node_t
 	{
 		identifier_expression_node_t() :expr_node_t(expr_identifier) {}
+
 		expr_node_ptr_t operand;
+
 		identifier_node_ptr_t id;
 	};
 
 	struct ternary_expr_node_t : public expr_node_t
 	{
 		ternary_expr_node_t() :expr_node_t(expr_ternary) {}
+
 		expr_node_ptr_t condition;
+
 		expr_node_ptr_t true_expr;
+
 		expr_node_ptr_t false_expr;
 	};
 

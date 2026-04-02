@@ -22,10 +22,15 @@ namespace aloe
 	{
 		fun_node_t() :node_t(FUNCTION_NODE),
 			is_defined(false) {}
-		identifier_node_ptr_t	id;
-		type_node_ptr_t			ret_type;
-		var_list_node_ptr_t		var_list;
+
+		identifier_node_ptr_t		id;
+
+		type_node_ptr_t				ret_type;
+
+		var_list_node_ptr_t			var_list;
+
 		execution_block_node_ptr_t	exec_block;
+
 		bool is_defined;
 	};
 

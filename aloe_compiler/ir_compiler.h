@@ -1,5 +1,6 @@
 #pragma once
-#include "type_mapper.h"
+#include "type.h"
+#include "value.h"
 
 using namespace llvm;
 
@@ -12,8 +13,7 @@ namespace aloe
 		DIBuilder* llvm_di	    = nullptr;
 		DIFile* llvm_di_file	= nullptr;
 
-		type_mapper_t* type_mapper  = nullptr;
-		ast_ptr_t ast;
+		ast_ptr_t		 ast;
 	};
 
 	class llvmir_compiler_t : public compiler_t
@@ -26,15 +26,21 @@ namespace aloe
 
 		virtual void walk_prog(compiler_ctx_t *ctx, prog_node_ptr_t node);
 
+		virtual type_ptr_t walk_type(compiler_ctx_t* ctx, type_node_ptr_t node);
+
 		virtual void walk_func(compiler_ctx_t* ctx, fun_node_ptr_t node);
 
 		virtual void walk_exec_statement(compiler_ctx_t* ctx, node_ptr_t node);
 
-		virtual void walk_expression(compiler_ctx_t* ctx, expr_node_ptr_t node);
+		virtual value_ptr_t walk_expression(compiler_ctx_t* ctx, expr_node_ptr_t node);
 
-		virtual Value* walk_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node);
+		virtual value_ptr_t walk_fun_call (compiler_ctx_t* ctx, funcall_expr_node_ptr_t node);
 
-		virtual Value* walk_literal(compiler_ctx_t* ctx, literal_node_ptr_t node);
+		virtual value_ptr_t walk_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node);
+
+		virtual value_ptr_t walk_literal(compiler_ctx_t* ctx, literal_node_ptr_t node);
+
+		virtual value_ptr_t walk_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
 
 	private:
 

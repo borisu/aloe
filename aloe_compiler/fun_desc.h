@@ -6,7 +6,7 @@ using namespace llvm;
 
 namespace aloe
 {
-	struct fun_desc_t : public type_desc_t
+	struct fun_desc_t : public type_t
 	{
 		fun_desc_t() :ir_func(nullptr) {}
 

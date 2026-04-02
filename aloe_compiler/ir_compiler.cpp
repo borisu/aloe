@@ -3,7 +3,6 @@
 #include "aloe\defs.h"
 #include "compiler_exception.h"
 #include "ir_compiler.h"
-#include "type_mapper.h"
 #include "fun_desc.h"
 
 using namespace aloe;
@@ -57,11 +56,6 @@ llvmir_compiler_t::compile(
 
     compiler_ctx.ast = ast;
 
-    type_mapper_t mapper(dib, module, ctx);
-
-    compiler_ctx.type_mapper = &mapper;
-    
-
 	bool res = false;
     try
     {
@@ -82,37 +76,91 @@ llvmir_compiler_t::compile(
     return res;
 }
 
+type_ptr_t
+llvmir_compiler_t::walk_type(compiler_ctx_t* ctx, type_node_ptr_t node)
+{
+	type_ptr_t type(new type_t());
+
+    switch (node->syn_type)
+    {
+    case SYN_INT:
+    {
+        type->irt = Type::getInt32Ty(*ctx->llvm_ctx);
+        break;
+	}
+    case SYN_CHAR:
+    {
+        type->irt = Type::getInt8Ty(*ctx->llvm_ctx);
+        break;
+    }
+    case SYN_VOID:
+    {
+        type->irt = Type::getVoidTy(*ctx->llvm_ctx);
+        break;
+    }
+    case SYN_DOUBLE:
+    {
+        type->irt = Type::getDoubleTy(*ctx->llvm_ctx);
+        break;
+    }
+    case SYN_OPAQUE:
+    {
+        type->irt = PointerType::getUnqual(*ctx->llvm_ctx);
+        break;
+    }
+    case SYN_FUNCTION:
+    case SYN_OBJECT:
+    case SYN_UNKNOWN:
+    default:
+    {
+        throw;
+    }
+    }
+
+    return type;
+
+}
+
 void 
 llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
 {
-    fun_desc_ptr_t fun_desc(new fun_desc_t());
+    // return type
+	type_ptr_t ret_irt = walk_type(ctx, fun->ret_type);
 
-    auto ir_type = ctx->type_mapper->fun_ir_type(fun);
+    // params
+    std::vector<Type*> args_irt;
+    for (auto p : fun->var_list->vars_m)
+    {
+        type_ptr_t arg_irt = walk_type(ctx, p.second->type);
+        args_irt.push_back(arg_irt->irt);
+    };
 
+    auto fun_irt =  FunctionType::get(ret_irt->irt, args_irt, false);
 
-    Function* ir_func =
-        Function::Create(ir_type, 
+    Function* fun_ir =
+        Function::Create(fun_irt,
             Function::ExternalLinkage, fun->id->name, ctx->llvm_module);
    
     if (!fun->is_defined)
         return;
     
-    BasicBlock* ir_entry = BasicBlock::Create(*ctx->llvm_ctx, fun->id->name, ir_func);
+    BasicBlock* ir_entry = BasicBlock::Create(*ctx->llvm_ctx, fun->id->name, fun_ir);
+
     ctx->llvm_ir->SetInsertPoint(ir_entry);
 
-    ctx->llvm_ir->CreateRet(ConstantInt::get(Type::getInt32Ty(*ctx->llvm_ctx), 0));
+    //ctx->llvm_ir->CreateRet(ConstantInt::get(Type::getInt32Ty(*ctx->llvm_ctx), 0));
    
-    DISubprogram* sp = ctx->llvm_di->createFunction(
+    /*DISubprogram* sp = ctx->llvm_di->createFunction(
         ctx->llvm_di_file,        // Function scope.  
         fun->id->name,            // Function name.
         fun->id->name,            // Mangled function name.
         ctx->llvm_di_file,        // File where this variable is defined.
         fun->line,                // Line number.
-        ctx->type_mapper->fun_di_type(fun), // fnType
+        ctx->type_cache->fun_di_type(fun), // fnType
         fun->line,                 // scope line
         DINode::FlagZero,
         DISubprogram::SPFlagDefinition
-	);
+	);*/
 
     
     for (auto& statement : fun->exec_block->exec_statements)
@@ -120,9 +168,9 @@ llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
         walk_exec_statement(ctx, statement);
     }
 
-    ir_func->setSubprogram(sp);
+    //fun_ir->setSubprogram(sp);
 
-    bool is_broken = llvm::verifyFunction(*ir_func);
+    bool is_broken = llvm::verifyFunction(*fun_ir);
 
     if (is_broken) {
         throw compiler_exeption_t("%s:%zu:%zu: error: generated IR for function '%s' is broken", 
@@ -149,6 +197,12 @@ llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
 
 }
 
+value_ptr_t 
+llvmir_compiler_t::walk_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node)
+{
+    return nullptr;
+}
+
 void 
 llvmir_compiler_t::walk_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
 {
@@ -164,51 +218,83 @@ llvmir_compiler_t::walk_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
     }
 }
 
-void 
+value_ptr_t
 llvmir_compiler_t::walk_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 {
+	value_ptr_t val(new value_t());
     switch (node->op)
     {
     case expr_literal:
     {
-        walk_expr_literal(ctx, PCAST(literal_expr_node_t,node));
+        val = walk_expr_literal(ctx, PCAST(literal_expr_node_t,node));
         break;
     }
     case expr_funcall:
     {
-        auto funcall_node = static_pointer_cast<funcall_expr_node_t>(node);
+        val = walk_fun_call (ctx, PCAST(funcall_expr_node_t,node));
+        break;
+    }
+    case expr_identifier:
+    {
+		val = walk_identifier(ctx, PCAST(identifier_expr_node_t, node));
         break;
     }
     default:
         break;
     }
+
+    return val;
 }
 
-Value* 
+
+
+value_ptr_t
+llvmir_compiler_t::walk_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr_t node)
+{
+
+	/*Value* callee = walk_expression(ctx, node->function);
+
+    funcPtr = builder.CreateBitCast(funcPtr, fooPtrType);
+	
+
+    ctx->llvm_ir->CreateCall(fooFunc, {
+    ConstantInt::get(intTy, 10),
+    ConstantInt::get(intTy, 20),
+    x
+        });;*/
+
+    return nullptr;
+}
+
+value_ptr_t
 llvmir_compiler_t::walk_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node)
 {
 	return walk_literal(ctx, node->literal);
 }
 
-Value*
+value_ptr_t
 llvmir_compiler_t::walk_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
 {
-    
+	value_ptr_t val(new value_t());
+
+    //val->type = ctx->type_cache->get_type(node);
+
+
     switch (node->lit_type)
     {
     case LIT_INT:
     {
-        return ConstantInt::get(ctx->type_mapper->literal_ir_type(node), std::get<int>(node->value));
-        break;
+	    val->ir_value   =  ConstantInt::get(val->type->irt, std::get<int>(node->value));
+	    break;
     }
     case LIT_STRING:
     {
-        return ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
+        val->ir_value = ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
         break;
     }
     case LIT_CHAR:
     {
-        return ConstantInt::get(ctx->type_mapper->literal_ir_type(node), std::get<char>(node->value));
+        val->ir_value = ConstantInt::get(val->type->irt, std::get<char>(node->value));
         break;
     }
     default:
@@ -216,5 +302,7 @@ llvmir_compiler_t::walk_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
         throw compiler_exeption_t("%s:%zu:%zu: error: unsupported literal type %d", ctx->ast->source_id.c_str(), node->line, node->pos, node->line);
     }
     }
+
+    return val;
         
 }

@@ -157,14 +157,15 @@
     <ClInclude Include="fun_desc.h" />
     <ClInclude Include="include\aloe\compiler.h" />
     <ClInclude Include="ir_compiler.h" />
-    <ClInclude Include="type_mapper.h" />
+    <ClInclude Include="type_cache.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="type.h" />
+    <ClInclude Include="value.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="compiler_exception.cpp" />
     <ClCompile Include="ir_compiler.cpp" />
-    <ClCompile Include="type_mapper.cpp" />
+    <ClCompile Include="type_cache.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

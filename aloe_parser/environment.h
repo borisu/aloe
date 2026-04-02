@@ -23,17 +23,9 @@ namespace aloe
 
 	private:
 
-		struct id_ptr_cmp
-		{
-			bool operator()(const identifier_node_ptr_t& a, const identifier_node_ptr_t& b) const
-			{
-				if (a->name != b->name)
-					return a->name < b->name;
-				return a->id_type < b->id_type;
-			}
-		};
+		
 
-		typedef map<identifier_node_ptr_t, node_ptr_t, id_ptr_cmp>
+		typedef map<identifier_node_ptr_t, node_ptr_t, id_ptr_map_cmp>
 		def_map_t;
 
 		def_map_t  id_map;

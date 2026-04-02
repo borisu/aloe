@@ -19,7 +19,6 @@ environment_t::register_id(identifier_node_ptr_t id, node_ptr_t node)
 }
 
 
-
 node_ptr_t
 environment_t::find_id(identifier_node_ptr_t id)
 {

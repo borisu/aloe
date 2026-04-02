@@ -13,18 +13,31 @@ namespace aloe
 		ID_UNKNOWN,
 		ID_VAR,
 		ID_TYPE,
-		ID_MODULE,
+		ID_MODULE
 	};
 
 	struct identifier_node_t : public node_t
 	{
 		identifier_node_t() :node_t(IDENTFIER_NODE),id_type(ID_UNKNOWN) {};
+
 		string name;
+
 		identifier_type_e id_type;
 	};
 
 	typedef shared_ptr<identifier_node_t>
 		identifier_node_ptr_t;
+
+	struct id_ptr_map_cmp
+	{
+		bool operator()(const identifier_node_ptr_t& a, const identifier_node_ptr_t& b) const
+		{
+			if (a->name != b->name)
+				return a->name < b->name;
+
+			return a->id_type < b->id_type;
+		}
+	};
 
 }
 #pragma once

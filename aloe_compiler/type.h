@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <aloe/ast.h>
 
 using namespace std;
 using namespace llvm;
@@ -19,29 +20,20 @@ namespace aloe
 		TYPE_FUNCTION
 	};
 
-	struct type_desc_t
+	struct type_t
 	{
-		type_desc_t() : ir_type(nullptr), di_type(nullptr) {}
+		type_t() : irt(nullptr), dit(nullptr) {}
 
-		Type* ir_type;
+		Type* irt;
 
-		DIType* di_type;
+		DIType* dit;
+
+		node_ptr_t node;
 		
 	};
 
-	typedef shared_ptr<type_desc_t>
-	type_desc_ptr_t;
-
-	struct type_t 
-	{
-		type_t(type_e type) :type_type(type), ref_count(0) {};
-	
-		size_t			ref_count;
-		type_e			type_type;
-		type_desc_ptr_t type_desc;
-		
-	};
-
+	typedef shared_ptr<type_t>
+	type_ptr_t;
 
 }
 
