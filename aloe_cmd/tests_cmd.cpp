@@ -67,7 +67,11 @@ tests_cmd_t::test_var_declarations1()
     TEST_PARSE_STRING(R"(var b:A)", false);
     TEST_PARSE_STRING(R"(var a:int)", true);
     TEST_PARSE_STRING(R"(var :int)", true);
+    TEST_PARSE_STRING(R"(var :^^^^^int)", true);
 }
+
+
+
 
 void
 tests_cmd_t::test_object_declarations1()
@@ -129,9 +133,11 @@ tests_cmd_t::test_expressions1()
 void
 tests_cmd_t::run_tests()
 {
-    test_fun_expect1();
+    TEST_PARSE_STRING(R"(var :^^^^^int)", true);
+
     return;
 
+    test_fun_expect1();
     test_var_declarations1();
     test_object_declarations1();
     test_fun_declarations1();

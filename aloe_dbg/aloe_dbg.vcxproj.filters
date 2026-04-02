@@ -14,8 +14,10 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="a.alo" />
-    <CustomBuild Include="gengen\a.ll">
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="gengen\a.ll">
       <Filter>gengen</Filter>
-    </CustomBuild>
+    </None>
   </ItemGroup>
 </Project>

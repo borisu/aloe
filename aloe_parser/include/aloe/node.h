@@ -9,6 +9,7 @@ namespace aloe
 	{
 		AST_ROOT_NODE,
 		PROG_NODE,
+		BUILTIN_NODE,
 		/* declaration nodes */
 		OBJECT_NODE,
 		INH_CHAIN_NODE,

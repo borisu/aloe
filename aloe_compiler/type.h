@@ -8,27 +8,18 @@ using namespace llvm;
 
 namespace aloe
 {
-	enum type_e
-	{
-		TYPE_UNKNOWN,
-		TYPE_INT,
-		TYPE_VOID,
-		TYPE_DOUBLE,
-		TYPE_OPAQUE,
-		TYPE_CHAR,
-		TYPE_OBJECT,
-		TYPE_FUNCTION
-	};
 
 	struct type_t
 	{
-		type_t() : irt(nullptr), dit(nullptr) {}
+		type_t() : irt(nullptr), dit(nullptr), ref_count(0){}
+
+		size_t ref_count;
 
 		Type* irt;
 
 		DIType* dit;
 
-		node_ptr_t node;
+		node_ptr_t def;
 		
 	};
 

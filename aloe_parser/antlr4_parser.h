@@ -23,6 +23,8 @@ namespace aloe
 	{
 	public:
 
+		antl4_parser_t();
+
 		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast, const string &source_id) override;
 
 		virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
@@ -55,7 +57,17 @@ namespace aloe
 
 		virtual execution_block_node_ptr_t walk_execution_block(environment_ptr_t env, aloeParser::ExecutionBlockContext* ctx);
 
-		
+		virtual builtin_node_ptr_t walk_built_in_type(environment_ptr_t env, aloeParser::BuiltinTypeContext* ctx);
+
+		builtin_node_ptr_t INT_NODE;
+
+		builtin_node_ptr_t CHAR_NODE;
+
+		builtin_node_ptr_t DOUBLE_NODE;
+
+		builtin_node_ptr_t OPAQUE_NODE;
+
+		builtin_node_ptr_t VOID_NODE;
 
 	};
 

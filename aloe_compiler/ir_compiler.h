@@ -7,13 +7,12 @@ using namespace llvm;
 namespace aloe
 {
 	struct compiler_ctx_t {
-		LLVMContext* llvm_ctx	= nullptr;
-		Module* llvm_module		= nullptr;
-		IRBuilder<>* llvm_ir	= nullptr;
-		DIBuilder* llvm_di	    = nullptr;
-		DIFile* llvm_di_file	= nullptr;
-
-		ast_ptr_t		 ast;
+		LLVMContext*	llvm_ctx	 = nullptr;
+		Module*			llvm_module	 = nullptr;
+		IRBuilder<>*	llvm_ir		 = nullptr;
+		DIBuilder*		llvm_di		 = nullptr;
+		DIFile*			llvm_di_file = nullptr;
+		ast_ptr_t		ast;
 	};
 
 	class llvmir_compiler_t : public compiler_t
@@ -28,7 +27,9 @@ namespace aloe
 
 		virtual type_ptr_t walk_type(compiler_ctx_t* ctx, type_node_ptr_t node);
 
-		virtual void walk_func(compiler_ctx_t* ctx, fun_node_ptr_t node);
+		virtual type_ptr_t walk_built_in(compiler_ctx_t* ctx, builtin_node_ptr_t node);
+
+		virtual type_ptr_t walk_func(compiler_ctx_t* ctx, fun_node_ptr_t node);
 
 		virtual void walk_exec_statement(compiler_ctx_t* ctx, node_ptr_t node);
 
@@ -44,9 +45,14 @@ namespace aloe
 
 	private:
 
-		std::map<node_ptr_t, DIType*> type_cache;
+		typedef std::pair<size_t, Type*> di_cache_key_t;
+		std::map<di_cache_key_t, DIType*> di_cache;
 
-		std::map<string, Function*> func_cache;
+		typedef std::pair<size_t, node_ptr_t> type_cache_key_t;
+		std::map<type_cache_key_t, type_ptr_t> type_cache;
+
+		DIType* get_dit(di_cache_key_t key, DIType* dit);
+
 		
 	};
 

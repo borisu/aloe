@@ -1,9 +1,8 @@
-expect fun log:void(var msg: ^char)
+expect fun log:void(var msg: ^char, var msg1: ^char)
 
 fun root:int()
 {
 	log("Hello World!");
 }
-
 
 

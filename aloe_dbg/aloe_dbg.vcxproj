@@ -153,15 +153,7 @@ $(TargetDir)\aloe.exe -c  %(FullPath)  -o $(ProjectDir)\gengen\a.ll</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="gengen\a.ll">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo "%LLVM%\llc" -filetype=obj %(FullPath) -o $(IntDirFullPath)%(Filename).obj
-"%LLVM%\llc" -filetype=obj %(FullPath) -o $(IntDirFullPath)%(Filename).obj</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\a.alo;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDirFullPath)%(Filename).obj</Outputs>
-    </CustomBuild>
+    <None Include="gengen\a.ll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

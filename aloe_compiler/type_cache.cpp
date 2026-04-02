@@ -17,7 +17,7 @@ type_cache_t::get_type(node_ptr_t node)
 
 	type->irt	= ir_get_type(node);
 	type->dit	= di_get_type(node);
-	type->node		= node;
+	type->def		= node;
 	return nullptr;
 }
 

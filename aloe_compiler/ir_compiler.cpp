@@ -10,7 +10,12 @@ using namespace llvm;
 using namespace llvm::dwarf;
 
 
-#define DW_LANG_ALOE (DW_LANG_lo_user+1)
+
+#define TYPE_NODE_KEY(N) type_cache_key_t(N->ref_count, N->def)
+#define NODE_KEY(N) type_cache_key_t(0, N)
+
+#define TYPE_KEY(T) di_cache_key_t(T->ref_count, T->irt)
+#define DI_KEY(IR) di_cache_key_t(0, IR)
 
 compiler_ptr_t
 aloe::create_compiler()
@@ -76,99 +81,177 @@ llvmir_compiler_t::compile(
     return res;
 }
 
+DIType* 
+llvmir_compiler_t::get_dit(di_cache_key_t key, DIType* dit)
+{
+	auto ir = di_cache.find(key);
+	if (ir != di_cache.end())
+        return ir->second;
+
+    di_cache[key] = dit;
+    return dit;
+	
+}
+
+
+type_ptr_t
+llvmir_compiler_t::walk_built_in(compiler_ctx_t* ctx, builtin_node_ptr_t node)
+{
+    if (type_cache.find(type_cache_key_t{ 0, node }) != type_cache.end())
+        return type_cache[type_cache_key_t{ 0, node }];
+
+    type_ptr_t type(new type_t());
+
+    switch (node->bit_type)
+    {
+    case BIT_INT:
+    {
+        type->irt = Type::getInt32Ty(*ctx->llvm_ctx);
+        type->dit = get_dit(TYPE_KEY(type), ctx->llvm_di->createBasicType("int", 32, dwarf::DW_ATE_signed));
+
+        break;
+    }
+    case BIT_CHAR:
+    {
+        type->irt = Type::getInt8Ty(*ctx->llvm_ctx);
+        type->dit = get_dit(TYPE_KEY(type), ctx->llvm_di->createBasicType("char", 8, dwarf::DW_ATE_signed_char));
+        break;
+    }
+    case BIT_VOID:
+    case BIT_OPAQUE:
+    {
+        type->irt = Type::getVoidTy(*ctx->llvm_ctx);
+        type->dit = get_dit(TYPE_KEY(type), nullptr);
+
+        break;
+    }
+    case BIT_DOUBLE:
+    {
+        type->irt = Type::getDoubleTy(*ctx->llvm_ctx);
+        type->dit = get_dit(TYPE_KEY(type), ctx->llvm_di->createBasicType("double",64,dwarf::DW_ATE_float));
+        break;
+    }
+    default:
+    {
+        throw compiler_exeption_t("%s:%zu:%zu: error: unknown built int type '%d'",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos,
+            node->bit_type);
+    }
+    }
+
+    return type;
+}
+
 type_ptr_t
 llvmir_compiler_t::walk_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 {
+
+    if (type_cache.find(TYPE_NODE_KEY(node)) != type_cache.end())
+		return type_cache[TYPE_NODE_KEY(node)];
+
 	type_ptr_t type(new type_t());
 
-    switch (node->syn_type)
+    switch (node->tt)
     {
-    case SYN_INT:
+    case TT_BUILTIN:
     {
-        type->irt = Type::getInt32Ty(*ctx->llvm_ctx);
-        break;
-	}
-    case SYN_CHAR:
-    {
-        type->irt = Type::getInt8Ty(*ctx->llvm_ctx);
+        type = walk_built_in(ctx, static_pointer_cast<builtin_node_t>(node->def));
         break;
     }
-    case SYN_VOID:
+    case TT_FUNCTION:
     {
-        type->irt = Type::getVoidTy(*ctx->llvm_ctx);
+        type = walk_func(ctx, static_pointer_cast<fun_node_t>(node->def));
         break;
+
     }
-    case SYN_DOUBLE:
-    {
-        type->irt = Type::getDoubleTy(*ctx->llvm_ctx);
-        break;
-    }
-    case SYN_OPAQUE:
-    {
-        type->irt = PointerType::getUnqual(*ctx->llvm_ctx);
-        break;
-    }
-    case SYN_FUNCTION:
-    case SYN_OBJECT:
-    case SYN_UNKNOWN:
+    case TT_OBJECT:
+    case TT_UNKNOWN:
     default:
     {
+		//TBD: implement user defined types
         throw;
     }
+    }
+
+	if (node->ref_count > 0)
+    {
+		type->irt = PointerType::getUnqual(*ctx->llvm_ctx); // collapse to pointer type
+		for (int i = 1; i <= node->ref_count; i++)  
+        {
+			type->ref_count = i;
+            type->dit = get_dit(TYPE_KEY(type), ctx->llvm_di->createPointerType(type->dit, 64)); // must preserve the type for each level of indirection for debug info
+        }
+	
     }
 
     return type;
 
 }
 
-void 
+type_ptr_t
 llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
 {
-    // return type
-	type_ptr_t ret_irt = walk_type(ctx, fun->ret_type);
+    if (type_cache.find(NODE_KEY(fun)) != type_cache.end())
+        return type_cache[NODE_KEY(fun)];
 
-    // params
-    std::vector<Type*> args_irt;
+    type_ptr_t rett = walk_type(ctx, fun->ret_type);
+
+    SmallVector<Metadata*, 8>   di_sig;
+    di_sig.push_back(rett->dit);
+    
+    std::vector<Type*>  args_irt; 
     for (auto p : fun->var_list->vars_m)
     {
-        type_ptr_t arg_irt = walk_type(ctx, p.second->type);
-        args_irt.push_back(arg_irt->irt);
+        type_ptr_t argt = walk_type(ctx, p.second->type);
+        args_irt.push_back(argt->irt);
+        di_sig.push_back(argt->dit);
     };
 
-    auto fun_irt =  FunctionType::get(ret_irt->irt, args_irt, false);
+    auto fun_irt = FunctionType::get(rett->irt, args_irt, false);
+
+    DISubroutineType *dit = (DISubroutineType*) get_dit(
+        DI_KEY(fun_irt),  
+        ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(di_sig)));
 
     Function* fun_ir =
         Function::Create(fun_irt,
             Function::ExternalLinkage, fun->id->name, ctx->llvm_module);
-   
-    if (!fun->is_defined)
-        return;
-    
-    BasicBlock* ir_entry = BasicBlock::Create(*ctx->llvm_ctx, fun->id->name, fun_ir);
 
-    ctx->llvm_ir->SetInsertPoint(ir_entry);
-
-    //ctx->llvm_ir->CreateRet(ConstantInt::get(Type::getInt32Ty(*ctx->llvm_ctx), 0));
-   
-    /*DISubprogram* sp = ctx->llvm_di->createFunction(
+    DISubprogram* sp = ctx->llvm_di->createFunction(
         ctx->llvm_di_file,        // Function scope.  
         fun->id->name,            // Function name.
         fun->id->name,            // Mangled function name.
         ctx->llvm_di_file,        // File where this variable is defined.
         fun->line,                // Line number.
-        ctx->type_cache->fun_di_type(fun), // fnType
+        dit, // fnType
         fun->line,                 // scope line
         DINode::FlagZero,
         DISubprogram::SPFlagDefinition
-	);*/
+     );
 
+    fun_ir->setSubprogram(sp);
+
+    type_ptr_t type(new type_t());
+
+    type->def = fun;
+    type->irt = fun_irt;
+    type->dit = dit;
+   
+    if (!fun->is_defined)
+        return type;
     
+    BasicBlock* ir_entry = BasicBlock::Create(*ctx->llvm_ctx, fun->id->name, fun_ir);
+
+    ctx->llvm_ir->SetInsertPoint(ir_entry);
+
+    ctx->llvm_ir->CreateRet(ConstantInt::get(Type::getInt32Ty(*ctx->llvm_ctx), 0));
+  
     for (auto& statement : fun->exec_block->exec_statements)
     {
         walk_exec_statement(ctx, statement);
     }
-
-    //fun_ir->setSubprogram(sp);
 
     bool is_broken = llvm::verifyFunction(*fun_ir);
 
@@ -179,6 +262,8 @@ llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
             fun->pos, 
 			fun->id->name.c_str());
     }
+   
+    return type;
 		
 }
 
@@ -231,7 +316,7 @@ llvmir_compiler_t::walk_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
     }
     case expr_funcall:
     {
-        val = walk_fun_call (ctx, PCAST(funcall_expr_node_t,node));
+        val = walk_fun_call(ctx, PCAST(funcall_expr_node_t,node));
         break;
     }
     case expr_identifier:
@@ -278,7 +363,6 @@ llvmir_compiler_t::walk_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
 	value_ptr_t val(new value_t());
 
     //val->type = ctx->type_cache->get_type(node);
-
 
     switch (node->lit_type)
     {
