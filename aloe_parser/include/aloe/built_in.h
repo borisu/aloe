@@ -17,7 +17,7 @@ namespace aloe
 
 	struct builtin_node_t : public node_t
 	{
-		builtin_node_t(builtin_type_e type_type, size_t ref_count = 0) :node_t(BUILTIN_NODE), bit_type(type_type){};
+		builtin_node_t(builtin_type_e type_type, size_t ref_count = 0) :node_t(BUILTIN_TYPE_NODE), bit_type(type_type){};
 		builtin_type_e 	bit_type;
 	};
 

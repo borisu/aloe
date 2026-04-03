@@ -35,11 +35,9 @@ namespace aloe
 
 		virtual prog_node_ptr_t walk_prog(environment_ptr_t env,  aloeParser::ProgContext* ctx);
 
-		virtual object_node_ptr_t walk_object_declaration(environment_ptr_t env, aloeParser::ObjectDeclarationContext* ctx);
-
-		virtual inh_chain_node_ptr_t walk_chain_declaration(environment_ptr_t env,  aloeParser::InheritanceChainContext* ctx);
-
 		virtual type_node_ptr_t walk_type(environment_ptr_t env,  aloeParser::TypeContext* ctx, int ref_count = 0);
+
+		virtual base_type_ptr_t walk_base_type(environment_ptr_t env, aloeParser::BaseTypeContext* ctx);
 
 		virtual var_list_node_ptr_t walk_var_list(environment_ptr_t env,  aloeParser::VarListContext* ctx);
 
@@ -59,6 +57,8 @@ namespace aloe
 
 		virtual builtin_node_ptr_t walk_built_in_type(environment_ptr_t env, aloeParser::BuiltinTypeContext* ctx);
 
+		virtual fun_type_ptr_t walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx);
+
 		builtin_node_ptr_t INT_NODE;
 
 		builtin_node_ptr_t CHAR_NODE;
@@ -68,6 +68,8 @@ namespace aloe
 		builtin_node_ptr_t OPAQUE_NODE;
 
 		builtin_node_ptr_t VOID_NODE;
+
+		bool syntax_error_occurred;
 
 	};
 

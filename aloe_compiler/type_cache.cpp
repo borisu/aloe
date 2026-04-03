@@ -28,31 +28,33 @@ type_cache_t::ir_get_type(node_ptr_t node){
 
 	switch (node->type)
 	{
-		case LITERAL_NODE:
-		{
-			ir_type = ir_get_type_lit(PCAST(literal_node_t,node));
-			break;
-		}
-		case FUNCTION_NODE:
-		{
-			ir_type = ir_get_type_fun(PCAST(fun_node_t, node));
-			break;
-		}
-		default:
-		{
-			throw compiler_exeption_t("%s:%d:%d error: cannot convert type %d to IR type", node->line, node->pos, node->type);
-		}
+	case LITERAL_NODE:
+	{
+		ir_type = ir_get_type_lit(PCAST(literal_node_t, node));
+		break;
 	}
+	case FUNCTION_NODE:
+	{
+		ir_type = ir_get_type_fun(PCAST(fun_node_t, node));
+		break;
+	}
+	default:
+	{
+		throw compiler_exeption_t("%s:%d:%d error: cannot convert type %d to IR type", node->line, node->pos, node->type);
+	}
+	};
+
+	return ir_type;
 }
 
 FunctionType*
 type_cache_t::ir_get_type_fun(fun_node_ptr_t node)
 {
-	Type* ir_ret_type = ir_get_type(node->ret_type);
+	Type* ir_ret_type = ir_get_type(node->fun_type->ret_type);
 
 	std::vector<Type*> ir_var_types;
 	
-	for (auto& var : node->var_list->vars_m)
+	for (auto& var : node->fun_type->var_list->vars_m)
 	{
 		auto var_type = ir_get_type(var.second->type);
 		ir_var_types.push_back(var_type);
@@ -129,10 +131,10 @@ type_cache_t::di_get_type_fun(fun_node_ptr_t node)
 	SmallVector<Metadata*, 8> types;
 
 	// return type
-	types.push_back(di_get_type(node->ret_type));
+	types.push_back(di_get_type(node->fun_type->ret_type));
 
 	// params
-	for (auto p: node->var_list->vars_m)
+	for (auto p: node->fun_type->var_list->vars_m)
 	{
 		types.push_back(di_get_type(p.second->type));
 	}

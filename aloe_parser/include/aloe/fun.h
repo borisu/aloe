@@ -12,23 +12,36 @@ namespace aloe
 
 	struct execution_block_node_t : public node_t
 	{
-		execution_block_node_t() :node_t(EXECUTION_BLOCK_NODE) {}
+		execution_block_node_t() : node_t(EXECUTION_BLOCK_NODE) {}
 		vector<node_ptr_t> exec_statements;
 	};
 
-	typedef shared_ptr<execution_block_node_t> execution_block_node_ptr_t;
+	typedef shared_ptr<execution_block_node_t> 
+	execution_block_node_ptr_t;
+
+	struct fun_type_t : public node_t
+	{
+		fun_type_t() :node_t(FUN_TYPE_NODE)
+		{}
+
+		type_node_ptr_t				ret_type;
+
+		var_list_node_ptr_t			var_list;
+
+	};
+
+	typedef shared_ptr<fun_type_t>
+	fun_type_ptr_t;
 
 	struct fun_node_t : public node_t
 	{
 		fun_node_t() :node_t(FUNCTION_NODE),
 			is_defined(false) {}
 
-		identifier_node_ptr_t		id;
+		identifier_node_ptr_t	id;
 
-		type_node_ptr_t				ret_type;
-
-		var_list_node_ptr_t			var_list;
-
+		fun_type_ptr_t 			fun_type;
+		
 		execution_block_node_ptr_t	exec_block;
 
 		bool is_defined;

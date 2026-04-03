@@ -110,14 +110,12 @@ int main(int argc, char* argv[])
        err_code = compile_cmd_t().compile_cmd(
              *in,
 			 *out,
-             input_file.empty () ? "<source>" : input_file);
+             input_file.empty () ? "<source>" : input_file) ? 0 : 1;
 
-        err_code = 0;
         break;
     }
     case MODE_TEST:
     {
-        err_code = 0;
         tests_cmd_t().run_tests();
     }
     }

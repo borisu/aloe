@@ -18,31 +18,17 @@ declarationStatementList
     ;
 
 declarationStatement
-    : objectDeclaration 
-    | varDeclaration
+    : varDeclaration
     | funDeclaration 
     ;
 
-
 executionStatement
-    : objectDeclaration 
-    | varDeclaration
+    : varDeclaration
     | funDeclaration 
     | returnStatement
     | expression
     ;
 
-/********************/
-/*      Object      */
-/********************/
-
-objectDeclaration  
-    : 'object' (identifier)? (inheritanceChain)?  '('  varList ')' 
-    ;  
-
-inheritanceChain
-    : ('>' (type))+
-    ;
 
 /********************/
 /*      Types       */
@@ -68,7 +54,6 @@ opaque
     : OpaqueType
     ;
 
-
 builtinType 
     : int
     | char
@@ -78,31 +63,27 @@ builtinType
     ;
 
 type 
-    : builtinType
-    | objectDeclaration
-    | funDeclaration
-    | pointerType
+    : '^' type
+    | baseType;
+
+baseType
+    : funType
+    | builtinType
     | identifier
     ;
-
-pointerType
-    : '^' type
-    ;
-
 
 /********************/
 /* Var Decalaration */
 /********************/
 
 varDeclaration
-    : ('var')? identifier? ':' type
+    : 'var' identifier? ':' type
     ;
 
-varList
+varList 
     : varDeclaration?  
     | varDeclaration (',' varDeclaration)+
     ;
-
 
 /********************/
 /* Fun Decalaration */
@@ -117,7 +98,7 @@ executionBlock
     ;
 
 funType
-    :  type '(' varList ')'
+    :  '(' varList ')' '->' type
     ;
 
 expect 

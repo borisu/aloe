@@ -11,7 +11,7 @@ using namespace llvm::dwarf;
 
 
 
-#define TYPE_NODE_KEY(N) type_cache_key_t(N->ref_count, N->def)
+#define TYPE_NODE_KEY(N) type_cache_key_t(N->ref_count, N->bt->def)
 #define NODE_KEY(N) type_cache_key_t(0, N)
 
 #define TYPE_KEY(T) di_cache_key_t(T->ref_count, T->irt)
@@ -153,16 +153,16 @@ llvmir_compiler_t::walk_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 
 	type_ptr_t type(new type_t());
 
-    switch (node->tt)
+    switch (node->bt->tt)
     {
     case TT_BUILTIN:
     {
-        type = walk_built_in(ctx, static_pointer_cast<builtin_node_t>(node->def));
+        type = walk_built_in(ctx, static_pointer_cast<builtin_node_t>(node->bt->def));
         break;
     }
     case TT_FUNCTION:
     {
-        type = walk_func(ctx, static_pointer_cast<fun_node_t>(node->def));
+        type = walk_func(ctx, static_pointer_cast<fun_node_t>(node->bt->def));
         break;
 
     }
@@ -196,13 +196,13 @@ llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
     if (type_cache.find(NODE_KEY(fun)) != type_cache.end())
         return type_cache[NODE_KEY(fun)];
 
-    type_ptr_t rett = walk_type(ctx, fun->ret_type);
+    type_ptr_t rett = walk_type(ctx, fun->fun_type->ret_type);
 
     SmallVector<Metadata*, 8>   di_sig;
     di_sig.push_back(rett->dit);
     
     std::vector<Type*>  args_irt; 
-    for (auto p : fun->var_list->vars_m)
+    for (auto p : fun->fun_type->var_list->vars_m)
     {
         type_ptr_t argt = walk_type(ctx, p.second->type);
         args_irt.push_back(argt->irt);
@@ -262,6 +262,8 @@ llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t fun)
             fun->pos, 
 			fun->id->name.c_str());
     }
+
+
    
     return type;
 		

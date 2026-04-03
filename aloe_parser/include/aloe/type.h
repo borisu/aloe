@@ -14,15 +14,29 @@ namespace aloe
 		TT_FUNCTION
 	};
 
+	struct base_type_t : public node_t
+	{
+		base_type_t() :node_t(BASE_TYPE_NODE), tt(TT_UNKNOWN){}
+
+		base_type_t(type_type_e type_type, node_ptr_t def) :node_t(BASE_TYPE_NODE), tt(type_type), def(def) {}
+
+		type_type_e				tt;
+
+		identifier_node_ptr_t	tid;
+
+		node_ptr_t				def;
+	};
+
+	typedef shared_ptr<base_type_t>
+	base_type_ptr_t;
+
 	struct type_node_t : public node_t
 	{
-		type_node_t(type_type_e type_type, size_t ref_count = 0) :node_t(TYPE_NODE),tt(type_type), ref_count(ref_count){};
-		type_node_t(type_type_e type_type, node_ptr_t def, size_t ref_count = 0) :node_t(TYPE_NODE), tt(type_type), ref_count(ref_count), def(def){};
+		type_node_t(size_t ref_count = 0) :node_t(TYPE_NODE), ref_count(ref_count){};
 
 		size_t					ref_count;
-		type_type_e				tt;
-		identifier_node_ptr_t	tid;
-		node_ptr_t				def;
+
+		base_type_ptr_t			bt;
 	};
 
 	typedef shared_ptr<type_node_t> 

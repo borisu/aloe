@@ -46,10 +46,11 @@ namespace aloe
 	private:
 
 		typedef std::pair<size_t, Type*> di_cache_key_t;
-		std::map<di_cache_key_t, DIType*> di_cache;
+		map<di_cache_key_t, DIType*> di_cache;
 
 		typedef std::pair<size_t, node_ptr_t> type_cache_key_t;
-		std::map<type_cache_key_t, type_ptr_t> type_cache;
+		map<type_cache_key_t, type_ptr_t> type_cache;
+	    
 
 		DIType* get_dit(di_cache_key_t key, DIType* dit);
 
