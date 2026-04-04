@@ -19,17 +19,16 @@
       <Filter>include\aloe</Filter>
     </ClInclude>
     <ClInclude Include="ir_compiler.h" />
-    <ClInclude Include="type_cache.h" />
     <ClInclude Include="compiler_exception.h" />
-    <ClInclude Include="type.h" />
+    <ClInclude Include="ir_type.h" />
     <ClInclude Include="fun_desc.h" />
-    <ClInclude Include="value.h" />
+    <ClInclude Include="ir_value.h" />
+    <ClInclude Include="type_cache.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="ir_compiler.cpp" />
-    <ClCompile Include="type_cache.cpp" />
     <ClCompile Include="compiler_exception.cpp" />
-    <ClCompile Include="type.cpp" />
+    <ClCompile Include="type_cache.cpp" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,9 @@
 #pragma once
-#include "type.h"
-#include "value.h"
+#include "aloe\type.h"
+#include "ir_type.h"
+#include "ir_value.h"
+#include "fun_desc.h"
+#include "type_cache.h"
 
 using namespace llvm;
 
@@ -25,35 +28,29 @@ namespace aloe
 
 		virtual void walk_prog(compiler_ctx_t *ctx, prog_node_ptr_t node);
 
-		virtual type_ptr_t walk_type(compiler_ctx_t* ctx, type_node_ptr_t node);
+		virtual ir_type_ptr_t walk_type(compiler_ctx_t* ctx, type_node_ptr_t node);
 
-		virtual type_ptr_t walk_built_in(compiler_ctx_t* ctx, builtin_node_ptr_t node);
+		virtual ir_base_type_ptr_t walk_built_in(compiler_ctx_t* ctx, builtin_node_ptr_t node);
 
-		virtual type_ptr_t walk_func(compiler_ctx_t* ctx, fun_node_ptr_t node);
+		virtual ir_base_type_ptr_t walk_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node);
+
+		virtual fun_desc_ptr_t walk_func(compiler_ctx_t* ctx, fun_node_ptr_t node);
 
 		virtual void walk_exec_statement(compiler_ctx_t* ctx, node_ptr_t node);
 
-		virtual value_ptr_t walk_expression(compiler_ctx_t* ctx, expr_node_ptr_t node);
+		virtual ir_value_ptr_t walk_expression(compiler_ctx_t* ctx, expr_node_ptr_t node);
 
-		virtual value_ptr_t walk_fun_call (compiler_ctx_t* ctx, funcall_expr_node_ptr_t node);
+		virtual ir_value_ptr_t walk_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr_t node);
 
-		virtual value_ptr_t walk_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node);
+		virtual ir_value_ptr_t walk_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node);
 
-		virtual value_ptr_t walk_literal(compiler_ctx_t* ctx, literal_node_ptr_t node);
+		virtual ir_value_ptr_t walk_literal(compiler_ctx_t* ctx, literal_node_ptr_t node);
 
-		virtual value_ptr_t walk_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
+		virtual ir_value_ptr_t walk_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
 
 	private:
 
-		typedef std::pair<size_t, Type*> di_cache_key_t;
-		map<di_cache_key_t, DIType*> di_cache;
-
-		typedef std::pair<size_t, node_ptr_t> type_cache_key_t;
-		map<type_cache_key_t, type_ptr_t> type_cache;
-	    
-
-		DIType* get_dit(di_cache_key_t key, DIType* dit);
-
+		type_cache_t type_cache;
 		
 	};
 

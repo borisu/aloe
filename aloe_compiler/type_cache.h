@@ -1,51 +1,32 @@
 #pragma once
-using namespace std;
-using namespace llvm;
-
-#include "aloe\compiler.h"
-#include "type.h"
-
+#include "aloe\type.h"
+#include "ir_type.h"
+#include "ir_value.h"
+#include "fun_desc.h"
 
 namespace aloe
 {
-    class type_cache_t {
+	class type_cache_t
+	{
+	public:
 
-    public:
+		DIType* get_dit(size_t ref_count, Type* ir_type, DIType* dit);
 
-        type_cache_t(DIBuilder& dib, Module& m, LLVMContext& ctx);
 
-		type_ptr_t get_type(node_ptr_t node);
+	private:
 
-    private:
 
-        /*** IR ***/
 
-        Type* ir_get_type(node_ptr_t node);
+		map<type_node_t, ir_type_ptr_t> type_cache;
 
-        Type* ir_get_type_lit(literal_node_ptr_t literal);
+		
 
-        FunctionType* ir_get_type_fun(fun_node_ptr_t fun);
+		typedef std::pair<size_t, Type*> di_cache_key_t;
+		map<di_cache_key_t, DIType*> di_cache;
 
-        /*** DI ***/
+	};
 
-        DIType* di_get_type(node_ptr_t node);
-
-        DISubroutineType* di_get_type_fun(fun_node_ptr_t node);
-
-        LLVMContext& ctx;
-
-        DIBuilder& dib;
-
-        Module& module;
-
-		map<node_ptr_t, DIType*> di_type_cache;
-        
-    };
-
-	typedef shared_ptr<type_cache_t> 
-    type_cache_ptr_t;
 
 }
-
 
 

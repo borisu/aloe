@@ -10,18 +10,18 @@ using namespace std;
 namespace aloe
 {
 
-	struct execution_block_node_t : public node_t
+	struct exec_block_node_t : public node_t
 	{
-		execution_block_node_t() : node_t(EXECUTION_BLOCK_NODE) {}
+		exec_block_node_t() : node_t(EXECUTION_BLOCK_NODE) {}
 		vector<node_ptr_t> exec_statements;
 	};
 
-	typedef shared_ptr<execution_block_node_t> 
-	execution_block_node_ptr_t;
+	typedef shared_ptr<exec_block_node_t> 
+	exec_block_node_ptr_t;
 
-	struct fun_type_t : public node_t
+	struct fun_type_node_t : public node_t
 	{
-		fun_type_t() :node_t(FUN_TYPE_NODE)
+		fun_type_node_t() :node_t(FUN_TYPE_NODE)
 		{}
 
 		type_node_ptr_t				ret_type;
@@ -30,8 +30,8 @@ namespace aloe
 
 	};
 
-	typedef shared_ptr<fun_type_t>
-	fun_type_ptr_t;
+	typedef shared_ptr<fun_type_node_t>
+	fun_type_node_ptr_t;
 
 	struct fun_node_t : public node_t
 	{
@@ -40,9 +40,9 @@ namespace aloe
 
 		identifier_node_ptr_t	id;
 
-		fun_type_ptr_t 			fun_type;
+		fun_type_node_ptr_t 	fun_type;
 		
-		execution_block_node_ptr_t	exec_block;
+		exec_block_node_ptr_t	exec_block;
 
 		bool is_defined;
 	};

@@ -253,10 +253,10 @@ antl4_parser_t::walk_built_in_type(environment_ptr_t env, aloeParser::BuiltinTyp
     return bit_node;
 }
 
-fun_type_ptr_t 
+fun_type_node_ptr_t
 antl4_parser_t::walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx)
 {
-    fun_type_ptr_t fun_type(new fun_type_t());
+    fun_type_node_ptr_t fun_type(new fun_type_node_t());
     INIT_POS(fun_type, ctx);
     fun_type->ret_type = walk_type(env, ctx->type());
     fun_type->var_list = walk_var_list(env, ctx->varList());
@@ -304,10 +304,10 @@ antl4_parser_t::walk_func_declaration( environment_ptr_t env, aloeParser::FunDec
     return fun_node;
 }
 
-execution_block_node_ptr_t
+exec_block_node_ptr_t
 antl4_parser_t::walk_execution_block(environment_ptr_t env, aloeParser::ExecutionBlockContext* ctx)
 {
-    execution_block_node_ptr_t block_node = execution_block_node_ptr_t(new execution_block_node_t());
+    exec_block_node_ptr_t block_node = exec_block_node_ptr_t(new exec_block_node_t());
     INIT_POS(block_node, ctx);
 
     for (auto& exec_ctx : ctx->executionStatement())

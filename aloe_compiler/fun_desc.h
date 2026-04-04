@@ -1,5 +1,5 @@
 #pragma once
-#include "type.h"
+#include "ir_type.h"
 #include "llvm/IR/Function.h"
 
 using namespace llvm;
@@ -8,11 +8,13 @@ namespace aloe
 {
 	struct fun_desc_t
 	{
-		fun_desc_t() :ir_func(nullptr) {}
+		fun_desc_t() :ir_fun(nullptr) {}
 
-		Function* ir_func;
+		Function* ir_fun;
 
-		type_t type;
+		ir_base_type_ptr_t  type;
+
+		fun_node_ptr_t ast_def;
 		
 	};
 
