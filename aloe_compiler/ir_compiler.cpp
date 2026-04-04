@@ -239,7 +239,7 @@ llvmir_compiler_t::walk_func(compiler_ctx_t* ctx, fun_node_ptr_t node)
         (DISubroutineType*) fun_type->dit, // fnType
         node->line,                 // scope line
         DINode::FlagZero,
-        DISubprogram::SPFlagDefinition
+		node->is_defined ? DISubprogram::SPFlagDefinition : DISubprogram::SPFlagZero
      );
 
     ir_fun->setSubprogram(sp);

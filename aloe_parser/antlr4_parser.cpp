@@ -116,6 +116,7 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
             {
                 prog->decl_statements.push_back(walk_func_declaration(env, stmt->funDeclaration()));
             }
+            
         }
         catch (parse_exeption_t &e)
         {
@@ -324,6 +325,10 @@ antl4_parser_t::walk_execution_block(environment_ptr_t env, aloeParser::Executio
         {
             block_node->exec_statements.push_back(walk_expression(env, exec_ctx->expression()));
         }
+        else if (exec_ctx->returnStatement())
+        {
+            block_node->exec_statements.push_back(walk_return(env, exec_ctx->returnStatement()));
+        }
     } // for 
 
 	return block_node;
@@ -442,6 +447,18 @@ antl4_parser_t::walk_arg_list(environment_ptr_t env, aloeParser::ArgumentExpress
         arg_list->args.push_back(walk_expression(env, exprCtx));
     }
     return arg_list;
+}
+
+return_node_ptr_t  
+antl4_parser_t::walk_return(environment_ptr_t env, aloeParser::ReturnStatementContext* ctx)
+{
+    return_node_ptr_t return_node(new return_node_t());
+    INIT_POS(return_node, ctx);
+    if (ctx->expression())
+    {
+        return_node->return_expr = walk_expression(env, ctx->expression());
+    }
+	return return_node;
 }
 
 expr_node_ptr_t 

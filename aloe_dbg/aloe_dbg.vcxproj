@@ -145,7 +145,7 @@
   <ItemGroup>
     <CustomBuild Include="a.alo">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo $(TargetDir)\aloe.exe -c  %(FullPath)  -o $(ProjectDir)\gengen\a.ll
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo Compiling %(FullPath) ...
 $(TargetDir)\aloe.exe -c  %(FullPath)  -o $(ProjectDir)\gengen\a.ll</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\gengen\a.ll</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -153,7 +153,12 @@ $(TargetDir)\aloe.exe -c  %(FullPath)  -o $(ProjectDir)\gengen\a.ll</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <None Include="gengen\a.ll" />
+    <CustomBuild Include="gengen\a.ll">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo Compiling %(FullPath)
+"C:\Program Files (x86)\LLVM\bin\llc" -filetype=obj %(FullPath)  -o  $(IntDir)%(Filename).obj</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename).obj</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

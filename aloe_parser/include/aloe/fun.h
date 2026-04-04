@@ -4,6 +4,7 @@
 #include "node.h"
 #include "type.h"
 #include "var.h"
+#include "expression.h"
 
 using namespace std;
 
@@ -48,4 +49,16 @@ namespace aloe
 	};
 
 	typedef shared_ptr<fun_node_t> fun_node_ptr_t;
+
+
+	struct return_node_t : public node_t
+	{
+		return_node_t() :node_t(RETURN_NODE){}
+
+		expr_node_ptr_t return_expr;
+	
+	};
+
+	typedef shared_ptr<return_node_t> 
+	return_node_ptr_t;
 }

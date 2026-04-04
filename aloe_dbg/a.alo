@@ -1,6 +1,6 @@
-expect fun log:void(var msg: ^char)
+expect fun log: (var msg: ^char) -> void 
 
-fun root:int()
+fun root:() -> int
 {
 	log("Hello World!");
 }
