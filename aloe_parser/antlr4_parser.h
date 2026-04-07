@@ -43,7 +43,7 @@ namespace aloe
 
 		virtual var_node_ptr_t walk_var(environment_ptr_t env, aloeParser::VarDeclarationContext* ctx);
 
-		virtual fun_node_ptr_t walk_func_declaration(environment_ptr_t env,  aloeParser::FunDeclarationContext* ctx);
+		virtual fun_node_ptr_t walk_fun_declaration(environment_ptr_t env,  aloeParser::FunDeclarationContext* ctx);
 
 		virtual expr_node_ptr_t walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx);
 
@@ -51,7 +51,7 @@ namespace aloe
 
 		virtual literal_node_ptr_t  walk_literal(environment_ptr_t env, aloeParser::LiteralContext* ctx);
 
-		virtual identifier_node_ptr_t  walk_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, bool declaration, identifier_type_e expected_type);
+		virtual identifier_node_ptr_t  walk_expr_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, bool declaration, identifier_type_e expected_type);
 
 		virtual arglist_node_ptr_t walk_arg_list(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx);
 

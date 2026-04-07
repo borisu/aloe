@@ -146,6 +146,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\aloe\defs.h" />
     <ClInclude Include="include\aloe\logger.h" />
+    <ClInclude Include="include\aloe\scope_guard.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

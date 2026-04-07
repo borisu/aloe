@@ -13,7 +13,7 @@ namespace aloe
 		void test_fun_expect1();
 		
 		bool parse_string(const char* al);
-		bool parse_file(const char* al);
+
 
 		bool success;
 		

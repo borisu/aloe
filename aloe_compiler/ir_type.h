@@ -37,7 +37,11 @@ namespace aloe
 
 	struct ir_type_t
 	{
-		ir_type_t() :  ref_count(0), irt(nullptr), dit(nullptr) {}
+		ir_type_t() :  
+			ref_count(0), 
+			irt(nullptr), 
+			dit(nullptr), 
+			base_type(new ir_base_type_t){}
 
 		size_t ref_count;
 
@@ -45,7 +49,7 @@ namespace aloe
 
 		DIType* dit;
 
-		ir_base_type_ptr_t bt;
+		ir_base_type_ptr_t base_type;
 
 	};
 

@@ -12,7 +12,7 @@ namespace aloe
 
 		Function* ir_fun;
 
-		ir_base_type_ptr_t  type;
+		ir_base_type_ptr_t  ir_type;
 
 		fun_node_ptr_t ast_def;
 		

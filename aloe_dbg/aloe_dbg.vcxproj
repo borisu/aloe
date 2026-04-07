@@ -112,6 +112,10 @@
       <AdditionalLibraryDirectories>$(IntDirFullPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>echo Deleting $(ProjectDir)\gengen\a.ll
+del $(ProjectDir)\gengen\a.ll</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

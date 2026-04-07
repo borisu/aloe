@@ -9,6 +9,9 @@
     <ClInclude Include="include\aloe\defs.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="include\aloe\scope_guard.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
