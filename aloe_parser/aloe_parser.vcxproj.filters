@@ -39,12 +39,18 @@
     <ClInclude Include="include\aloe\built_in.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="parse_exception.h" />
+    <ClInclude Include="include\aloe\bridge.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="antlr4_parser.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="environment.cpp" />
+    <ClCompile Include="type.cpp" />
+    <ClCompile Include="parse_exception.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">

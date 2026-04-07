@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "antlr4_parser.h"
+#include "parse_exception.h"
 #include "utils.h"
+#include "aloe/defs.h"
 
 using namespace aloe;
 using namespace std;
@@ -15,15 +17,6 @@ aloe::create_parser()
     return parser_ptr_t(new antl4_parser_t());
 }
 
-
-aloe::parse_exeption_t::parse_exeption_t(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-	va_end(args);
-}
-
 antl4_parser_t::antl4_parser_t()
 {
     syntax_error_occurred = false;
@@ -33,6 +26,12 @@ antl4_parser_t::antl4_parser_t()
     DOUBLE_NODE.reset(new builtin_node_t(BIT_DOUBLE));
     OPAQUE_NODE.reset(new builtin_node_t(BIT_OPAQUE));
     VOID_NODE.reset(new builtin_node_t(BIT_VOID));
+
+	INT_NODE_BRIDGE.reset(new bridge_t(INT_NODE));
+	CHAR_NODE_BRIDGE.reset(new bridge_t(CHAR_NODE));
+	DOUBLE_NODE_BRIDGE.reset(new bridge_t(DOUBLE_NODE));
+	OPAQUE_NODE_BRIDGE.reset(new bridge_t(OPAQUE_NODE));
+	VOID_NODE_BRIDGE.reset(new bridge_t(VOID_NODE));
 }
 
 bool
@@ -101,7 +100,7 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
 
 	if (ctx->moduleStatement())
     {
-        prog->module_name = walk_expr_identifier(env,ctx->moduleStatement()->identifier(),true,ID_MODULE);
+        prog->module_name = walk_identifier(env,ctx->moduleStatement()->identifier(), ID_MODULE,false);
     }
 
     for (auto& stmt : ctx->declarationStatementList()->declarationStatement())
@@ -139,31 +138,23 @@ antl4_parser_t::walk_base_type(environment_ptr_t env, aloeParser::BaseTypeContex
 
     if (ctx->funType())
     {
-        auto ast_def = walk_fun_type(env, ctx->funType());
-        out.reset(new base_type_t(TT_FUNCTION, ast_def));
+        auto fun_type = walk_fun_type(env, ctx->funType());
+        out.reset(new base_type_t(TT_FUNCTION, bridge_ptr_t(new bridge_t(fun_type))));
     }
     else if (ctx->builtinType())
     {
-        auto ast_def = walk_built_in_type(env, ctx->builtinType());
-        out.reset(new base_type_t(TT_BUILTIN, ast_def));
+        auto builtin_type_node = walk_built_in_type(env, ctx->builtinType());
+        out.reset(new base_type_t(TT_BUILTIN, bridge_ptr_t(new bridge_t(builtin_type_node))));
     }
     else if (ctx->identifier())
     {
-        identifier_node_ptr_t id_node = walk_expr_identifier(env, ctx->identifier(), false, ID_TYPE);
-        node_ptr_t ast_def = env->find_id(id_node);
-        if (!ast_def)
-        {
-            throw parse_exeption_t("%s:%zu:%zu: error: unknown type '%s'",
-                env->source_id.c_str(),
-                ctx->getStart()->getLine(),
-                ctx->getStart()->getStartIndex(),
-                ctx->getText().c_str());
-        }
-
-        switch (ast_def->node_type_id)
+        identifier_node_ptr_t id_node = walk_identifier(env, ctx->identifier(), ID_TYPE,true);
+        bridge_ptr_t bridge = env->find_id(id_node);
+        
+        switch (bridge->target->node_type_id)
         {
         case FUN_TYPE_NODE: {
-            out.reset(new base_type_t(TT_FUNCTION, ast_def));
+            out.reset(new base_type_t(TT_FUNCTION, bridge));
             break;
         }
         default:
@@ -201,9 +192,9 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
 
         return out;
     }
-    else if (ctx->ir_type())
+    else if (ctx->type())
     {
-		return walk_type(env, ctx->ir_type(), ref_count + 1);
+		return walk_type(env, ctx->type(), ref_count + 1);
     }
     else
     {
@@ -259,7 +250,7 @@ antl4_parser_t::walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext*
 {
     fun_type_node_ptr_t fun_type(new fun_type_node_t());
     INIT_POS(fun_type, ctx);
-    fun_type->ret_type = walk_type(env, ctx->ir_type());
+    fun_type->ret_type = walk_type(env, ctx->type());
     fun_type->var_list = walk_var_list(env, ctx->varList());
 	return fun_type;
 }
@@ -270,33 +261,72 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
     fun_node_ptr_t fun_node = fun_node_ptr_t(new fun_node_t());
     INIT_POS(fun_node, ctx);
 
-    
-	fun_node->is_defined = ctx->expect() == nullptr;
-    fun_node->id         = walk_expr_identifier(env, ctx->identifier(), true, ID_VAR);
-    
-	env->register_id(fun_node->id, fun_node);
-
-    environment_ptr_t new_env(new environment_t(env));
-    fun_node->fun_type = walk_fun_type(new_env, ctx->funType());
-
-	if (ctx->expect() && ctx->executionBlock())
+    if (ctx->expect() && ctx->executionBlock())
     {
-		throw parse_exeption_t("%s:%zu:%zu: error: function %s was declared as 'expect' but has body", 
-            env->source_id.c_str(), 
-            ctx->getStart()->getLine(), 
-            ctx->getStart()->getStartIndex(), 
+        throw parse_exeption_t("%s:%zu:%zu: error: function %s was declared as 'expect' but has body",
+            env->source_id.c_str(),
+            ctx->getStart()->getLine(),
+            ctx->getStart()->getStartIndex(),
             fun_node->id->name.c_str());
     }
 
     if (!ctx->expect() && !ctx->executionBlock())
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: function %s was not declared as 'expect' but has no body", 
-            env->source_id.c_str(), 
-            ctx->getStart()->getLine(), 
-            ctx->getStart()->getStartIndex(), 
+        throw parse_exeption_t("%s:%zu:%zu: error: function %s was not declared as 'expect' but has no body",
+            env->source_id.c_str(),
+            ctx->getStart()->getLine(),
+            ctx->getStart()->getStartIndex(),
             fun_node->id->name.c_str());
     }
+    
+	fun_node->is_defined = ctx->expect() == nullptr;
+    fun_node->id         = walk_identifier(env, ctx->identifier(), ID_NONTYPE,false);
 
+    auto prev_node      = env->find_id(fun_node->id);
+    auto prev_fun       = prev_node ? PCAST(fun_node_t, prev_node->target) : nullptr;
+
+    // check that function is defined twice
+    if (prev_node)
+    {
+        if (prev_fun->is_defined && fun_node->is_defined)
+        {
+            throw parse_exeption_t("%s:%zu:%zu: error: function %s was already defined",
+                env->source_id.c_str(),
+                ctx->getStart()->getLine(),
+                ctx->getStart()->getStartIndex(),
+                fun_node->id->name.c_str());
+        }
+    }
+    
+    environment_ptr_t new_env(new environment_t(env));
+    fun_node->fun_type = walk_fun_type(new_env, ctx->funType());
+
+	// check that function is not defined with different type
+    if (prev_node)
+    {
+        if (*(prev_fun->fun_type) != *(fun_node->fun_type))
+        {
+            throw parse_exeption_t("%s:%zu:%zu: error: function %s was already declared with different type",
+                env->source_id.c_str(),
+                ctx->getStart()->getLine(),
+                ctx->getStart()->getStartIndex(),
+                fun_node->id->name.c_str());
+        }
+
+    }
+
+    // if we already stored definition node do not attempt to store this one
+    if (prev_fun)
+    {
+        if (prev_fun->is_defined)
+        {
+			fun_node->ignore = true; 
+        }
+    }
+
+    if (!fun_node->ignore)
+        env->register_id(fun_node->id, fun_node); // it will mark previous node as ignore
+   
     if (fun_node->is_defined)
     {
         fun_node->exec_block = walk_execution_block(new_env, ctx->executionBlock());
@@ -359,15 +389,26 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
     var_node_ptr_t var_node  = var_node_ptr_t(new var_node_t());
     INIT_POS(var_node, ctx);
 
-    var_node->id = walk_expr_identifier(env, ctx->identifier(), true, ID_VAR);
-    var_node->ir_type           = walk_type(env, ctx->ir_type());
+    var_node->id = walk_identifier(env, ctx->identifier(), ID_NONTYPE, false);
+
+    auto prev_node = env->find_id(var_node->id);
+    if (prev_node)
+    {
+        throw parse_exeption_t("%s:%zu:%zu: error: var %s was already defined",
+            env->source_id.c_str(),
+            ctx->getStart()->getLine(),
+            ctx->getStart()->getStartIndex(),
+            var_node->id->name.c_str());
+    }
+
+    var_node->type = walk_type(env, ctx->type());
     env->register_id(var_node->id, var_node);
 
     return var_node;
 }
 
 identifier_node_ptr_t  
-antl4_parser_t::walk_expr_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, bool id_declaration, identifier_type_e expected_id_type)
+antl4_parser_t::walk_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, identifier_type_e expected_id_type, bool must_exist)
 {
     if (!ctx)
         return identifier_node_ptr_t();
@@ -376,27 +417,18 @@ antl4_parser_t::walk_expr_identifier(environment_ptr_t env, aloeParser::Identifi
     INIT_POS(id_node, ctx);
 
     id_node->name    = ctx->getText() ;
-    id_node->id_type = expected_id_type;
+    id_node->idt_type_id = expected_id_type;
 
-    auto already_exists_node_ptr = env->find_id(id_node);
+    auto prev_node = env->find_id(id_node);
+    if (!prev_node && must_exist)
+    {
+        throw parse_exeption_t("%s:%zu:%zu: error: identifier '%s' is not defined",
+            env->source_id.c_str(),
+            ctx->getStart()->getLine(),
+            ctx->getStart()->getStartIndex(),
+			id_node->name.c_str());
+    }
         
-    if (id_declaration && already_exists_node_ptr)
-    {
-        throw parse_exeption_t("%s:%zu:%zu: error: identifier %s was already defined", 
-            env->source_id.c_str(), 
-            ctx->getStart()->getLine(), 
-            ctx->getStart()->getStartIndex(), 
-            id_node->name.c_str());
-    }
-    else if (!id_declaration && !already_exists_node_ptr)
-    {
-        throw parse_exeption_t("%s:%zu:%zu: error: unknown identifier '%s'", 
-            env->source_id.c_str(), 
-            ctx->getStart()->getLine(), 
-            ctx->getStart()->getStartIndex(), 
-            id_node->name.c_str());
-    }
-    
     return id_node;
     
 }
@@ -414,7 +446,7 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
         literal_node->value = std::stoi(ctx->DigitSequence()->getText());
 		literal_node->value_type->base_type->node_type_id = BASE_TYPE_NODE;
 		literal_node->value_type->base_type->type_type_id = TT_BUILTIN;
-        literal_node->value_type->base_type->ast_def = this->INT_NODE;
+        literal_node->value_type->base_type->ast_def = INT_NODE_BRIDGE;
     }
     else if (ctx->StringLiteral().size() > 0)
     {
@@ -426,7 +458,7 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
         }
         literal_node->value = unescape(sf.substr(1, sf.size() - 2));
         literal_node->value_type->base_type->node_type_id = BASE_TYPE_NODE;
-        literal_node->value_type->base_type->ast_def = this->CHAR_NODE;
+        literal_node->value_type->base_type->ast_def = CHAR_NODE_BRIDGE;
         literal_node->value_type->base_type->type_type_id = TT_BUILTIN;
 		literal_node->value_type->ref_count = 1; // string literal is char pointer
     }
@@ -436,7 +468,7 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
         literal_node->value = unescape(ctx->CharacterConstant()->getText())[0];
 		literal_node->value_type->base_type->node_type_id = BASE_TYPE_NODE;
         literal_node->value_type->base_type->type_type_id = TT_BUILTIN;
-        literal_node->value_type->base_type->ast_def = this->CHAR_NODE;
+        literal_node->value_type->base_type->ast_def = CHAR_NODE_BRIDGE;
     }
     else
     {
@@ -481,8 +513,8 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        NEW_EXPR_NODE(expr_node, identifier);
        INIT_POS(expr_node, ctx);
 
-       expr_node->id = walk_expr_identifier(env, e->identifier(), false,ID_VAR);
-	   expr_node->id_def = env->find_id(expr_node->id);
+       expr_node->id = walk_identifier(env, e->identifier(),ID_NONTYPE,true);
+	   expr_node->ast_def = env->find_id(expr_node->id);
 
        return expr_node;
    }
@@ -546,7 +578,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
-       expr_node->id        = walk_expr_identifier(env, e->identifier(), false, ID_VAR);
+       expr_node->id        = walk_identifier(env, e->identifier(), ID_NONTYPE,true);
 
        return expr_node;
 
@@ -557,7 +589,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
-       expr_node->id        = walk_expr_identifier(env, e->identifier(), false, ID_VAR);
+       expr_node->id        = walk_identifier(env, e->identifier(), ID_NONTYPE,true);
 
        return expr_node;
 
@@ -620,7 +652,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        NEW_EXPR_NODE(expr_node, cast);
        INIT_POS(expr_node, ctx);
 
-       expr_node->type_node = walk_type(env, e->ir_type());
+       expr_node->type_node = walk_type(env, e->type());
        expr_node->operand   = walk_expression(env, e->expression());
 
        return expr_node;
@@ -657,7 +689,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        NEW_EXPR_NODE(expr_node, sizeoftype);
        INIT_POS(expr_node, ctx);
 
-       expr_node->type_node = walk_type(env, e->ir_type());
+       expr_node->type_node = walk_type(env, e->type());
 
        return expr_node;
 

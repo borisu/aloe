@@ -8,16 +8,7 @@ using namespace std;
 
 namespace aloe
 {
-	struct parse_exeption_t : public std::exception	{ 
 	
-		parse_exeption_t(const char* format, ...);
-
-		char buffer[ALOE_MAX_LOG_LEN];
-
-		virtual const char* what() const noexcept override {
-			return buffer;
-		}
-	};
 
 	class antl4_parser_t : public parser_t, public antlr4::BaseErrorListener, private aloeBaseListener
 	{
@@ -51,7 +42,7 @@ namespace aloe
 
 		virtual literal_node_ptr_t  walk_literal(environment_ptr_t env, aloeParser::LiteralContext* ctx);
 
-		virtual identifier_node_ptr_t  walk_expr_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, bool declaration, identifier_type_e expected_type);
+		virtual identifier_node_ptr_t  walk_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, identifier_type_e expected_type, bool must_exist);
 
 		virtual arglist_node_ptr_t walk_arg_list(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx);
 
@@ -70,6 +61,16 @@ namespace aloe
 		builtin_node_ptr_t OPAQUE_NODE;
 
 		builtin_node_ptr_t VOID_NODE;
+
+		bridge_ptr_t INT_NODE_BRIDGE;
+
+		bridge_ptr_t CHAR_NODE_BRIDGE;
+
+		bridge_ptr_t DOUBLE_NODE_BRIDGE;
+
+		bridge_ptr_t OPAQUE_NODE_BRIDGE;
+
+		bridge_ptr_t VOID_NODE_BRIDGE;
 
 		bool syntax_error_occurred;
 

@@ -40,7 +40,7 @@ tests_cmd_t::parse_string(const char* al)
 void
 tests_cmd_t::test_var_declarations1()
 {
-    auto p = create_parser();
+    
 
     TEST_PARSE_STRING(R"(var b:A)", false);
     TEST_PARSE_STRING(R"(var a:int)", true);
@@ -52,26 +52,44 @@ tests_cmd_t::test_var_declarations1()
 void
 tests_cmd_t::test_fun_declarations1()
 {
-    auto p = create_parser();
     
     TEST_PARSE_STRING(R"(fun foo:()-> void { fun xxx:()->int {}; })", true);
 
 }
 
+
+
 void
 tests_cmd_t::test_fun_expect1()
 {
-    auto p = create_parser();
 
     TEST_PARSE_STRING(R"(expect fun foo:() -> void)", true);
     TEST_PARSE_STRING(R"(expect fun foo:() -> void {})", false);
+    TEST_PARSE_STRING(R"(
+        expect fun foo:()-> void; 
+        fun foo:()-> void { }
+    )", true);
+
+    TEST_PARSE_STRING(R"(
+            fun foo:()-> void { }
+            expect fun foo:()-> void; 
+    )", true);
+
+    TEST_PARSE_STRING(R"(
+        expect fun foo:()-> void; 
+        fun foo:()-> int { }
+    )", false);
+
+    TEST_PARSE_STRING(R"(
+            fun foo:()-> int { }
+            expect fun foo:()-> void; 
+    )", false);
 
 }
 
 void 
 tests_cmd_t::test_expressions1()
 {
-    auto p = create_parser();
 
     TEST_PARSE_STRING(R"( fun foo:() -> void { "a";})", true);
     TEST_PARSE_STRING(R"( fun foo:() -> void { '\n';})", true);
@@ -87,10 +105,13 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
+   
+
     test_fun_expect1();
     test_var_declarations1();
     test_fun_declarations1();
     test_expressions1();
+    
 
     return success;
 }

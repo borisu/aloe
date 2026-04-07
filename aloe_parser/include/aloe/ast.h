@@ -8,6 +8,7 @@
 #include "literal.h"
 #include "identifier.h"
 #include "built_in.h"
+#include "bridge.h"
 
 
 using namespace std;

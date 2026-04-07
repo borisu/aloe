@@ -1,5 +1,7 @@
 expect fun vera: (var msg: ^char) -> void 
 
+expect fun root:() -> int
+
 fun root:() -> int
 {
 	vera("Hello World!")

@@ -6,11 +6,11 @@ namespace aloe
 {
 	struct ir_value_t
 	{
-		ir_value_t() :ir_value(nullptr), ir_type(new ir_type_t()),is_lvalue(false){}
+		ir_value_t() :ir_value(nullptr), type(new ir_type_t()),is_lvalue(false){}
 
 		Value* ir_value;
 
-		ir_type_ptr_t ir_type;
+		ir_type_ptr_t type;
 
 		bool is_lvalue;
 		

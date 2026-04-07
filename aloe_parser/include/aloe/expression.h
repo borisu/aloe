@@ -98,7 +98,7 @@ namespace aloe
 
 		identifier_node_ptr_t id;
 
-		node_ptr_t id_def;
+		bridge_ptr_t ast_def;
 	};
 	
 	struct unary_expr_node_t : public expr_node_t

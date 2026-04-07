@@ -10,7 +10,7 @@ namespace aloe
 	{
 	public:
 
-		DIType* get_dit_type(size_t ref_count, Type* ir_type, DIType* dit);
+		DIType* get_dit_type(size_t ref_count, Type* type, DIType* dit);
 
 		//ir_type_ptr_t get_ir_type(type_node_ptr_t node, ir_type_ptr_t ir_type);
 	

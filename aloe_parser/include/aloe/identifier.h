@@ -11,33 +11,22 @@ namespace aloe
 	enum identifier_type_e
 	{
 		ID_UNKNOWN,
-		ID_VAR,
+		ID_NONTYPE,
 		ID_TYPE,
 		ID_MODULE
 	};
 
 	struct identifier_node_t : public node_t
 	{
-		identifier_node_t() :node_t(IDENTFIER_NODE),id_type(ID_UNKNOWN) {};
+		identifier_node_t() :node_t(IDENTFIER_NODE),idt_type_id(ID_UNKNOWN) {};
 
 		string name;
 
-		identifier_type_e id_type;
+		identifier_type_e idt_type_id;
 	};
 
 	typedef shared_ptr<identifier_node_t>
-		identifier_node_ptr_t;
-
-	struct id_ptr_map_cmp
-	{
-		bool operator()(const identifier_node_ptr_t& a, const identifier_node_ptr_t& b) const
-		{
-			if (a->name != b->name)
-				return a->name < b->name;
-
-			return a->id_type < b->id_type;
-		}
-	};
+	identifier_node_ptr_t;
 
 }
 #pragma once

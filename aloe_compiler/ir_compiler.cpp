@@ -139,16 +139,15 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
     {
     case TT_BUILTIN:
     {
-        out->base_type = emit_built_in(ctx, PCAST(builtin_node_t,node->base_type->ast_def));
+        out->base_type = emit_built_in(ctx, PCAST(builtin_node_t,node->base_type->ast_def->target));
         break;
     }
     case TT_FUNCTION:
     {
-        out->base_type = emit_fun_type(ctx, PCAST(fun_type_node_t,node->base_type->ast_def));
+        out->base_type = emit_fun_type(ctx, PCAST(fun_type_node_t,node->base_type->ast_def->target));
         break;
 
     }
-    case TT_OBJECT:
     case TT_UNKNOWN:
     default:
     {
@@ -206,7 +205,7 @@ llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
     std::vector<Type*>  args_irt;
     for (auto p : node->var_list->vars_m)
     {
-        ir_type_ptr_t argt = emit_type(ctx, p.second->ir_type);
+        ir_type_ptr_t argt = emit_type(ctx, p.second->type);
         args_irt.push_back(argt->irt);
         di_sig.push_back(argt->dit);
     };
@@ -224,6 +223,9 @@ llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
 fun_desc_ptr_t
 llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 {
+    if (node->ignore)
+        return nullptr;
+
     if (fun_cache.find(node) != fun_cache.end()){
         return fun_cache[node];
     }
@@ -233,7 +235,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     ir_base_type_ptr_t
         fun_type = emit_fun_type(ctx, node->fun_type);
 
-    out->ir_type = fun_type;
+    out->type = fun_type;
     out->ast_def = node;
 
     Function* ir_fun =
@@ -327,16 +329,16 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
 {
 	ir_value_ptr_t out(new ir_value_t());
 
-	switch (node->id_def->node_type_id)
+	switch (node->ast_def->target->node_type_id)
     {
         case FUNCTION_NODE:
         {
 			// convert function descrption to value for function call
-            fun_desc_ptr_t fun_desc = emit_fun(ctx, PCAST(fun_node_t, node->id_def));
+            fun_desc_ptr_t fun_desc = emit_fun(ctx, PCAST(fun_node_t, node->ast_def->target));
 
-			out->ir_type->base_type = fun_desc->ir_type;
-			out->ir_type->irt = fun_desc->ir_type->irt;
-			out->ir_type->dit = fun_desc->ir_type->dit;
+			out->type->base_type = fun_desc->type;
+			out->type->irt = fun_desc->type->irt;
+			out->type->dit = fun_desc->type->dit;
 
             out->ir_value           = fun_desc->ir_fun;
 
@@ -351,7 +353,6 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
                 node->pos,
 				node->id->name.c_str());
         }
-        
     }
 
     return out;
@@ -414,7 +415,7 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
    
 	ir_value_ptr_t calee = emit_expression(ctx, node->function);
   
-	if (!isa<FunctionType>(calee->ir_type->irt))
+	if (!isa<FunctionType>(calee->type->irt))
     {
         throw compiler_exeption_t("%s:%zu:%zu: (error): cannot call non-function type",
             ctx->ast->source_id.c_str(),
@@ -430,7 +431,7 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         args.push_back(arg_val->ir_value);
     }
        
-    auto inst = ctx->llvm_ir->CreateCall((FunctionType*)calee->ir_type->irt, calee->ir_value, args);
+    auto inst = ctx->llvm_ir->CreateCall((FunctionType*)calee->type->irt, calee->ir_value, args);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
@@ -439,7 +440,6 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         ctx->fun_desc_stack.top()->ir_fun->getSubprogram()
     );
 
-    
     inst->setDebugLoc(dloc);
 
     return nullptr;
@@ -460,22 +460,22 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     {
     case LIT_INT:
     {
-        val->ir_type       = emit_type(ctx, node->value_type);
-	    val->ir_value   = ConstantInt::get(val->ir_type->irt, std::get<int>(node->value), true);
+        val->type       = emit_type(ctx, node->value_type);
+	    val->ir_value   = ConstantInt::get(val->type->irt, std::get<int>(node->value), true);
 		
 	    break;
     }
     case LIT_STRING:
     {
-        val->ir_type       = emit_type(ctx, node->value_type);
+        val->type       = emit_type(ctx, node->value_type);
         val->ir_value   = ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
         
         break;
     }
     case LIT_CHAR:
     {
-        val->ir_type       = emit_type(ctx, node->value_type);
-        val->ir_value   = ConstantInt::get(val->ir_type->irt, std::get<char>(node->value));
+        val->type       = emit_type(ctx, node->value_type);
+        val->ir_value   = ConstantInt::get(val->type->irt, std::get<char>(node->value));
         break;
     }
     default:

@@ -15,20 +15,30 @@ namespace aloe
 
 		environment_t(environment_ptr_t env = nullptr);
 
-		bool register_id(identifier_node_ptr_t	id, node_ptr_t node);
+		void register_id(identifier_node_ptr_t id, node_ptr_t node);
 
-		node_ptr_t find_id(identifier_node_ptr_t id);
+		bridge_ptr_t find_id(identifier_node_ptr_t id);
 
 		string source_id;
 
 	private:
 
-		
+		struct id_ptr_map_cmp
+		{
+			bool operator()(const identifier_node_ptr_t& a, const identifier_node_ptr_t& b) const
+			{
+				if (a->name != b->name)
+					return a->name < b->name;
 
-		typedef map<identifier_node_ptr_t, node_ptr_t, id_ptr_map_cmp>
-		def_map_t;
+				return a->idt_type_id < b->idt_type_id;
+			}
+		};
 
-		def_map_t  id_map;
+
+		typedef map<identifier_node_ptr_t, bridge_ptr_t, id_ptr_map_cmp>
+		bridge_map_t;
+
+		bridge_map_t  bridge_map;
 
 		environment_ptr_t prev;
 

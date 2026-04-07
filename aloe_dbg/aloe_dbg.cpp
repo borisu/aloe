@@ -5,11 +5,6 @@
 
 extern "C" int32_t root();
 
-extern "C" void vera(const char* msg)
-{
-	printf("VERA: %s\n", msg);
-}
-
 int main()
 {
     int x  = root();

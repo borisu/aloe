@@ -61,4 +61,8 @@ namespace aloe
 
 	typedef shared_ptr<return_node_t> 
 	return_node_ptr_t;
+
+	bool operator!=(const fun_type_node_t& t1, const fun_type_node_t& t2);
+	bool operator==(const fun_type_node_t& t1, const fun_type_node_t& t2);
+
 }

@@ -12,10 +12,14 @@
     <ClInclude Include="include\aloe\scope_guard.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="include\aloe\intrinsics.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="logger.cpp" />
+    <ClCompile Include="intrinsics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">

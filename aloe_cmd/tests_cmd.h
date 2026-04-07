@@ -11,6 +11,7 @@ namespace aloe
 		void test_fun_declarations1();
 		void test_expressions1();
 		void test_fun_expect1();
+
 		
 		bool parse_string(const char* al);
 
