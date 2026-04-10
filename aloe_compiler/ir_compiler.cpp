@@ -4,7 +4,7 @@
 #include "aloe\scope_guard.h"
 #include "compiler_exception.h"
 #include "ir_compiler.h"
-#include "fun_desc.h"
+#include "ir_fun.h"
 
 using namespace aloe;
 using namespace llvm;
@@ -88,33 +88,33 @@ llvmir_compiler_t::emit_built_in(compiler_ctx_t* ctx, builtin_node_ptr_t node)
     {
     case BIT_INT:
     {
-        out->irt = Type::getInt32Ty(*ctx->llvm_ctx);
-        out->dit = type_cache.get_dit_type(0, out->irt, ctx->llvm_di->createBasicType("int", 32, dwarf::DW_ATE_signed));
-		out->irtt = IRT_INTEGER;
+        out->ir_type = Type::getInt32Ty(*ctx->llvm_ctx);
+        out->di_type = type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("int", 32, dwarf::DW_ATE_signed));
+		out->type_id = IRT_INTEGER;
 
         break;
     }
     case BIT_CHAR:
     {
-        out->irt = Type::getInt8Ty(*ctx->llvm_ctx);
-        out->dit = type_cache.get_dit_type(0, out->irt, ctx->llvm_di->createBasicType("char", 8, dwarf::DW_ATE_signed_char));
-        out->irtt = IRT_INTEGER;
+        out->ir_type = Type::getInt8Ty(*ctx->llvm_ctx);
+        out->di_type = type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("char", 8, dwarf::DW_ATE_signed_char));
+        out->type_id = IRT_CHAR;
         break;
     }
     case BIT_VOID:
     case BIT_OPAQUE:
     {
-        out->irt = Type::getVoidTy(*ctx->llvm_ctx);
-        out->dit = type_cache.get_dit_type(0, out->irt, nullptr);
-        out->irtt = IRT_OPAQUE;
+        out->ir_type = Type::getVoidTy(*ctx->llvm_ctx);
+        out->di_type = type_cache.get_dit_type(0, out->ir_type, nullptr);
+        out->type_id = IRT_OPAQUE;
 
         break;
     }
     case BIT_DOUBLE:
     {
-        out->irt = Type::getDoubleTy(*ctx->llvm_ctx);
-        out->dit = type_cache.get_dit_type(0, out->irt, ctx->llvm_di->createBasicType("double",64,dwarf::DW_ATE_float));
-        out->irtt = IRT_OPAQUE;
+        out->ir_type = Type::getDoubleTy(*ctx->llvm_ctx);
+        out->di_type = type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("double",64,dwarf::DW_ATE_float));
+        out->type_id = IRT_OPAQUE;
         break;
     }
     default:
@@ -133,56 +133,41 @@ llvmir_compiler_t::emit_built_in(compiler_ctx_t* ctx, builtin_node_ptr_t node)
 ir_type_ptr_t
 llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 {
-    ir_type_ptr_t out(new ir_type_t());
+    ir_base_type_ptr_t base_type;
 
     switch (node->base_type->type_type_id)
     {
     case TT_BUILTIN:
     {
-        out->base_type = emit_built_in(ctx, PCAST(builtin_node_t,node->base_type->ast_def->target));
+        base_type = emit_built_in(ctx, PCAST(builtin_node_t, node->base_type->ast_def->target));
         break;
     }
     case TT_FUNCTION:
     {
-        out->base_type = emit_fun_type(ctx, PCAST(fun_type_node_t,node->base_type->ast_def->target));
+        base_type = emit_fun_type(ctx, PCAST(fun_type_node_t, node->base_type->ast_def->target));
         break;
 
     }
     case TT_UNKNOWN:
     default:
     {
-	
+
         throw  compiler_exeption_t("%s:%zu:%zu: (error): unknown type %d",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
             node->base_type->type_type_id); ;
     }
-    }
+    };
 
-	if (node->ref_count == 0)
-    {
-        out->irt = out->base_type->irt;
-        out->dit = out->base_type->dit;
-    }
-    else if (node->ref_count > 0)
-    {
-        out->irt = PointerType::getUnqual(*ctx->llvm_ctx); // collapse to pointer type
+    ir_type_ptr_t out = init_type_from_base(ctx, base_type, node->ref_count);
 
-        for (int i = 1; i <= node->ref_count; i++)
-        {
-            out->ref_count = i;
-            out->dit = type_cache.get_dit_type(i , out->irt, ctx->llvm_di->createPointerType(out->dit, 64)); // must preserve the type for each level of indirection for debug info
-        }
-       
-    }
-    else
+    if (!out)
     {
-        throw compiler_exeption_t("%s:%zu:%zu: (error): negative reference count '%zu' is not allowed for type",
+        throw compiler_exeption_t("%s:%zu:%zu: (error): invalid type",
             ctx->ast->source_id.c_str(),
             node->line,
-            node->pos,
-			node->ref_count);
+            node->pos);
     }
     
 
@@ -194,33 +179,63 @@ ir_base_type_ptr_t
 llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
 {
     ir_base_type_ptr_t out(new ir_base_type_t());
-	out->irtt = IRT_FUNCTION;
+	out->type_id = IRT_FUNCTION;
     out->ast_def = node;
 
     ir_type_ptr_t rett = emit_type(ctx, node->ret_type);
 
     SmallVector<Metadata*, 8>   di_sig;
-    di_sig.push_back(rett->dit);
+    di_sig.push_back(rett->di_type);
 
     std::vector<Type*>  args_irt;
     for (auto p : node->var_list->vars_m)
     {
         ir_type_ptr_t argt = emit_type(ctx, p.second->type);
-        args_irt.push_back(argt->irt);
-        di_sig.push_back(argt->dit);
+        args_irt.push_back(argt->ir_type);
+        di_sig.push_back(argt->di_type);
     };
 
-    out->irt = FunctionType::get(rett->irt, args_irt, false);
+    out->ir_type = FunctionType::get(rett->ir_type, args_irt, false);
 
-    out->dit = (DISubroutineType*)type_cache.get_dit_type(
+    out->di_type = (DISubroutineType*)type_cache.get_dit_type(
         0,
-        out->irt,
+        out->ir_type,
         ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(di_sig)));
 
     return out;
 }
 
-fun_desc_ptr_t
+ir_type_ptr_t 
+llvmir_compiler_t::init_type_from_base(compiler_ctx_t* ctx, ir_base_type_ptr_t base_type, size_t ref_count)
+{
+	ir_type_ptr_t out(new ir_type_t());
+	out->ref_count = ref_count;
+
+    if (out->ref_count == 0)
+    {
+        out->ir_type = base_type->ir_type;
+        out->di_type = base_type->di_type;
+    }
+    else if (out->ref_count > 0)
+    {
+        out->ir_type = PointerType::getUnqual(*ctx->llvm_ctx); // collapse to pointer type
+
+        for (int i = 1; i <= out->ref_count; i++)
+        {
+            out->ref_count = i;
+            out->di_type = type_cache.get_dit_type(i, out->ir_type, ctx->llvm_di->createPointerType(out->di_type, 64)); // must preserve the type for each level of indirection for debug info
+        }
+
+    }
+    else
+    {
+        return nullptr;
+    }
+
+    return out;
+}
+
+ir_fun_ptr_t
 llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 {
     if (node->ignore)
@@ -230,18 +245,19 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
         return fun_cache[node];
     }
 
-    fun_desc_ptr_t out(new fun_desc_t());
+    ir_fun_ptr_t out(new ir_fun_t());
 
-    ir_base_type_ptr_t
-        fun_type = emit_fun_type(ctx, node->fun_type);
+    ir_base_type_ptr_t base_type = emit_fun_type(ctx, node->fun_type);
 
-    out->type = fun_type;
+	out->ir_value->type = init_type_from_base(ctx, base_type, 0);
+
     out->ast_def = node;
 
     Function* ir_fun =
-        Function::Create( (FunctionType*)fun_type->irt,
+        Function::Create( (FunctionType*)base_type->ir_type,
             Function::ExternalLinkage, node->id->name, ctx->llvm_module);
 
+   
     Value* val = ir_fun;
 
     DISubprogram* sp = ctx->llvm_di->createFunction(
@@ -250,7 +266,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
         node->id->name,            // Mangled function name.
         ctx->llvm_di_file,        // File where this variable is defined.
         node->line,                // Line number.
-        (DISubroutineType*) fun_type->dit, // fnType
+        (DISubroutineType*) base_type->di_type, // fnType
         node->line,                 // scope line
         DINode::FlagZero,
 		node->is_defined ? DISubprogram::SPFlagDefinition : DISubprogram::SPFlagZero
@@ -258,7 +274,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
     ir_fun->setSubprogram(sp);
 
-	out->ir_fun = ir_fun;
+	out->ir_value->ir_value = ir_fun;
 
     if (node->is_defined)
     {
@@ -300,9 +316,8 @@ llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-		ctx->fun_desc_stack.top()->ir_fun->getSubprogram()
+		((Function*)ctx->fun_desc_stack.top()->ir_value->ir_value)->getSubprogram()
     );
-
 
 	auto ret_inst = ctx->llvm_ir->CreateRet(ret_val->ir_value);
     ret_inst->setDebugLoc(dloc);
@@ -334,13 +349,9 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
         case FUNCTION_NODE:
         {
 			// convert function descrption to value for function call
-            fun_desc_ptr_t fun_desc = emit_fun(ctx, PCAST(fun_node_t, node->ast_def->target));
+            ir_fun_ptr_t fun_desc = emit_fun(ctx, PCAST(fun_node_t, node->ast_def->target));
 
-			out->type->base_type = fun_desc->type;
-			out->type->irt = fun_desc->type->irt;
-			out->type->dit = fun_desc->type->dit;
-
-            out->ir_value           = fun_desc->ir_fun;
+			out  = fun_desc->ir_value;
 
             break;
         }
@@ -415,7 +426,7 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
    
 	ir_value_ptr_t calee = emit_expression(ctx, node->function);
   
-	if (!isa<FunctionType>(calee->type->irt))
+	if (!isa<FunctionType>(calee->type->ir_type))
     {
         throw compiler_exeption_t("%s:%zu:%zu: (error): cannot call non-function type",
             ctx->ast->source_id.c_str(),
@@ -431,13 +442,13 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         args.push_back(arg_val->ir_value);
     }
        
-    auto inst = ctx->llvm_ir->CreateCall((FunctionType*)calee->type->irt, calee->ir_value, args);
+    auto inst = ctx->llvm_ir->CreateCall((FunctionType*)calee->type->ir_type, calee->ir_value, args);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-        ctx->fun_desc_stack.top()->ir_fun->getSubprogram()
+        ((Function*)ctx->fun_desc_stack.top()->ir_value->ir_value)->getSubprogram()
     );
 
     inst->setDebugLoc(dloc);
@@ -461,7 +472,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     case LIT_INT:
     {
         val->type       = emit_type(ctx, node->value_type);
-	    val->ir_value   = ConstantInt::get(val->type->irt, std::get<int>(node->value), true);
+	    val->ir_value   = ConstantInt::get(val->type->ir_type, std::get<int>(node->value), true);
 		
 	    break;
     }
@@ -475,7 +486,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     case LIT_CHAR:
     {
         val->type       = emit_type(ctx, node->value_type);
-        val->ir_value   = ConstantInt::get(val->type->irt, std::get<char>(node->value));
+        val->ir_value   = ConstantInt::get(val->type->ir_type, std::get<char>(node->value));
         break;
     }
     default:

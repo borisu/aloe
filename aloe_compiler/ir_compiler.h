@@ -3,7 +3,7 @@
 #include "aloe\type.h"
 #include "ir_type.h"
 #include "ir_value.h"
-#include "fun_desc.h"
+#include "ir_fun.h"
 #include "type_cache.h"
 
 using namespace llvm;
@@ -17,7 +17,7 @@ namespace aloe
 		DIBuilder*		llvm_di		 = nullptr;
 		DIFile*			llvm_di_file = nullptr;
 		ast_ptr_t		ast;
-		std::stack<fun_desc_ptr_t> fun_desc_stack;
+		std::stack<ir_fun_ptr_t> fun_desc_stack;
 	};
 
 	class llvmir_compiler_t : public compiler_t
@@ -36,7 +36,7 @@ namespace aloe
 
 		virtual ir_base_type_ptr_t emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node);
 
-		virtual fun_desc_ptr_t emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node);
+		virtual ir_fun_ptr_t emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node);
 
 		virtual void emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node);
 
@@ -52,11 +52,13 @@ namespace aloe
 
 		virtual ir_value_ptr_t emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
 
+		virtual ir_type_ptr_t init_type_from_base(compiler_ctx_t* ctx, ir_base_type_ptr_t base_type, size_t ref_count);
+
 	private:
 
 		type_cache_t type_cache;
 
-		map<fun_node_ptr_t, fun_desc_ptr_t> fun_cache;
+		map<fun_node_ptr_t, ir_fun_ptr_t> fun_cache;
 		
 	};
 

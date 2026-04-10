@@ -154,9 +154,10 @@
   <ItemGroup>
     <ClInclude Include="compiler_exception.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="fun_desc.h" />
+    <ClInclude Include="ir_fun.h" />
     <ClInclude Include="include\aloe\compiler.h" />
     <ClInclude Include="ir_compiler.h" />
+    <ClInclude Include="ir_var.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ir_type.h" />
     <ClInclude Include="ir_value.h" />

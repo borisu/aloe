@@ -14,20 +14,21 @@ namespace aloe
 		IRT_UNKNOWN,
 		IRT_OPAQUE,
 		IRT_INTEGER,
+		IRT_CHAR,
 		IRT_FUNCTION
 	};
 
 	struct ir_base_type_t
 	{
-		ir_base_type_t() : irtt(IRT_UNKNOWN), irt(nullptr), dit(nullptr) {}
+		ir_base_type_t() : type_id(IRT_UNKNOWN), ir_type(nullptr), di_type(nullptr) {}
 
-		ir_base_type_t(ir_type_e irtt) : irtt(irtt), irt(nullptr), dit(nullptr) {}
+		ir_base_type_t(ir_type_e irtt) : type_id(irtt), ir_type(nullptr), di_type(nullptr) {}
 
-		ir_type_e irtt;
+		ir_type_e type_id;
 
-		Type* irt;
+		Type* ir_type;
 
-		DIType* dit;
+		DIType* di_type;
 
 		node_ptr_t ast_def;
 	};
@@ -39,15 +40,15 @@ namespace aloe
 	{
 		ir_type_t() :  
 			ref_count(0), 
-			irt(nullptr), 
-			dit(nullptr), 
+			ir_type(nullptr), 
+			di_type(nullptr), 
 			base_type(new ir_base_type_t){}
 
 		size_t ref_count;
 
-		Type* irt;
+		Type* ir_type;
 
-		DIType* dit;
+		DIType* di_type;
 
 		ir_base_type_ptr_t base_type;
 

@@ -2,7 +2,7 @@
 #include "aloe\type.h"
 #include "ir_type.h"
 #include "ir_value.h"
-#include "fun_desc.h"
+#include "ir_fun.h"
 
 namespace aloe
 {
@@ -10,7 +10,7 @@ namespace aloe
 	{
 	public:
 
-		DIType* get_dit_type(size_t ref_count, Type* type, DIType* dit);
+		DIType* get_dit_type(size_t ref_count, Type* ir_type, DIType* dit);
 
 		//ir_type_ptr_t get_ir_type(type_node_ptr_t node, ir_type_ptr_t ir_type);
 	

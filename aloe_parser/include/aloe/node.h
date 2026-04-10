@@ -29,7 +29,7 @@ namespace aloe
 
 	struct node_t
 	{
-		node_t(node_type_e type) : node_type_id(type), line(-1), pos(-1), ignore (false) {}
+		node_t(node_type_e ir_type) : node_type_id(ir_type), line(-1), pos(-1), ignore (false) {}
 
 		node_type_e node_type_id;
 
