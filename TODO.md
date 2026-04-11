@@ -3,4 +3,5 @@
 - [ ] emit_expr_fun_call must not return nullptr	
 - [ ] unify exception in base
 - [ ] place ast in base
+- [ ] add debuggin informatin for variables (global and local)
 

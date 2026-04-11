@@ -11,15 +11,11 @@ namespace aloe
 
 		Value* ir_value;
 
-		ir_type_ptr_t type;
+		// this stores original type, for variable the actual type of ir_value may be different 
+		// (e.g. alloca instruction has pointer type, but the variable it represents may be int), 
+		// this is used for type checking and debug info generation
 
-		Function* sc_function() const // safe cast to llvm::Function
-		{
-			if (isa<Function>(ir_value))
-				(Function*)ir_value;
-		}
-
-		
+		ir_type_ptr_t type; 
 		
 	};
 

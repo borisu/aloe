@@ -2,8 +2,9 @@ expect fun vera: (var msg: ^char) -> void
 
 fun root:() -> int
 {
-	var a: int;
+	var a: int = 5;
 
 	vera("Hello World!");
-	return 0;
+
+	return a;
 }

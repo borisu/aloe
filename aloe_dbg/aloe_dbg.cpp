@@ -9,7 +9,7 @@ int main()
 {
     int x  = root();
     
-    std::cout << "Hello World!\n";
+    std::cout << "Hello World! (" << x << ")\n";
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

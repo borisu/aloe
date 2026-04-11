@@ -267,7 +267,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
         ir_arg->setName(var_name);
 
 		ir_var_ptr_t var(new ir_var_t());
-		var->ast_def        = var_node;
+		var->ast_def         = var_node;
 		var->value->ir_value = ir_arg;
 		var->value->type     = emit_type(ctx, var_node->type);
 
@@ -335,6 +335,7 @@ llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
     );
 
 	auto ret_inst = ctx->llvm_ir->CreateRet(ret_val->ir_value);
+
     ret_inst->setDebugLoc(dloc);
 
 }
@@ -349,6 +350,9 @@ llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
         case FUNCTION_NODE:
             emit_fun(ctx, PCAST(fun_node_t,decl));
 			break;
+        case VAR_NODE:
+            emit_var(ctx, PCAST(var_node_t, decl));
+            break;
         }
     }
 
@@ -363,7 +367,6 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
     {
         case FUNCTION_NODE:
         {
-			// convert function descrption to value for function call
             ir_fun_ptr_t fun_desc = fun_cache[node->ast_def->target];
 
 			out  = fun_desc->value;
@@ -371,6 +374,15 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
             break;
         }
         case VAR_NODE:
+        {
+            ir_var_ptr_t var_desc = var_cache[node->ast_def->target];
+
+            out->ir_value   = ctx->llvm_ir->CreateLoad(var_desc->value->type->ir_type, var_desc->value->ir_value);
+            out->type       = var_desc->value->type;
+          
+
+            break;
+        }
         default:
         {
             throw compiler_exeption_t("%s:%zu:%zu: (error): identifier '%s' points to unsupported type",
@@ -394,6 +406,11 @@ llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
 			emit_expression(ctx, PCAST(expr_node_t,node));
             break;
 		}
+        case VAR_NODE:
+        {
+            emit_var(ctx, PCAST(var_node_t, node));
+            break;
+        }
         case RETURN_NODE:
         {
             emit_return(ctx, PCAST(return_node_t,node));
@@ -404,36 +421,54 @@ llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
     }
 }
 
+ir_value_ptr_t 
+llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, ir_type_ptr_t node)
+{
+	ir_value_ptr_t out(new ir_value_t());
+   
+    out->type = node;
+    out->ir_value = Constant::getNullValue(out->type->ir_type);
+    
+    return out;
+    
+}
+
+
 ir_var_ptr_t 
 llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 {
 	ir_var_ptr_t out(new ir_var_t());
 
-    /*out->value->type = emit_type(ctx, node->type);
+    out->value->type = emit_type(ctx, node->type);
+
+	auto init_val = node->initializer ? emit_literal(ctx, node->initializer) : emit_default(ctx, out->value->type);
 
     if (ctx->fun_desc_stack.empty())
     {
         out->value->ir_value = new GlobalVariable(
-            ctx->llvm_module,
+            *ctx->llvm_module,
             out->value->type->ir_type,
             false,
             GlobalValue::ExternalLinkage,
-            out->value->type->ir_type,
-            node->id->name,
-        );
+            ir_sc <Constant>(init_val->ir_value),
+			node->id->name
+            );
     }
     else
     {
-        out->value->ir_value = ctx->llvm_ir->CreateAlloca(out->value->type->ir_type, nullptr, node->id->name);
-    }
+        auto alloca_inst = ctx->llvm_ir->CreateAlloca(out->value->type->ir_type, nullptr, node->id->name);
+        out->value->ir_value = alloca_inst;
 
-    /*DILocalVariable* var = ctx->llvm_di->createAutoVariable(
-        Scope,          // usually DISubprogram or lexical block
-        node->id->name, // variable name
-        File,           // DIFile*
-        LineNo,
-        intType
-    );*/
+        auto store_inst = ctx->llvm_ir->CreateStore(init_val->ir_value, out->value->ir_value);
+        llvm::DebugLoc dloc = llvm::DILocation::get(
+            *ctx->llvm_ctx,
+            node->line,
+            node->pos,
+            ir_sc<Function>(ctx->fun_desc_stack.top()->value->ir_value)->getSubprogram()
+        );
+
+        store_inst->setDebugLoc(dloc);
+    }
 
 	var_cache[node] = out;
 
@@ -530,6 +565,14 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     {
         val->type       = emit_type(ctx, node->type);
         val->ir_value   = ConstantInt::get(val->type->ir_type, std::get<char>(node->value));
+        break;
+    }
+    case LIT_POINTER_INT:
+    {
+        val->type       = emit_type(ctx, node->type); // must be pointer to int
+        Constant* addr  = ConstantInt::get(val->type->base_type->ir_type, std::get<int>(node->value));
+        // the value is not an int but actually its location in memory 
+        val->ir_value   = ConstantExpr::getIntToPtr(addr, PointerType::getUnqual(*ctx->llvm_ctx));
         break;
     }
     default:

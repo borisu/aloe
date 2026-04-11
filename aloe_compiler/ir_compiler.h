@@ -52,6 +52,8 @@ namespace aloe
 
 		virtual ir_var_ptr_t emit_var(compiler_ctx_t* ctx, var_node_ptr_t node);
 
+		virtual ir_value_ptr_t emit_default(compiler_ctx_t* ctx, ir_type_ptr_t node);
+
 		virtual ir_value_ptr_t emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
 
 		virtual ir_type_ptr_t init_type_from_base(compiler_ctx_t* ctx, ir_base_type_ptr_t base_type, size_t ref_count);
