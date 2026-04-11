@@ -122,8 +122,13 @@ literal
     : DigitSequence
     | StringLiteral+
     | CharacterConstant
+    | pointerToInt
     ;
- 
+
+pointerToInt
+    :pl_pfx+='^'+ DigitSequence
+    ;
+
 /********************/
 /*   Expressions    */
 /********************/

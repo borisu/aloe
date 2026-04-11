@@ -58,6 +58,18 @@ tests_cmd_t::test_fun_declarations1()
 }
 
 
+void 
+tests_cmd_t::test_defauts()
+{
+
+    TEST_PARSE_STRING(R"(var a:int    =   0)", true);
+    TEST_PARSE_STRING(R"(var a:^int   =  ^0)", true);
+    TEST_PARSE_STRING(R"(var a:^^int  = ^^0)", true);
+    TEST_PARSE_STRING(R"(var a:^char  = "ok")", true);
+    TEST_PARSE_STRING(R"(var a:char   = 'o')", true);
+    TEST_PARSE_STRING(R"(var a:char   = 123)", false);
+}
+    
 
 void
 tests_cmd_t::test_fun_expect1()
@@ -111,6 +123,7 @@ tests_cmd_t::run_tests()
     test_var_declarations1();
     test_fun_declarations1();
     test_expressions1();
+    test_defauts();
     
 
     return success;

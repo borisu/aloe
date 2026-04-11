@@ -263,20 +263,18 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
 
     if (ctx->expect() && ctx->executionBlock())
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: function %s was declared as 'expect' but has body",
+        throw parse_exeption_t("%s:%zu:%zu: error: function was declared as 'expect' but has body",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
-            ctx->getStart()->getStartIndex(),
-            fun_node->id->name.c_str());
+            ctx->getStart()->getStartIndex());
     }
 
     if (!ctx->expect() && !ctx->executionBlock())
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: function %s was not declared as 'expect' but has no body",
+        throw parse_exeption_t("%s:%zu:%zu: error: function was not declared as 'expect' but has no body",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
-            ctx->getStart()->getStartIndex(),
-            fun_node->id->name.c_str());
+            ctx->getStart()->getStartIndex());
     }
     
 	fun_node->is_defined = ctx->expect() == nullptr;
@@ -408,6 +406,15 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
     if (ctx->literal())
     {
         var_node->initializer = walk_literal(env, ctx->literal());
+        if (*var_node->initializer->type != *var_node->type)
+        {
+            throw parse_exeption_t("%s:%zu:%zu: error: cannot initialize variable of type '%s' with literal of type '%s'",
+                env->source_id.c_str(),
+                ctx->getStart()->getLine(),
+                ctx->getStart()->getStartIndex(),
+                ctx->type()->getText().c_str(),
+				ctx->literal()->getText().c_str());
+        }
     }
    
     env->register_id(var_node->id, var_node);
@@ -452,9 +459,9 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
     {
 		literal_node->lit_type_id = LIT_INT;
         literal_node->value = std::stoi(ctx->DigitSequence()->getText());
-		literal_node->value_type->base_type->node_type_id = BASE_TYPE_NODE;
-		literal_node->value_type->base_type->type_type_id = TT_BUILTIN;
-        literal_node->value_type->base_type->ast_def = INT_NODE_BRIDGE;
+		literal_node->type->base_type->node_type_id = BASE_TYPE_NODE;
+		literal_node->type->base_type->type_type_id = TT_BUILTIN;
+        literal_node->type->base_type->ast_def = INT_NODE_BRIDGE;
     }
     else if (ctx->StringLiteral().size() > 0)
     {
@@ -465,18 +472,28 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
             sf += s->getText();
         }
         literal_node->value = unescape(sf.substr(1, sf.size() - 2));
-        literal_node->value_type->base_type->node_type_id = BASE_TYPE_NODE;
-        literal_node->value_type->base_type->ast_def = CHAR_NODE_BRIDGE;
-        literal_node->value_type->base_type->type_type_id = TT_BUILTIN;
-		literal_node->value_type->ref_count = 1; // string literal is char pointer
+        literal_node->type->base_type->node_type_id = BASE_TYPE_NODE;
+        literal_node->type->base_type->ast_def = CHAR_NODE_BRIDGE;
+        literal_node->type->base_type->type_type_id = TT_BUILTIN;
+		literal_node->type->ref_count = 1; // string literal is char pointer
     }
     else if (ctx->CharacterConstant())
     {
 		literal_node->lit_type_id = LIT_CHAR;
         literal_node->value = unescape(ctx->CharacterConstant()->getText())[0];
-		literal_node->value_type->base_type->node_type_id = BASE_TYPE_NODE;
-        literal_node->value_type->base_type->type_type_id = TT_BUILTIN;
-        literal_node->value_type->base_type->ast_def = CHAR_NODE_BRIDGE;
+		literal_node->type->base_type->node_type_id = BASE_TYPE_NODE;
+        literal_node->type->base_type->type_type_id = TT_BUILTIN;
+        literal_node->type->base_type->ast_def = CHAR_NODE_BRIDGE;
+    }
+    else if (ctx->pointerToInt())
+    {
+        literal_node->lit_type_id = LIT_POINTER_INT;
+        literal_node->value = std::stoi(ctx->pointerToInt()->DigitSequence()->getText());
+        literal_node->type->base_type->node_type_id = BASE_TYPE_NODE;
+        literal_node->type->base_type->type_type_id = TT_BUILTIN;
+        literal_node->type->base_type->ast_def = INT_NODE_BRIDGE;
+		literal_node->type->ref_count = ctx->pointerToInt()->pl_pfx.size(); // pointer literal is int pointer
+
     }
     else
     {

@@ -514,21 +514,21 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     {
     case LIT_INT:
     {
-        val->type       = emit_type(ctx, node->value_type);
+        val->type       = emit_type(ctx, node->type);
 	    val->ir_value   = ConstantInt::get(val->type->ir_type, std::get<int>(node->value), true);
 		
 	    break;
     }
     case LIT_STRING:
     {
-        val->type       = emit_type(ctx, node->value_type);
+        val->type       = emit_type(ctx, node->type);
         val->ir_value   = ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
         
         break;
     }
     case LIT_CHAR:
     {
-        val->type       = emit_type(ctx, node->value_type);
+        val->type       = emit_type(ctx, node->type);
         val->ir_value   = ConstantInt::get(val->type->ir_type, std::get<char>(node->value));
         break;
     }
