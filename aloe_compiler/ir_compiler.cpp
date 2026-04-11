@@ -5,6 +5,7 @@
 #include "compiler_exception.h"
 #include "ir_compiler.h"
 #include "ir_fun.h"
+#include "utils.h"
 
 using namespace aloe;
 using namespace llvm;
@@ -182,25 +183,27 @@ llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
 	out->type_id = IRT_FUNCTION;
     out->ast_def = node;
 
-    ir_type_ptr_t rett = emit_type(ctx, node->ret_type);
+    ir_type_ptr_t ret_type = emit_type(ctx, node->ret_type);
 
-    SmallVector<Metadata*, 8>   di_sig;
-    di_sig.push_back(rett->di_type);
+    SmallVector<Metadata*, 8>   dit_args;
+    dit_args.push_back(ret_type->di_type);
 
-    std::vector<Type*>  args_irt;
+    std::vector<Type*>  irt_args;
     for (auto p : node->var_list->vars_m)
     {
         ir_type_ptr_t argt = emit_type(ctx, p.second->type);
-        args_irt.push_back(argt->ir_type);
-        di_sig.push_back(argt->di_type);
+        irt_args.push_back(argt->ir_type);
+        dit_args.push_back(argt->di_type);
     };
 
-    out->ir_type = FunctionType::get(rett->ir_type, args_irt, false);
+    out->ir_type = FunctionType::get(ret_type->ir_type, irt_args, false);
 
-    out->di_type = (DISubroutineType*)type_cache.get_dit_type(
+    auto di_type = ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(dit_args));
+
+     out->di_type = type_cache.get_dit_type(
         0,
         out->ir_type,
-        ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(di_sig)));
+        ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(dit_args)));
 
     return out;
 }
@@ -241,15 +244,12 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     if (node->ignore)
         return nullptr;
 
-    if (fun_cache.find(node) != fun_cache.end()){
-        return fun_cache[node];
-    }
-
+    
     ir_fun_ptr_t out(new ir_fun_t());
 
     ir_base_type_ptr_t base_type = emit_fun_type(ctx, node->fun_type);
 
-	out->ir_value->type = init_type_from_base(ctx, base_type, 0);
+	out->value->type = init_type_from_base(ctx, base_type, 0);
 
     out->ast_def = node;
 
@@ -257,16 +257,31 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
         Function::Create( (FunctionType*)base_type->ir_type,
             Function::ExternalLinkage, node->id->name, ctx->llvm_module);
 
-   
-    Value* val = ir_fun;
+	for (int i = 0; i < ir_fun->arg_size(); i++)
+    {
+        auto ir_arg = ir_fun->getArg(i);
 
+        auto var_node = node->fun_type->var_list->vars_v[i].second;
+        auto var_name = var_node->id->name;
+
+        ir_arg->setName(var_name);
+
+		ir_var_ptr_t var(new ir_var_t());
+		var->ast_def        = var_node;
+		var->value->ir_value = ir_arg;
+		var->value->type     = emit_type(ctx, var_node->type);
+
+		var_cache[var_node] = var;
+		
+    }
+   
     DISubprogram* sp = ctx->llvm_di->createFunction(
         ctx->llvm_di_file,        // Function scope.  
         node->id->name,            // Function name.
         node->id->name,            // Mangled function name.
         ctx->llvm_di_file,        // File where this variable is defined.
         node->line,                // Line number.
-        (DISubroutineType*) base_type->di_type, // fnType
+        ir_sc<DISubroutineType> (base_type->di_type), // fnType
         node->line,                 // scope line
         DINode::FlagZero,
 		node->is_defined ? DISubprogram::SPFlagDefinition : DISubprogram::SPFlagZero
@@ -274,7 +289,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
     ir_fun->setSubprogram(sp);
 
-	out->ir_value->ir_value = ir_fun;
+	out->value->ir_value = ir_fun;
 
     if (node->is_defined)
     {
@@ -316,7 +331,7 @@ llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-		((Function*)ctx->fun_desc_stack.top()->ir_value->ir_value)->getSubprogram()
+		((Function*)ctx->fun_desc_stack.top()->value->ir_value)->getSubprogram()
     );
 
 	auto ret_inst = ctx->llvm_ir->CreateRet(ret_val->ir_value);
@@ -332,7 +347,7 @@ llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
         switch (decl->node_type_id)
         {
         case FUNCTION_NODE:
-            emit_fun(ctx, static_pointer_cast<fun_node_t>(decl));
+            emit_fun(ctx, PCAST(fun_node_t,decl));
 			break;
         }
     }
@@ -349,9 +364,9 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
         case FUNCTION_NODE:
         {
 			// convert function descrption to value for function call
-            ir_fun_ptr_t fun_desc = emit_fun(ctx, PCAST(fun_node_t, node->ast_def->target));
+            ir_fun_ptr_t fun_desc = fun_cache[node->ast_def->target];
 
-			out  = fun_desc->ir_value;
+			out  = fun_desc->value;
 
             break;
         }
@@ -389,8 +404,44 @@ llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
     }
 }
 
-ir_value_ptr_t
+ir_var_ptr_t 
+llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
+{
+	ir_var_ptr_t out(new ir_var_t());
 
+    /*out->value->type = emit_type(ctx, node->type);
+
+    if (ctx->fun_desc_stack.empty())
+    {
+        out->value->ir_value = new GlobalVariable(
+            ctx->llvm_module,
+            out->value->type->ir_type,
+            false,
+            GlobalValue::ExternalLinkage,
+            out->value->type->ir_type,
+            node->id->name,
+        );
+    }
+    else
+    {
+        out->value->ir_value = ctx->llvm_ir->CreateAlloca(out->value->type->ir_type, nullptr, node->id->name);
+    }
+
+    /*DILocalVariable* var = ctx->llvm_di->createAutoVariable(
+        Scope,          // usually DISubprogram or lexical block
+        node->id->name, // variable name
+        File,           // DIFile*
+        LineNo,
+        intType
+    );*/
+
+	var_cache[node] = out;
+
+    return out;
+   
+}
+
+ir_value_ptr_t
 llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 {
     ir_value_ptr_t val(new ir_value_t());
@@ -425,14 +476,6 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
     ir_value_ptr_t val(new ir_value_t());
    
 	ir_value_ptr_t calee = emit_expression(ctx, node->function);
-  
-	if (!isa<FunctionType>(calee->type->ir_type))
-    {
-        throw compiler_exeption_t("%s:%zu:%zu: (error): cannot call non-function type",
-            ctx->ast->source_id.c_str(),
-            node->line,
-            node->pos);
-    }
 
     std::vector <Value*> args = {};
 
@@ -442,13 +485,13 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         args.push_back(arg_val->ir_value);
     }
        
-    auto inst = ctx->llvm_ir->CreateCall((FunctionType*)calee->type->ir_type, calee->ir_value, args);
+    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(calee->type->ir_type), calee->ir_value, args);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-        ((Function*)ctx->fun_desc_stack.top()->ir_value->ir_value)->getSubprogram()
+        ir_sc<Function>(ctx->fun_desc_stack.top()->value->ir_value)->getSubprogram()
     );
 
     inst->setDebugLoc(dloc);

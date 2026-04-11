@@ -25,6 +25,7 @@
     <ClInclude Include="ir_value.h" />
     <ClInclude Include="type_cache.h" />
     <ClInclude Include="ir_var.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

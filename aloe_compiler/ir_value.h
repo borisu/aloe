@@ -12,6 +12,14 @@ namespace aloe
 		Value* ir_value;
 
 		ir_type_ptr_t type;
+
+		Function* sc_function() const // safe cast to llvm::Function
+		{
+			if (isa<Function>(ir_value))
+				(Function*)ir_value;
+		}
+
+		
 		
 	};
 

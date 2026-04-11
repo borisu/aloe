@@ -378,6 +378,8 @@ antl4_parser_t::walk_var_list( environment_ptr_t env, aloeParser::VarListContext
 		var_list->vars_m[var_ptr->id] = var_ptr;
 		var_list->vars_v.push_back(var_id_t(var_ptr->id, var_ptr));
     };
+
+    
     
     return var_list;
 }
@@ -402,6 +404,12 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
     }
 
     var_node->type = walk_type(env, ctx->type());
+
+    if (ctx->literal())
+    {
+        var_node->initializer = walk_literal(env, ctx->literal());
+    }
+   
     env->register_id(var_node->id, var_node);
 
     return var_node;

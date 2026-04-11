@@ -9,9 +9,9 @@ namespace aloe
 {
 	struct ir_fun_t
 	{
-		ir_fun_t() :ir_value(new ir_value_t()) {}
+		ir_fun_t() :value(new ir_value_t()) {}
 
-		ir_value_ptr_t ir_value;
+		ir_value_ptr_t value;
 
 		fun_node_ptr_t ast_def;
 		

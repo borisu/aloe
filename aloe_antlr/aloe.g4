@@ -77,7 +77,7 @@ baseType
 /********************/
 
 varDeclaration
-    : 'var' identifier? ':' type
+    : 'var' identifier? ':' type ( '=' literal )?
     ;
 
 varList 

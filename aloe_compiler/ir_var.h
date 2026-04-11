@@ -10,9 +10,9 @@ namespace aloe
 {
 	struct ir_var_t
 	{
-		ir_var_t() :ast_def(nullptr) {}
+		ir_var_t() :ast_def(nullptr), value(new ir_value_t()) {}
 
-		ir_value_t value;
+		ir_value_ptr_t value;
 
 		var_node_ptr_t ast_def;
 

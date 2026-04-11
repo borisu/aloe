@@ -4,6 +4,7 @@
 #include <vector>
 #include "node.h"
 #include "type.h"
+#include "literal.h"	
 
 using namespace std;
 
@@ -14,6 +15,7 @@ namespace aloe
 		var_node_t() :node_t(VAR_NODE) {};
 		identifier_node_ptr_t	id;
 		type_node_ptr_t			type;
+		literal_node_ptr_t		initializer;
 	};
 
 	typedef shared_ptr<var_node_t> 
