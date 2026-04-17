@@ -7,11 +7,11 @@ namespace aloe
 {
 	struct ir_value_t
 	{
-		ir_value_t() :ir_value(nullptr), ssa_type(nullptr){}
+		ir_value_t() :ir_value(nullptr), ssa_type(new ir_type_t()){}
 
 		Value* ir_value;
 
-		Type* ssa_type;
+		ir_type_ptr_t ssa_type;
 		
 	};
 

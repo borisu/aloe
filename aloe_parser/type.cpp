@@ -10,12 +10,6 @@ aloe::operator!=(const type_node_t& t1, const type_node_t& t2)
 	return !(t1 == t2);
 }
 
-bool 
-aloe::operator!=(const base_type_t& t1, const base_type_t& t2)
-{
-	return !(t1 == t2);
-}
-
 bool
 aloe::operator!=(const fun_type_node_t& fun_t1, const fun_type_node_t& fun_t2)
 {
@@ -56,14 +50,6 @@ aloe::operator==(const type_node_t& t1, const type_node_t& t2)
 		return false;
 	}
 
-	return *t1.base_type == *t2.base_type;
-}
-
-
-bool 
-aloe::operator==(const base_type_t& t1, const base_type_t& t2)
-{
-
 	if (t1.type_type_id != t2.type_type_id)
 	{
 		return false;
@@ -85,9 +71,11 @@ aloe::operator==(const base_type_t& t1, const base_type_t& t2)
 		break;
 	}
 	default:
-		
+
 		return false;
 	}
 
 	return true;
 }
+
+

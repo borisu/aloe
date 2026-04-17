@@ -12,7 +12,6 @@ namespace aloe
 
 		DIType* get_dit_type(size_t ref_count, Type* ir_type, DIType* dit);
 
-	
 	private:
 
 		map<type_node_t, ir_type_ptr_t> type_cache;

@@ -131,20 +131,23 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
 }
 
 
-base_type_ptr_t
+type_node_ptr_t
 antl4_parser_t::walk_base_type(environment_ptr_t env, aloeParser::BaseTypeContext* ctx)
 {
-    base_type_ptr_t out;
+    type_node_ptr_t out (new type_node_t());
 
     if (ctx->funType())
     {
         auto fun_type = walk_fun_type(env, ctx->funType());
-        out.reset(new base_type_t(TT_FUNCTION, bridge_ptr_t(new bridge_t(fun_type))));
+		out->type_type_id = TT_FUNCTION;
+		out->ast_def = bridge_ptr_t(new bridge_t(fun_type));
+        
     }
     else if (ctx->builtinType())
     {
         auto builtin_type_node = walk_built_in_type(env, ctx->builtinType());
-        out.reset(new base_type_t(TT_BUILTIN, bridge_ptr_t(new bridge_t(builtin_type_node))));
+		out->type_type_id = TT_BUILTIN;
+		out->ast_def = bridge_ptr_t(new bridge_t(builtin_type_node));
     }
     else if (ctx->identifier())
     {
@@ -154,7 +157,8 @@ antl4_parser_t::walk_base_type(environment_ptr_t env, aloeParser::BaseTypeContex
         switch (bridge->target->node_type_id)
         {
         case FUN_TYPE_NODE: {
-            out.reset(new base_type_t(TT_FUNCTION, bridge));
+			out->type_type_id = TT_FUNCTION;
+			out->ast_def = bridge;
             break;
         }
         default:
@@ -185,10 +189,9 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx, 
 {
     if (ctx->baseType())
     {
-        base_type_ptr_t base  = walk_base_type(env, ctx->baseType());
+        type_node_ptr_t out  = walk_base_type(env, ctx->baseType());
 
-        type_node_ptr_t out(new type_node_t(ref_count));
-		out->base_type = base;
+		out->ref_count = ref_count;
 
         return out;
     }
@@ -459,9 +462,9 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
     {
 		literal_node->lit_type_id = LIT_INT;
         literal_node->value = std::stoi(ctx->DigitSequence()->getText());
-		literal_node->type->base_type->node_type_id = BASE_TYPE_NODE;
-		literal_node->type->base_type->type_type_id = TT_BUILTIN;
-        literal_node->type->base_type->ast_def = INT_NODE_BRIDGE;
+		literal_node->type->node_type_id = BASE_TYPE_NODE;
+		literal_node->type->type_type_id = TT_BUILTIN;
+        literal_node->type->ast_def = INT_NODE_BRIDGE;
     }
     else if (ctx->StringLiteral().size() > 0)
     {
@@ -472,26 +475,26 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
             sf += s->getText();
         }
         literal_node->value = unescape(sf.substr(1, sf.size() - 2));
-        literal_node->type->base_type->node_type_id = BASE_TYPE_NODE;
-        literal_node->type->base_type->ast_def = CHAR_NODE_BRIDGE;
-        literal_node->type->base_type->type_type_id = TT_BUILTIN;
+        literal_node->type->node_type_id = BASE_TYPE_NODE;
+        literal_node->type->ast_def = CHAR_NODE_BRIDGE;
+        literal_node->type->type_type_id = TT_BUILTIN;
 		literal_node->type->ref_count = 1; // string literal is char pointer
     }
     else if (ctx->CharacterConstant())
     {
 		literal_node->lit_type_id = LIT_CHAR;
         literal_node->value = unescape(ctx->CharacterConstant()->getText())[0];
-		literal_node->type->base_type->node_type_id = BASE_TYPE_NODE;
-        literal_node->type->base_type->type_type_id = TT_BUILTIN;
-        literal_node->type->base_type->ast_def = CHAR_NODE_BRIDGE;
+		literal_node->type->node_type_id = BASE_TYPE_NODE;
+        literal_node->type->type_type_id = TT_BUILTIN;
+        literal_node->type->ast_def = CHAR_NODE_BRIDGE;
     }
     else if (ctx->pointerToInt())
     {
         literal_node->lit_type_id = LIT_POINTER_INT;
         literal_node->value = std::stoi(ctx->pointerToInt()->DigitSequence()->getText());
-        literal_node->type->base_type->node_type_id = BASE_TYPE_NODE;
-        literal_node->type->base_type->type_type_id = TT_BUILTIN;
-        literal_node->type->base_type->ast_def = INT_NODE_BRIDGE;
+        literal_node->type->node_type_id = BASE_TYPE_NODE;
+        literal_node->type->type_type_id = TT_BUILTIN;
+        literal_node->type->ast_def = INT_NODE_BRIDGE;
 		literal_node->type->ref_count = ctx->pointerToInt()->pl_pfx.size(); // pointer literal is int pointer
 
     }

@@ -135,16 +135,16 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 {
     ir_base_type_ptr_t base_type;
 
-    switch (node->base_type->type_type_id)
+    switch (node->type_type_id)
     {
     case TT_BUILTIN:
     {
-        base_type = emit_built_in(ctx, PCAST(builtin_node_t, node->base_type->ast_def->target));
+        base_type = emit_built_in(ctx, PCAST(builtin_node_t, node->ast_def->target));
         break;
     }
     case TT_FUNCTION:
     {
-        base_type = emit_fun_type(ctx, PCAST(fun_type_node_t, node->base_type->ast_def->target));
+        base_type = emit_fun_type(ctx, PCAST(fun_type_node_t, node->ast_def->target));
         break;
 
     }
@@ -156,20 +156,11 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
-            node->base_type->type_type_id); ;
+            node->type_type_id); ;
     }
     };
 
     ir_type_ptr_t out = init_type_from_base(ctx, base_type, node->ref_count);
-
-    if (!out)
-    {
-        throw compiler_exeption_t("%s:%zu:%zu: (error): invalid type",
-            ctx->ast->source_id.c_str(),
-            node->line,
-            node->pos);
-    }
-    
 
     return out;
 
@@ -199,7 +190,7 @@ llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
 
     auto di_type = ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(dit_args));
 
-     out->di_type = type_cache.get_dit_type(
+    out->di_type = type_cache.get_dit_type(
         0,
         out->ir_type,
         ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(dit_args)));
@@ -218,7 +209,7 @@ llvmir_compiler_t::init_type_from_base(compiler_ctx_t* ctx, ir_base_type_ptr_t b
         out->ir_type = base_type->ir_type;
         out->di_type = base_type->di_type;
     }
-    else if (out->ref_count > 0)
+    else 
     {
         out->ir_type = PointerType::getUnqual(*ctx->llvm_ctx); // collapse to pointer type
 
@@ -228,10 +219,6 @@ llvmir_compiler_t::init_type_from_base(compiler_ctx_t* ctx, ir_base_type_ptr_t b
             out->di_type = type_cache.get_dit_type(i, out->ir_type, ctx->llvm_di->createPointerType(out->di_type, 64)); // must preserve the type for each level of indirection for debug info
         }
 
-    }
-    else
-    {
-        return nullptr;
     }
 
     return out;
@@ -248,7 +235,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     ir_base_type_ptr_t base_type = emit_fun_type(ctx, node->fun_type);
 
     out->ast_def = node;
-	out->ssa_type = base_type->ir_type;
+	out->ssa_type = init_type_from_base(ctx, base_type, 0);
 
     Function* ir_fun =
         Function::Create(ir_sc<FunctionType>(base_type->ir_type),
@@ -370,7 +357,7 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
         {
             ir_var_ptr_t var_desc = PCAST(ir_var_t, ast_def_cache[node->ast_def->target]);
 
-            out->ir_value   = ctx->llvm_ir->CreateLoad(var_desc->ssa_type, var_desc->ir_value);
+            out->ir_value = ctx->llvm_ir->CreateLoad(var_desc->ssa_type->ir_type, var_desc->ir_value);
           
             break;
         }
@@ -444,14 +431,14 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 			node->id->name
             );
 
-		out->ssa_type = type->ir_type;
+		out->ssa_type = type;
 		
     }
     else
     {
         auto alloca_inst = ctx->llvm_ir->CreateAlloca(type->ir_type, nullptr, node->id->name);
         out->ir_value = alloca_inst;
-		out->ssa_type = alloca_inst->getAllocatedType();
+		out->ssa_type = type;
 
         auto store_inst = ctx->llvm_ir->CreateStore(init_val->ir_value, out->ir_value);
         llvm::DebugLoc dloc = llvm::DILocation::get(
@@ -514,7 +501,7 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         args.push_back(arg_val->ir_value);
     }
         
-    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type), fun_val->ir_value, args);
+    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), fun_val->ir_value, args);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,

@@ -28,7 +28,7 @@ namespace aloe
 
 		virtual type_node_ptr_t walk_type(environment_ptr_t env,  aloeParser::TypeContext* ctx, int ref_count = 0);
 
-		virtual base_type_ptr_t walk_base_type(environment_ptr_t env, aloeParser::BaseTypeContext* ctx);
+		virtual type_node_ptr_t walk_base_type(environment_ptr_t env, aloeParser::BaseTypeContext* ctx);
 
 		virtual var_list_node_ptr_t walk_var_list(environment_ptr_t env,  aloeParser::VarListContext* ctx);
 
