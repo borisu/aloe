@@ -224,17 +224,17 @@ llvmir_compiler_t::init_type_from_base(compiler_ctx_t* ctx, ir_base_type_ptr_t b
     return out;
 }
 
-ir_fun_ptr_t
+ir_value_ptr_t
 llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 {
     if (node->ignore)
         return nullptr;
 
-    ir_fun_ptr_t out(new ir_fun_t(node));
+    ir_value_ptr_t out(new ir_value_t());
 
     ir_base_type_ptr_t base_type = emit_fun_type(ctx, node->fun_type);
 
-    out->ast_def = node;
+    
 	out->ssa_type = init_type_from_base(ctx, base_type, 0);
 
     Function* ir_fun =
@@ -250,7 +250,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
         ir_arg->setName(var_name);
 
-		ir_var_ptr_t var(new ir_var_t(var_node));
+		ir_value_ptr_t var(new ir_value_t());
 		var->ir_value = ir_arg;
 	
 		ast_def_cache[var_node] = var;
@@ -349,13 +349,13 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
     {
         case FUNCTION_NODE:
         {
-            out = PCAST(ir_fun_t, ast_def_cache[node->ast_def->target]);
+            out = PCAST(ir_value_t, ast_def_cache[node->ast_def->target]);
 
             break;
         }
         case VAR_NODE:
         {
-            ir_var_ptr_t var_desc = PCAST(ir_var_t, ast_def_cache[node->ast_def->target]);
+            ir_value_ptr_t var_desc = PCAST(ir_value_t, ast_def_cache[node->ast_def->target]);
 
             out->ir_value = ctx->llvm_ir->CreateLoad(var_desc->ssa_type->ir_type, var_desc->ir_value);
           
@@ -411,10 +411,10 @@ llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, ir_type_ptr_t type)
 }
 
 
-ir_var_ptr_t 
+ir_value_ptr_t 
 llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 {
-	ir_var_ptr_t out(new ir_var_t(node));
+	ir_value_ptr_t out(new ir_value_t());
 
     auto type = emit_type(ctx, node->type);
 

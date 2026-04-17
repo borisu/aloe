@@ -16,7 +16,7 @@ namespace aloe
 		DIBuilder*		llvm_di		 = nullptr;
 		DIFile*			llvm_di_file = nullptr;
 		ast_ptr_t		ast;
-		std::stack<ir_fun_ptr_t> fun_desc_stack;
+		std::stack<ir_value_ptr_t> fun_desc_stack;
 	};
 
 	class llvmir_compiler_t : public compiler_t
@@ -35,7 +35,7 @@ namespace aloe
 
 		virtual ir_base_type_ptr_t emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node);
 
-		virtual ir_fun_ptr_t emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node);
+		virtual ir_value_ptr_t emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node);
 
 		virtual void emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node);
 
@@ -49,7 +49,7 @@ namespace aloe
 
 		virtual ir_value_ptr_t emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node);
 
-		virtual ir_var_ptr_t emit_var(compiler_ctx_t* ctx, var_node_ptr_t node);
+		virtual ir_value_ptr_t emit_var(compiler_ctx_t* ctx, var_node_ptr_t node);
 
 		virtual ir_value_ptr_t emit_default(compiler_ctx_t* ctx, ir_type_ptr_t node);
 
