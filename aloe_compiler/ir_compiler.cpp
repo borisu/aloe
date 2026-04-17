@@ -4,7 +4,6 @@
 #include "aloe\scope_guard.h"
 #include "compiler_exception.h"
 #include "ir_compiler.h"
-#include "ir_fun.h"
 #include "utils.h"
 
 using namespace aloe;
@@ -244,17 +243,15 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     if (node->ignore)
         return nullptr;
 
-    
-    ir_fun_ptr_t out(new ir_fun_t());
+    ir_fun_ptr_t out(new ir_fun_t(node));
 
     ir_base_type_ptr_t base_type = emit_fun_type(ctx, node->fun_type);
 
-	out->value->type = init_type_from_base(ctx, base_type, 0);
-
     out->ast_def = node;
+	out->ssa_type = base_type->ir_type;
 
     Function* ir_fun =
-        Function::Create( (FunctionType*)base_type->ir_type,
+        Function::Create(ir_sc<FunctionType>(base_type->ir_type),
             Function::ExternalLinkage, node->id->name, ctx->llvm_module);
 
 	for (int i = 0; i < ir_fun->arg_size(); i++)
@@ -266,12 +263,10 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
         ir_arg->setName(var_name);
 
-		ir_var_ptr_t var(new ir_var_t());
-		var->ast_def         = var_node;
-		var->value->ir_value = ir_arg;
-		var->value->type     = emit_type(ctx, var_node->type);
-
-		var_cache[var_node] = var;
+		ir_var_ptr_t var(new ir_var_t(var_node));
+		var->ir_value = ir_arg;
+	
+		ast_def_cache[var_node] = var;
 		
     }
    
@@ -289,7 +284,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
     ir_fun->setSubprogram(sp);
 
-	out->value->ir_value = ir_fun;
+	out->ir_value = ir_fun;
 
     if (node->is_defined)
     {
@@ -316,8 +311,8 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
             node->pos,
             node->id->name.c_str());
     }
-   
-    fun_cache[node] = out;
+
+    ast_def_cache[node] = out;
     return out;
 		
 }
@@ -331,7 +326,7 @@ llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-		((Function*)ctx->fun_desc_stack.top()->value->ir_value)->getSubprogram()
+		((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
     );
 
 	auto ret_inst = ctx->llvm_ir->CreateRet(ret_val->ir_value);
@@ -367,20 +362,16 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
     {
         case FUNCTION_NODE:
         {
-            ir_fun_ptr_t fun_desc = fun_cache[node->ast_def->target];
-
-			out  = fun_desc->value;
+            out = PCAST(ir_fun_t, ast_def_cache[node->ast_def->target]);
 
             break;
         }
         case VAR_NODE:
         {
-            ir_var_ptr_t var_desc = var_cache[node->ast_def->target];
+            ir_var_ptr_t var_desc = PCAST(ir_var_t, ast_def_cache[node->ast_def->target]);
 
-            out->ir_value   = ctx->llvm_ir->CreateLoad(var_desc->value->type->ir_type, var_desc->value->ir_value);
-            out->type       = var_desc->value->type;
+            out->ir_value   = ctx->llvm_ir->CreateLoad(var_desc->ssa_type, var_desc->ir_value);
           
-
             break;
         }
         default:
@@ -422,12 +413,11 @@ llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
 }
 
 ir_value_ptr_t 
-llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, ir_type_ptr_t node)
+llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, ir_type_ptr_t type)
 {
 	ir_value_ptr_t out(new ir_value_t());
-   
-    out->type = node;
-    out->ir_value = Constant::getNullValue(out->type->ir_type);
+    
+    out->ir_value = Constant::getNullValue(type->ir_type);
     
     return out;
     
@@ -437,40 +427,44 @@ llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, ir_type_ptr_t node)
 ir_var_ptr_t 
 llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 {
-	ir_var_ptr_t out(new ir_var_t());
+	ir_var_ptr_t out(new ir_var_t(node));
 
-    out->value->type = emit_type(ctx, node->type);
+    auto type = emit_type(ctx, node->type);
 
-	auto init_val = node->initializer ? emit_literal(ctx, node->initializer) : emit_default(ctx, out->value->type);
+	auto init_val = node->initializer ? emit_literal(ctx, node->initializer) : emit_default(ctx, type);
 
     if (ctx->fun_desc_stack.empty())
     {
-        out->value->ir_value = new GlobalVariable(
+        out->ir_value = new GlobalVariable(
             *ctx->llvm_module,
-            out->value->type->ir_type,
+            type->ir_type,
             false,
             GlobalValue::ExternalLinkage,
             ir_sc <Constant>(init_val->ir_value),
 			node->id->name
             );
+
+		out->ssa_type = type->ir_type;
+		
     }
     else
     {
-        auto alloca_inst = ctx->llvm_ir->CreateAlloca(out->value->type->ir_type, nullptr, node->id->name);
-        out->value->ir_value = alloca_inst;
+        auto alloca_inst = ctx->llvm_ir->CreateAlloca(type->ir_type, nullptr, node->id->name);
+        out->ir_value = alloca_inst;
+		out->ssa_type = alloca_inst->getAllocatedType();
 
-        auto store_inst = ctx->llvm_ir->CreateStore(init_val->ir_value, out->value->ir_value);
+        auto store_inst = ctx->llvm_ir->CreateStore(init_val->ir_value, out->ir_value);
         llvm::DebugLoc dloc = llvm::DILocation::get(
             *ctx->llvm_ctx,
             node->line,
             node->pos,
-            ir_sc<Function>(ctx->fun_desc_stack.top()->value->ir_value)->getSubprogram()
+            ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
         );
 
         store_inst->setDebugLoc(dloc);
     }
 
-	var_cache[node] = out;
+	ast_def_cache[node] = out;
 
     return out;
    
@@ -510,7 +504,7 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
 {
     ir_value_ptr_t val(new ir_value_t());
    
-	ir_value_ptr_t calee = emit_expression(ctx, node->function);
+	ir_value_ptr_t fun_val = emit_expression(ctx, node->function);
 
     std::vector <Value*> args = {};
 
@@ -519,14 +513,14 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         ir_value_ptr_t arg_val = emit_expression(ctx, arg);
         args.push_back(arg_val->ir_value);
     }
-       
-    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(calee->type->ir_type), calee->ir_value, args);
+        
+    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type), fun_val->ir_value, args);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-        ir_sc<Function>(ctx->fun_desc_stack.top()->value->ir_value)->getSubprogram()
+        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
     );
 
     inst->setDebugLoc(dloc);
@@ -549,28 +543,28 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     {
     case LIT_INT:
     {
-        val->type       = emit_type(ctx, node->type);
-	    val->ir_value   = ConstantInt::get(val->type->ir_type, std::get<int>(node->value), true);
+        auto type = emit_type(ctx, node->type);
+	    val->ir_value   = ConstantInt::get(type->ir_type, std::get<int>(node->value), true);
 		
 	    break;
     }
     case LIT_STRING:
     {
-        val->type       = emit_type(ctx, node->type);
+        auto type = emit_type(ctx, node->type);
         val->ir_value   = ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
         
         break;
     }
     case LIT_CHAR:
     {
-        val->type       = emit_type(ctx, node->type);
-        val->ir_value   = ConstantInt::get(val->type->ir_type, std::get<char>(node->value));
+        auto type = emit_type(ctx, node->type);
+        val->ir_value   = ConstantInt::get(type->ir_type, std::get<char>(node->value));
         break;
     }
     case LIT_POINTER_INT:
     {
-        val->type       = emit_type(ctx, node->type); // must be pointer to int
-        Constant* addr  = ConstantInt::get(val->type->base_type->ir_type, std::get<int>(node->value));
+        auto type = emit_type(ctx, node->type); // must be pointer to int
+        Constant* addr  = ConstantInt::get(type->base_type->ir_type, std::get<int>(node->value));
         // the value is not an int but actually its location in memory 
         val->ir_value   = ConstantExpr::getIntToPtr(addr, PointerType::getUnqual(*ctx->llvm_ctx));
         break;

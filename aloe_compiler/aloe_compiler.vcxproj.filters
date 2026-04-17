@@ -21,10 +21,8 @@
     <ClInclude Include="ir_compiler.h" />
     <ClInclude Include="compiler_exception.h" />
     <ClInclude Include="ir_type.h" />
-    <ClInclude Include="ir_fun.h" />
     <ClInclude Include="ir_value.h" />
     <ClInclude Include="type_cache.h" />
-    <ClInclude Include="ir_var.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>

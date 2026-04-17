@@ -3,7 +3,6 @@
 #include "aloe\type.h"
 #include "ir_type.h"
 #include "ir_value.h"
-#include "ir_fun.h"
 #include "type_cache.h"
 
 using namespace llvm;
@@ -62,9 +61,8 @@ namespace aloe
 
 		type_cache_t type_cache;
 
-		map<node_ptr_t, ir_fun_ptr_t> fun_cache;
+		map<node_ptr_t, ir_value_ptr_t> ast_def_cache;
 
-		map<node_ptr_t, ir_var_ptr_t> var_cache;
 		
 	};
 
