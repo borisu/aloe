@@ -21,7 +21,7 @@ namespace aloe
 		LIT_STRING,
 		LIT_INT,
 		LIT_CHAR,
-		LIT_POINTER_INT
+		LIT_POINTER_VOID
 	};
 
 	struct literal_node_t : public node_t

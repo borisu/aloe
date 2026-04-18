@@ -20,8 +20,8 @@
     </ClInclude>
     <ClInclude Include="ir_compiler.h" />
     <ClInclude Include="compiler_exception.h" />
-    <ClInclude Include="ir_type.h" />
-    <ClInclude Include="ir_value.h" />
+    <ClInclude Include="value_type.h" />
+    <ClInclude Include="value.h" />
     <ClInclude Include="type_cache.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>

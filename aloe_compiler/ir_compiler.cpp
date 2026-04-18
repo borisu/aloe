@@ -10,6 +10,12 @@ using namespace aloe;
 using namespace llvm;
 using namespace llvm::dwarf;
 
+#define ALOE_INT_SIZE 64
+#define ALOE_PTR_SIZE 64
+#define ALOE_CHAR_SIZE 8
+#define ALOE_DOUBLE_SIZE 64
+
+
 
 compiler_ptr_t
 aloe::create_compiler()
@@ -28,7 +34,6 @@ llvmir_compiler_t::compile(
     DIBuilder dib(module);
     std::filesystem::path pth(ast->source_id);
     DIFile* di_file = dib.createFile(pth.filename().string(), pth.parent_path().string());
-
 
     DICompileUnit* cu = dib.createCompileUnit(
         DW_LANG_C,   
@@ -75,51 +80,60 @@ llvmir_compiler_t::compile(
     return res;
 }
 
-
-
-ir_base_type_ptr_t
-llvmir_compiler_t::emit_built_in(compiler_ctx_t* ctx, builtin_node_ptr_t node)
+value_type_ptr_t
+llvmir_compiler_t::emit_builtin_type(compiler_ctx_t* ctx, builtin_node_ptr_t node)
 {
-    
-    ir_base_type_ptr_t out(new ir_base_type_t());
-	out->ast_def = node;
+    value_type_ptr_t out(new value_type_t());
 
     switch (node->bit_type)
     {
     case BIT_INT:
     {
-        out->ir_type = Type::getInt32Ty(*ctx->llvm_ctx);
-        out->di_type = type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("int", 32, dwarf::DW_ATE_signed));
-		out->type_id = IRT_INTEGER;
+        out->ir_type = Type::getInt64Ty(*ctx->llvm_ctx);
+
+		auto di_opt = type_cache.get_dit_type(0, out->ir_type);
+
+        out->di_type = di_opt.has_value() ? di_opt.value() : 
+            type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("int", ALOE_INT_SIZE, dwarf::DW_ATE_signed));
 
         break;
     }
     case BIT_CHAR:
     {
         out->ir_type = Type::getInt8Ty(*ctx->llvm_ctx);
-        out->di_type = type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("char", 8, dwarf::DW_ATE_signed_char));
-        out->type_id = IRT_CHAR;
+
+        auto di_opt = type_cache.get_dit_type(0, out->ir_type);
+
+        out->di_type = di_opt.has_value() ? di_opt.value() : 
+            type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("char", ALOE_CHAR_SIZE, dwarf::DW_ATE_signed_char));
+
         break;
     }
     case BIT_VOID:
-    case BIT_OPAQUE:
     {
         out->ir_type = Type::getVoidTy(*ctx->llvm_ctx);
-        out->di_type = type_cache.get_dit_type(0, out->ir_type, nullptr);
-        out->type_id = IRT_OPAQUE;
+
+        auto di_opt = type_cache.get_dit_type(0, out->ir_type);
+
+		out->di_type = di_opt.has_value() ? di_opt.value() :  
+            type_cache.get_dit_type(0, out->ir_type, nullptr);
 
         break;
     }
     case BIT_DOUBLE:
     {
         out->ir_type = Type::getDoubleTy(*ctx->llvm_ctx);
-        out->di_type = type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("double",64,dwarf::DW_ATE_float));
-        out->type_id = IRT_OPAQUE;
+
+        auto di_opt = type_cache.get_dit_type(0, out->ir_type);
+
+        out->di_type =  di_opt.has_value() ? di_opt.value() : 
+            type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("double",64,dwarf::DW_ATE_float));
+
         break;
     }
     default:
     {
-        throw compiler_exeption_t("%s:%zu:%zu: (error): unknown built int type '%d'",
+        throw compiler_exeption_t("%s:%zu:%zu: (internal compiler error): unknown built int type '%d'",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
@@ -130,25 +144,24 @@ llvmir_compiler_t::emit_built_in(compiler_ctx_t* ctx, builtin_node_ptr_t node)
     return out;
 }
 
-ir_type_ptr_t
+value_type_ptr_t
 llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 {
-    ir_base_type_ptr_t base_type;
+    value_type_ptr_t out;
 
     switch (node->type_type_id)
     {
     case TT_BUILTIN:
     {
-        base_type = emit_built_in(ctx, PCAST(builtin_node_t, node->ast_def->target));
+        out = emit_builtin_type(ctx, PCAST(builtin_node_t, node->ast_def->target));
         break;
     }
     case TT_FUNCTION:
     {
-        base_type = emit_fun_type(ctx, PCAST(fun_type_node_t, node->ast_def->target));
+        out = emit_fun_type(ctx, PCAST(fun_type_node_t, node->ast_def->target));
         break;
 
     }
-    case TT_UNKNOWN:
     default:
     {
 
@@ -160,20 +173,31 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
     }
     };
 
-    ir_type_ptr_t out = init_type_from_base(ctx, base_type, node->ref_count);
+    if (node->ref_count > 0)
+    {
+        out->ref_count = node->ref_count;
+        out->pointee_ir_type = out->ir_type;
+        out->pointee_di_type = out->di_type;
+		out->ir_type = PointerType::getUnqual(*ctx->llvm_ctx); // collapse pointer types, we will preserve the original type in debug info for each level of indirection
+
+        for (int i = 1; i <= out->ref_count; i++)
+        {
+			auto di_opt = type_cache.get_dit_type(i, out->ir_type);
+            out->di_type = di_opt.has_value() ? di_opt.value() :
+                type_cache.get_dit_type(i, out->ir_type, ctx->llvm_di->createPointerType(out->di_type, 64));
+        }
+    }
 
     return out;
 
 }
 
-ir_base_type_ptr_t
+value_type_ptr_t
 llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
 {
-    ir_base_type_ptr_t out(new ir_base_type_t());
-	out->type_id = IRT_FUNCTION;
-    out->ast_def = node;
+    value_type_ptr_t out(new value_type_t());
 
-    ir_type_ptr_t ret_type = emit_type(ctx, node->ret_type);
+    value_type_ptr_t ret_type = emit_type(ctx, node->ret_type);
 
     SmallVector<Metadata*, 8>   dit_args;
     dit_args.push_back(ret_type->di_type);
@@ -181,16 +205,16 @@ llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
     std::vector<Type*>  irt_args;
     for (auto p : node->var_list->vars_m)
     {
-        ir_type_ptr_t argt = emit_type(ctx, p.second->type);
+        value_type_ptr_t argt = emit_type(ctx, p.second->type);
         irt_args.push_back(argt->ir_type);
         dit_args.push_back(argt->di_type);
     };
 
     out->ir_type = FunctionType::get(ret_type->ir_type, irt_args, false);
 
-    auto di_type = ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(dit_args));
+	auto di_opt = type_cache.get_dit_type(0, out->ir_type);
 
-    out->di_type = type_cache.get_dit_type(
+    out->di_type = di_opt.has_value() ? di_opt.value() : type_cache.get_dit_type(
         0,
         out->ir_type,
         ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(dit_args)));
@@ -198,47 +222,20 @@ llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
     return out;
 }
 
-ir_type_ptr_t 
-llvmir_compiler_t::init_type_from_base(compiler_ctx_t* ctx, ir_base_type_ptr_t base_type, size_t ref_count)
-{
-	ir_type_ptr_t out(new ir_type_t());
-	out->ref_count = ref_count;
 
-    if (out->ref_count == 0)
-    {
-        out->ir_type = base_type->ir_type;
-        out->di_type = base_type->di_type;
-    }
-    else 
-    {
-        out->ir_type = PointerType::getUnqual(*ctx->llvm_ctx); // collapse to pointer type
-
-        for (int i = 1; i <= out->ref_count; i++)
-        {
-            out->ref_count = i;
-            out->di_type = type_cache.get_dit_type(i, out->ir_type, ctx->llvm_di->createPointerType(out->di_type, 64)); // must preserve the type for each level of indirection for debug info
-        }
-
-    }
-
-    return out;
-}
-
-ir_value_ptr_t
+void
 llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 {
     if (node->ignore)
-        return nullptr;
+        return;
 
-    ir_value_ptr_t out(new ir_value_t());
-
-    ir_base_type_ptr_t base_type = emit_fun_type(ctx, node->fun_type);
-
-    
-	out->ssa_type = init_type_from_base(ctx, base_type, 0);
+    value_ptr_t out(new value_t());
+	
+    out->ssa_type  = emit_fun_type(ctx, node->fun_type);
+    out->is_lvalue  = false;
 
     Function* ir_fun =
-        Function::Create(ir_sc<FunctionType>(base_type->ir_type),
+        Function::Create(ir_sc<FunctionType>(out->ssa_type->ir_type),
             Function::ExternalLinkage, node->id->name, ctx->llvm_module);
 
 	for (int i = 0; i < ir_fun->arg_size(); i++)
@@ -250,10 +247,10 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
         ir_arg->setName(var_name);
 
-		ir_value_ptr_t var(new ir_value_t());
+		value_ptr_t var(new value_t());
 		var->ir_value = ir_arg;
 	
-		ast_def_cache[var_node] = var;
+		id_ssa_cache[var_node] = var;
 		
     }
    
@@ -263,7 +260,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
         node->id->name,            // Mangled function name.
         ctx->llvm_di_file,        // File where this variable is defined.
         node->line,                // Line number.
-        ir_sc<DISubroutineType> (base_type->di_type), // fnType
+        ir_sc<DISubroutineType> (out->ssa_type->di_type), // fnType
         node->line,                 // scope line
         DINode::FlagZero,
 		node->is_defined ? DISubprogram::SPFlagDefinition : DISubprogram::SPFlagZero
@@ -299,15 +296,14 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
             node->id->name.c_str());
     }
 
-    ast_def_cache[node] = out;
-    return out;
+    id_ssa_cache[node] = out;
 		
 }
 
 void 
 llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
 {
-    ir_value_ptr_t ret_val = emit_expression(ctx, node->return_expr);
+    value_ptr_t ret_val = emit_expression(ctx, node->return_expr);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
@@ -316,7 +312,7 @@ llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
 		((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
     );
 
-	auto ret_inst = ctx->llvm_ir->CreateRet(ret_val->ir_value);
+	auto ret_inst = ctx->llvm_ir->CreateRet(toRValue(ctx, ret_val));
 
     ret_inst->setDebugLoc(dloc);
 
@@ -340,25 +336,23 @@ llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
 
 }
 
-ir_value_ptr_t
+value_ptr_t
 llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node)
 {
-	ir_value_ptr_t out(new ir_value_t());
+	value_ptr_t out(new value_t());
 
 	switch (node->ast_def->target->node_type_id)
     {
         case FUNCTION_NODE:
         {
-            out = PCAST(ir_value_t, ast_def_cache[node->ast_def->target]);
+            out = PCAST(value_t, id_ssa_cache[node->ast_def->target]);
 
             break;
         }
         case VAR_NODE:
         {
-            ir_value_ptr_t var_desc = PCAST(ir_value_t, ast_def_cache[node->ast_def->target]);
+            out = PCAST(value_t, id_ssa_cache[node->ast_def->target]);
 
-            out->ir_value = ctx->llvm_ir->CreateLoad(var_desc->ssa_type->ir_type, var_desc->ir_value);
-          
             break;
         }
         default:
@@ -399,46 +393,48 @@ llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
     }
 }
 
-ir_value_ptr_t 
-llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, ir_type_ptr_t type)
+value_ptr_t 
+llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, value_type_ptr_t val_type)
 {
-	ir_value_ptr_t out(new ir_value_t());
-    
-    out->ir_value = Constant::getNullValue(type->ir_type);
-    
+	value_ptr_t out(new value_t());
+
+    out->is_lvalue = false;
+    out->ir_value = Constant::getNullValue(val_type->ir_type);
+    out->ssa_type = val_type;
+   
     return out;
-    
+
 }
 
 
-ir_value_ptr_t 
+void 
 llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 {
-	ir_value_ptr_t out(new ir_value_t());
+	value_ptr_t out(new value_t());
 
-    auto type = emit_type(ctx, node->type);
+    out->ssa_type = emit_type(ctx, node->type);
 
-	auto init_val = node->initializer ? emit_literal(ctx, node->initializer) : emit_default(ctx, type);
+	auto init_val = node->initializer ? emit_literal(ctx, node->initializer) : emit_default(ctx, out->ssa_type);
 
     if (ctx->fun_desc_stack.empty())
     {
         out->ir_value = new GlobalVariable(
             *ctx->llvm_module,
-            type->ir_type,
+            out->ssa_type->ir_type,
             false,
             GlobalValue::ExternalLinkage,
             ir_sc <Constant>(init_val->ir_value),
 			node->id->name
             );
 
-		out->ssa_type = type;
+        out->is_lvalue = true;
 		
     }
     else
     {
-        auto alloca_inst = ctx->llvm_ir->CreateAlloca(type->ir_type, nullptr, node->id->name);
-        out->ir_value = alloca_inst;
-		out->ssa_type = type;
+        auto alloca_inst = ctx->llvm_ir->CreateAlloca(out->ssa_type->ir_type, nullptr, node->id->name);
+        out->ir_value  = alloca_inst;
+		out->is_lvalue = true;
 
         auto store_inst = ctx->llvm_ir->CreateStore(init_val->ir_value, out->ir_value);
         llvm::DebugLoc dloc = llvm::DILocation::get(
@@ -451,16 +447,14 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
         store_inst->setDebugLoc(dloc);
     }
 
-	ast_def_cache[node] = out;
-
-    return out;
+	id_ssa_cache[node] = out;
    
 }
 
-ir_value_ptr_t
+value_ptr_t
 llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 {
-    ir_value_ptr_t val(new ir_value_t());
+    value_ptr_t val(new value_t());
 
     switch (node->op)
     {
@@ -486,22 +480,32 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
     return val;
 }
 
-ir_value_ptr_t
+Value* 
+llvmir_compiler_t::toRValue(compiler_ctx_t* ctx, value_ptr_t& val) 
+{
+    if (!val->is_lvalue)
+        return val->ir_value;
+
+    // load from address
+    return ctx->llvm_ir->CreateLoad(val->ssa_type->ir_type, val->ir_value);
+}
+
+value_ptr_t
 llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr_t node)
 {
-    ir_value_ptr_t val(new ir_value_t());
+    value_ptr_t val(new value_t());
    
-	ir_value_ptr_t fun_val = emit_expression(ctx, node->function);
+	value_ptr_t fun_val = emit_expression(ctx, node->function);
 
     std::vector <Value*> args = {};
 
 	for (auto arg : node->arg_list->args)
     {
-        ir_value_ptr_t arg_val = emit_expression(ctx, arg);
-        args.push_back(arg_val->ir_value);
+        value_ptr_t arg_val = emit_expression(ctx, arg);
+        args.push_back(toRValue(ctx, arg_val));
     }
-        
-    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), fun_val->ir_value, args);
+
+    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), toRValue(ctx, fun_val), args);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
@@ -515,30 +519,32 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
     return nullptr;
 }
 
-ir_value_ptr_t
+value_ptr_t
 llvmir_compiler_t::emit_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node)
 {
 	return emit_literal(ctx, node->literal);
 }
 
-ir_value_ptr_t
+value_ptr_t
 llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
 {
-    ir_value_ptr_t val(new ir_value_t());
+    value_ptr_t val(new value_t());
    
     switch (node->lit_type_id)
     {
     case LIT_INT:
     {
-        auto type = emit_type(ctx, node->type);
-	    val->ir_value   = ConstantInt::get(type->ir_type, std::get<int>(node->value), true);
-		
+        val->ssa_type  = emit_type(ctx, node->type);
+	    val->ir_value   = ConstantInt::get(val->ssa_type->ir_type, std::get<int>(node->value), true);
+		val->is_lvalue  = false;
+
 	    break;
     }
     case LIT_STRING:
     {
-        auto type = emit_type(ctx, node->type);
+        val->ssa_type   = emit_type(ctx, node->type);
         val->ir_value   = ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
+        val->is_lvalue  = true;
         
         break;
     }
@@ -546,16 +552,10 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     {
         auto type = emit_type(ctx, node->type);
         val->ir_value   = ConstantInt::get(type->ir_type, std::get<char>(node->value));
+        val->is_lvalue  = false;
         break;
     }
-    case LIT_POINTER_INT:
-    {
-        auto type = emit_type(ctx, node->type); // must be pointer to int
-        Constant* addr  = ConstantInt::get(type->base_type->ir_type, std::get<int>(node->value));
-        // the value is not an int but actually its location in memory 
-        val->ir_value   = ConstantExpr::getIntToPtr(addr, PointerType::getUnqual(*ctx->llvm_ctx));
-        break;
-    }
+    case LIT_POINTER_VOID:
     default:
     {
         throw compiler_exeption_t("%s:%zu:%zu: (error): unsupported literal type %d", ctx->ast->source_id.c_str(), node->line, node->pos, node->line);

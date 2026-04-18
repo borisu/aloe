@@ -11,7 +11,6 @@ namespace aloe
 		BIT_INT,
 		BIT_VOID,
 		BIT_DOUBLE,
-		BIT_OPAQUE,
 		BIT_CHAR,
 	};
 

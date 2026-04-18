@@ -50,15 +50,10 @@ double
     : DoubleType
     ;
 
-opaque
-    : OpaqueType
-    ;
-
 builtinType 
     : int
     | char
     | double
-    | opaque
     | void
     ;
 
@@ -122,10 +117,10 @@ literal
     : DigitSequence
     | StringLiteral+
     | CharacterConstant
-    | pointerToInt
+    | pointerToVoid
     ;
 
-pointerToInt
+pointerToVoid
     :pl_pfx+='^'+ DigitSequence
     ;
 
@@ -221,10 +216,6 @@ Replaces
 
 VoidType 
     : 'void'
-    ;
-
-OpaqueType 
-    : 'opaque'
     ;
 
 IntType 

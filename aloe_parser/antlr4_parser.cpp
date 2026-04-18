@@ -24,13 +24,11 @@ antl4_parser_t::antl4_parser_t()
     INT_NODE.reset(new builtin_node_t(BIT_INT));
     CHAR_NODE.reset(new builtin_node_t(BIT_CHAR));
     DOUBLE_NODE.reset(new builtin_node_t(BIT_DOUBLE));
-    OPAQUE_NODE.reset(new builtin_node_t(BIT_OPAQUE));
     VOID_NODE.reset(new builtin_node_t(BIT_VOID));
 
 	INT_NODE_BRIDGE.reset(new bridge_t(INT_NODE));
 	CHAR_NODE_BRIDGE.reset(new bridge_t(CHAR_NODE));
 	DOUBLE_NODE_BRIDGE.reset(new bridge_t(DOUBLE_NODE));
-	OPAQUE_NODE_BRIDGE.reset(new bridge_t(OPAQUE_NODE));
 	VOID_NODE_BRIDGE.reset(new bridge_t(VOID_NODE));
 }
 
@@ -230,10 +228,6 @@ antl4_parser_t::walk_built_in_type(environment_ptr_t env, aloeParser::BuiltinTyp
     else if (ctx->double_())
     {
         bit_node = DOUBLE_NODE;
-    }
-    else if (ctx->opaque())
-    {
-        bit_node = OPAQUE_NODE;
     }
     else
     {
@@ -488,14 +482,14 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
         literal_node->type->type_type_id = TT_BUILTIN;
         literal_node->type->ast_def = CHAR_NODE_BRIDGE;
     }
-    else if (ctx->pointerToInt())
+    else if (ctx->pointerToVoid())
     {
-        literal_node->lit_type_id = LIT_POINTER_INT;
-        literal_node->value = std::stoi(ctx->pointerToInt()->DigitSequence()->getText());
+        literal_node->lit_type_id = LIT_POINTER_VOID;
+        literal_node->value = std::stoi(ctx->pointerToVoid()->DigitSequence()->getText());
         literal_node->type->node_type_id = BASE_TYPE_NODE;
         literal_node->type->type_type_id = TT_BUILTIN;
-        literal_node->type->ast_def = INT_NODE_BRIDGE;
-		literal_node->type->ref_count = ctx->pointerToInt()->pl_pfx.size(); // pointer literal is int pointer
+        literal_node->type->ast_def      = VOID_NODE_BRIDGE;
+		literal_node->type->ref_count     = ctx->pointerToVoid()->pl_pfx.size(); // pointer literal is int pointer
 
     }
     else

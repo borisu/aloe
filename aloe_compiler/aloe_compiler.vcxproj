@@ -157,8 +157,8 @@
     <ClInclude Include="include\aloe\compiler.h" />
     <ClInclude Include="ir_compiler.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="ir_type.h" />
-    <ClInclude Include="ir_value.h" />
+    <ClInclude Include="value_type.h" />
+    <ClInclude Include="value.h" />
     <ClInclude Include="type_cache.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
