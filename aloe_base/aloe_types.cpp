@@ -1,0 +1,73 @@
+#include "pch.h"
+#include "aloe/aloe_type.h"
+#include "aloe/defs.h"
+
+using namespace aloe;
+
+bool
+aloe::operator!=(const aloe_type_t& t1, const aloe_type_t& t2)
+{
+	return !(t1 == t2);
+}
+
+bool
+aloe::operator==(const aloe_type_t& t1, const aloe_type_t& t2)
+{
+	if (t1.ref_count != t2.ref_count)
+	{
+		return false;
+	}
+
+	if (t1.type_cat_id != t2.type_cat_id)
+	{
+		return false;
+	}
+
+	switch (t1.type_cat_id)
+	{
+	case TT_BUILTIN:
+	{
+		return (t1.type_cat_id == t2.type_cat_id);
+		break;
+	}
+	case TT_FUNCTION:
+	{
+		auto fun_t1 = dynamic_cast<const aloe_fun_type_t&>(t1);
+		auto fun_t2 = dynamic_cast<const aloe_fun_type_t&>(t2);
+
+		if (fun_t1.args_type_list.size() != fun_t2.args_type_list.size())
+		{
+			return false;
+		}
+
+		if (!(fun_t1.ret_type == fun_t2.ret_type))
+		{
+			return false;
+		}
+
+		for (size_t i = 0; i < fun_t1.args_type_list.size(); i++)
+		{
+			auto arg1 = fun_t1.args_type_list[i];
+			auto arg2 = fun_t2.args_type_list[i];
+			if (arg1 != arg2)
+			{
+				return false;
+			}
+		}
+
+		return true;
+
+		break;
+	}
+	default:
+
+		return false;
+	}
+
+	return true;
+}
+
+
+
+
+

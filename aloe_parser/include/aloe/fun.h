@@ -20,9 +20,9 @@ namespace aloe
 	typedef shared_ptr<exec_block_node_t> 
 	exec_block_node_ptr_t;
 
-	struct fun_type_node_t : public node_t
+	struct fun_type_node_t : public type_node_t
 	{
-		fun_type_node_t() :node_t(FUN_TYPE_NODE)
+		fun_type_node_t() :type_node_t(TT_FUNCTION)
 		{}
 
 		type_node_ptr_t				ret_type;
@@ -61,8 +61,5 @@ namespace aloe
 
 	typedef shared_ptr<return_node_t> 
 	return_node_ptr_t;
-
-	bool operator!=(const fun_type_node_t& t1, const fun_type_node_t& t2);
-	bool operator==(const fun_type_node_t& t1, const fun_type_node_t& t2);
 
 }

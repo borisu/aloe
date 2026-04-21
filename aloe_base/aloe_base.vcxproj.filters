@@ -15,11 +15,15 @@
     <ClInclude Include="include\aloe\intrinsics.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="include\aloe\aloe_type.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="intrinsics.cpp" />
+    <ClCompile Include="aloe_types.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">

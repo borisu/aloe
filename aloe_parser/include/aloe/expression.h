@@ -14,7 +14,7 @@ namespace aloe
 	struct expr_node_t;
 	typedef shared_ptr<expr_node_t> expr_node_ptr_t;
 
-	enum expression_type_e
+	enum expression_op_e
 	{
 		expr_identifier,
 		expr_literal,
@@ -71,9 +71,11 @@ namespace aloe
 
 	struct expr_node_t : public node_t
 	{
-		expr_node_t(expression_type_e op) :node_t(EXPRESSION_NODE),op(op) {}
+		expr_node_t(expression_op_e op) :node_t(EXPRESSION_NODE),op_id(op), expr_type(new type_node_t()) {}
 
-		expression_type_e op;
+		expression_op_e op_id;
+
+		type_node_ptr_t expr_type;
 	};
 
 	struct arglist_node_t : public node_t
@@ -103,7 +105,7 @@ namespace aloe
 	
 	struct unary_expr_node_t : public expr_node_t
 	{
-		unary_expr_node_t(expression_type_e op) :expr_node_t(op) {}
+		unary_expr_node_t(expression_op_e op) :expr_node_t(op) {}
 
 		expr_node_ptr_t operand;
 	};
@@ -135,7 +137,7 @@ namespace aloe
 
 	struct binary_expr_node_t : public expr_node_t
 	{
-		binary_expr_node_t(expression_type_e op) :expr_node_t(op) {}
+		binary_expr_node_t(expression_op_e op) :expr_node_t(op) {}
 
 		expr_node_ptr_t operand1;
 
@@ -183,7 +185,7 @@ namespace aloe
 	DEFINE_UNARY_EXPR_NODE_TYPE(deref);
 	DEFINE_UNARY_EXPR_NODE_TYPE(addressof);
 	
-#define DEFINE_IDENTIFIER_EXPR_NODE_TYPE(NAME) struct NAME##_expr_node_t : public identifier_expression_node_t { NAME##_expr_node_t () : identifier_expression_node_t() { op = expr_##NAME; } }
+#define DEFINE_IDENTIFIER_EXPR_NODE_TYPE(NAME) struct NAME##_expr_node_t : public identifier_expression_node_t { NAME##_expr_node_t () : identifier_expression_node_t() { op_id = expr_##NAME; } }
 	DEFINE_IDENTIFIER_EXPR_NODE_TYPE(dot);
 	DEFINE_IDENTIFIER_EXPR_NODE_TYPE(arrow);
 

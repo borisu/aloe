@@ -64,7 +64,6 @@ type
 baseType
     : funType
     | builtinType
-    | identifier
     ;
 
 /********************/
@@ -147,7 +146,7 @@ expression
     | '-' expression                                       #expr_min
     | '!' expression                                       #expr_not
     | '~' expression                                       #expr_bwsnot
-    | '(' type ')' expression                              #expr_cast
+    | expression':'type                                      #expr_cast
     | '@' expression                                       #expr_deref
     | '&' expression                                       #expr_addressof
     | 'sizeof'  '(' expression ')'                         #expr_sizeofexpr

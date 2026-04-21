@@ -81,7 +81,7 @@ llvmir_compiler_t::compile(
 }
 
 value_type_ptr_t
-llvmir_compiler_t::emit_builtin_type(compiler_ctx_t* ctx, builtin_node_ptr_t node)
+llvmir_compiler_t::emit_builtin_type(compiler_ctx_t* ctx, builtin_type_node_ptr_t node)
 {
     value_type_ptr_t out(new value_type_t());
 
@@ -149,27 +149,27 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 {
     value_type_ptr_t out;
 
-    switch (node->type_type_id)
+    switch (node->type_cat_id)
     {
     case TT_BUILTIN:
     {
-        out = emit_builtin_type(ctx, PCAST(builtin_node_t, node->ast_def->target));
+        out = emit_builtin_type(ctx, PCAST(builtin_type_node_t, node));
         break;
     }
     case TT_FUNCTION:
     {
-        out = emit_fun_type(ctx, PCAST(fun_type_node_t, node->ast_def->target));
+        out = emit_fun_type(ctx, PCAST(fun_type_node_t, node));
         break;
 
     }
     default:
     {
 
-        throw  compiler_exeption_t("%s:%zu:%zu: (error): unknown type %d",
+        throw  compiler_exeption_t("%s:%zu:%zu: (internal error): unknown type %d",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
-            node->type_type_id); ;
+            node->type_cat_id); ;
     }
     };
 
@@ -289,7 +289,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     bool is_broken = llvm::verifyFunction(*ir_fun);
 
     if (is_broken) {
-        throw compiler_exeption_t("%s:%zu:%zu: (error): generated IR for function '%s' is broken",
+        throw compiler_exeption_t("%s:%zu:%zu: (internal error): generated IR for function '%s' is broken",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
@@ -312,7 +312,7 @@ llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
 		((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
     );
 
-	auto ret_inst = ctx->llvm_ir->CreateRet(toRValue(ctx, ret_val));
+	auto ret_inst = ctx->llvm_ir->CreateRet(emit_r_value(ctx, ret_val));
 
     ret_inst->setDebugLoc(dloc);
 
@@ -357,7 +357,7 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
         }
         default:
         {
-            throw compiler_exeption_t("%s:%zu:%zu: (error): identifier '%s' points to unsupported type",
+            throw compiler_exeption_t("%s:%zu:%zu: (internal error): identifier '%s' points to unsupported type",
                 ctx->ast->source_id.c_str(),
                 node->line,
                 node->pos,
@@ -456,7 +456,7 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 {
     value_ptr_t val(new value_t());
 
-    switch (node->op)
+    switch (node->op_id)
     {
     case expr_literal:
     {
@@ -481,13 +481,29 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 }
 
 Value* 
-llvmir_compiler_t::toRValue(compiler_ctx_t* ctx, value_ptr_t& val) 
+llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val) 
 {
     if (!val->is_lvalue)
         return val->ir_value;
 
     // load from address
     return ctx->llvm_ir->CreateLoad(val->ssa_type->ir_type, val->ir_value);
+}
+
+Value*
+llvmir_compiler_t::emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_ptr_t target_type, node_ptr_t node)
+{
+    if (val->is_lvalue)
+    {
+       throw compiler_exeption_t("%s:%zu:%zu: (internal error): cannot cast lvalue, expected rvalue",
+            ctx->ast->source_id.c_str(),
+            node->line,
+		    node->pos);
+    }
+
+    // int, char 
+
+    
 }
 
 value_ptr_t
@@ -502,10 +518,10 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
 	for (auto arg : node->arg_list->args)
     {
         value_ptr_t arg_val = emit_expression(ctx, arg);
-        args.push_back(toRValue(ctx, arg_val));
+        args.push_back(emit_r_value(ctx, arg_val));
     }
 
-    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), toRValue(ctx, fun_val), args);
+    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), emit_r_value(ctx, fun_val), args);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
@@ -558,7 +574,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     case LIT_POINTER_VOID:
     default:
     {
-        throw compiler_exeption_t("%s:%zu:%zu: (error): unsupported literal type %d", ctx->ast->source_id.c_str(), node->line, node->pos, node->line);
+        throw compiler_exeption_t("%s:%zu:%zu: (internal error): unsupported literal type %d", ctx->ast->source_id.c_str(), node->line, node->pos, node->line);
     }
     }
 

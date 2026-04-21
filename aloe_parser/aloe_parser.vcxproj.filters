@@ -36,9 +36,6 @@
     <ClInclude Include="include\aloe\var.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
-    <ClInclude Include="include\aloe\built_in.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
     <ClInclude Include="parse_exception.h" />
     <ClInclude Include="include\aloe\bridge.h">
       <Filter>include\aloe</Filter>

@@ -152,7 +152,6 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\aloe\ast.h" />
     <ClInclude Include="include\aloe\bridge.h" />
-    <ClInclude Include="include\aloe\built_in.h" />
     <ClInclude Include="include\aloe\expression.h" />
     <ClInclude Include="include\aloe\fun.h" />
     <ClInclude Include="include\aloe\identifier.h" />

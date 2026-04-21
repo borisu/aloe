@@ -19,6 +19,10 @@ namespace aloe
 
 		bridge_ptr_t find_id(identifier_node_ptr_t id);
 
+		void push_fun(fun_node_ptr_t fun);
+
+		fun_node_ptr_t top_fun();
+
 		string source_id;
 
 	private:
@@ -39,6 +43,8 @@ namespace aloe
 		bridge_map_t;
 
 		bridge_map_t  bridge_map;
+
+		stack<fun_node_ptr_t> fun_stack;
 
 		environment_ptr_t prev;
 

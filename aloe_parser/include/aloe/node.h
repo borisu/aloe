@@ -13,7 +13,6 @@ namespace aloe
 		FUNCTION_NODE,
 		EXECUTION_BLOCK_NODE,
 		RETURN_NODE,
-		BASE_TYPE_NODE,
 		TYPE_NODE,
 		FUN_TYPE_NODE,
 		VAR_NODE,
@@ -38,6 +37,8 @@ namespace aloe
 		int pos;
 
 		bool ignore;
+
+		string content;
 
 		virtual ~node_t() {}
 	};

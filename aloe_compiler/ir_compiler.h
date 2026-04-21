@@ -30,7 +30,7 @@ namespace aloe
 
 		virtual value_type_ptr_t emit_type(compiler_ctx_t* ctx, type_node_ptr_t node);
 
-		virtual value_type_ptr_t emit_builtin_type(compiler_ctx_t* ctx, builtin_node_ptr_t node);
+		virtual value_type_ptr_t emit_builtin_type(compiler_ctx_t* ctx, builtin_type_node_ptr_t node);
 
 		virtual value_type_ptr_t emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node);
 
@@ -54,7 +54,9 @@ namespace aloe
 
 		virtual value_ptr_t emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
 
-		virtual Value* toRValue(compiler_ctx_t* ctx, value_ptr_t& expr);
+		virtual Value* emit_r_value(compiler_ctx_t* ctx, value_ptr_t expr);
+
+		virtual Value* emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_ptr_t target_type, node_ptr_t node);
 
 
 	private:

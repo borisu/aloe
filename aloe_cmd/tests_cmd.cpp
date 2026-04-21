@@ -54,20 +54,26 @@ tests_cmd_t::test_fun_declarations1()
 {
     
     TEST_PARSE_STRING(R"(fun foo:()-> void { fun xxx:()->int {}; })", true);
+    TEST_PARSE_STRING(R"(fun foo:()-> void { fun :()->int {}; })", true);
 
+}
+
+void tests_cmd_t::test_casts()
+{
+    TEST_PARSE_STRING(R"(fun foo:()-> void { return 10; })", false);
 }
 
 
 void 
-tests_cmd_t::test_defauts()
+tests_cmd_t::test_defaults()
 {
-
-    TEST_PARSE_STRING(R"(var a:int    =   0)", true);
-    TEST_PARSE_STRING(R"(var a:^int   =  ^0)", true);
-    TEST_PARSE_STRING(R"(var a:^^int  = ^^0)", true);
-    TEST_PARSE_STRING(R"(var a:^char  = "ok")", true);
-    TEST_PARSE_STRING(R"(var a:char   = 'o')", true);
-    TEST_PARSE_STRING(R"(var a:char   = 123)", false);
+    TEST_PARSE_STRING(R"(var a:void     =   0)", false);
+    TEST_PARSE_STRING(R"(var a:int     =   0)", true);
+    TEST_PARSE_STRING(R"(var a:^void   =  ^0)", true);
+    TEST_PARSE_STRING(R"(var a:^^void  = ^^0)", true);
+    TEST_PARSE_STRING(R"(var a:^char   = "ok")", true);
+    TEST_PARSE_STRING(R"(var a:char    = 'o')", true);
+    TEST_PARSE_STRING(R"(var a:char    = 123)", false);
 }
     
 
@@ -117,13 +123,15 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-   
+    test_casts();
+    return success;
+
 
     test_fun_expect1();
     test_var_declarations1();
     test_fun_declarations1();
     test_expressions1();
-    test_defauts();
+    test_defaults();
     
 
     return success;

@@ -17,8 +17,6 @@ namespace aloe
 
 	private:
 
-		map<type_node_t, value_type_ptr_t> type_cache;
-
 		typedef std::pair<size_t, Type*> di_cache_key_t;
 		map<di_cache_key_t, DIType*> di_cache;
 

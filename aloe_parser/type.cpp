@@ -4,7 +4,7 @@
 
 using namespace aloe;
 
-bool 
+/*bool
 aloe::operator!=(const type_node_t& t1, const type_node_t& t2)
 {
 	return !(t1 == t2);
@@ -76,6 +76,6 @@ aloe::operator==(const type_node_t& t1, const type_node_t& t2)
 	}
 
 	return true;
-}
+}*/
 
 
