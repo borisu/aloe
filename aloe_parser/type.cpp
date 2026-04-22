@@ -1,81 +1,59 @@
 #include "pch.h"
 #include "aloe/ast.h"
 #include "aloe/defs.h"
+#include "parse_exception.h"
 
 using namespace aloe;
 
-/*bool
-aloe::operator!=(const type_node_t& t1, const type_node_t& t2)
+
+aloe_type_ptr_t 
+aloe::convert_type(type_node_ptr_t type)
 {
-	return !(t1 == t2);
-}
-
-bool
-aloe::operator!=(const fun_type_node_t& fun_t1, const fun_type_node_t& fun_t2)
-{
-	return !(fun_t1 == fun_t2);
-}
-
-bool 
-aloe::operator==(const fun_type_node_t& fun_t1, const fun_type_node_t& fun_t2)
-{
-	if (fun_t1.var_list->vars_v.size() != fun_t2.var_list->vars_v.size())
+	switch (type->type_type_id)
 	{
-		return false;
+	case TT_VOID:
+	{
+		return aloe_type_ptr_t(new aloe_type_t(TT_VOID));
 	}
-
-	if (!(*fun_t1.ret_type == *fun_t2.ret_type))
+	case TT_CHAR:
 	{
-		return false;
+		return aloe_type_ptr_t(new aloe_type_t(TT_CHAR));
 	}
-
-	for (size_t i = 0; i < fun_t1.var_list->vars_v.size(); i++)
+	case TT_INT:
 	{
-		auto arg1 = fun_t1.var_list->vars_v[i];
-		auto arg2 = fun_t2.var_list->vars_v[i];
-		if (*arg1.second->type != *arg2.second->type)
-		{
-			return false;
-		}
+		return aloe_type_ptr_t(new aloe_type_t(TT_INT));
 	}
-
-	return true;
-}
-
-bool 
-aloe::operator==(const type_node_t& t1, const type_node_t& t2)
-{
-	if (t1.ref_count != t2.ref_count)
+	case TT_FLOAT:
 	{
-		return false;
-	}
-
-	if (t1.type_type_id != t2.type_type_id)
-	{
-		return false;
-	}
-
-	switch (t1.type_type_id)
-	{
-	case TT_BUILTIN:
-	{
-		return (t1.ast_def->target.get() == t2.ast_def->target.get());
-		break;
+		return aloe_type_ptr_t(new aloe_type_t(TT_FLOAT));
 	}
 	case TT_FUNCTION:
 	{
-		auto fun_t1 = PCAST(fun_node_t, t1.ast_def->target);
-		auto fun_t2 = PCAST(fun_node_t, t2.ast_def->target);
+		auto fun_type = PCAST(fun_type_node_t, type);
 
-		return (fun_t1 == fun_t2);
-		break;
+		if (!fun_type)
+		{
+			throw parse_exeption_t("%s:%zu:%zu: (internal compiler error): invalid function type node", type->content.c_str(), type->line, type->pos);
+		}
+
+		aloe_fun_type_ptr_t fun_t = make_shared<aloe_fun_type_t>();
+
+		fun_t->ret_type = convert_type(fun_type->ret_type);
+
+		for (auto& var : fun_type->param_list->vars_v)
+		{
+			fun_t->args_type_list.push_back(convert_type(var.second->type));
+		}
+
+
+		return aloe_type_ptr_t(fun_t);
 	}
 	default:
-
-		return false;
+	{
+		throw parse_exeption_t("%s:%zu:%zu: (internal compiler error): unknown type", type->content.c_str(), type->line, type->pos);
 	}
+	}
+}
 
-	return true;
-}*/
 
 

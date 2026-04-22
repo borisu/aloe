@@ -80,80 +80,57 @@ llvmir_compiler_t::compile(
     return res;
 }
 
+
+
 value_type_ptr_t
-llvmir_compiler_t::emit_builtin_type(compiler_ctx_t* ctx, builtin_type_node_ptr_t node)
+llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 {
     value_type_ptr_t out(new value_type_t());
 
-    switch (node->bit_type)
+    switch (node->type_type_id)
     {
-    case BIT_INT:
+    case TT_INT:
     {
         out->ir_type = Type::getInt64Ty(*ctx->llvm_ctx);
 
-		auto di_opt = type_cache.get_dit_type(0, out->ir_type);
+        auto di_opt = type_cache.get_dit_type(0, out->ir_type);
 
-        out->di_type = di_opt.has_value() ? di_opt.value() : 
+        out->di_type = di_opt.has_value() ? di_opt.value() :
             type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("int", ALOE_INT_SIZE, dwarf::DW_ATE_signed));
 
         break;
     }
-    case BIT_CHAR:
+    case TT_CHAR:
     {
         out->ir_type = Type::getInt8Ty(*ctx->llvm_ctx);
 
         auto di_opt = type_cache.get_dit_type(0, out->ir_type);
 
-        out->di_type = di_opt.has_value() ? di_opt.value() : 
+        out->di_type = di_opt.has_value() ? di_opt.value() :
             type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("char", ALOE_CHAR_SIZE, dwarf::DW_ATE_signed_char));
 
         break;
     }
-    case BIT_VOID:
+    case TT_VOID:
     {
         out->ir_type = Type::getVoidTy(*ctx->llvm_ctx);
 
         auto di_opt = type_cache.get_dit_type(0, out->ir_type);
 
-		out->di_type = di_opt.has_value() ? di_opt.value() :  
+        out->di_type = di_opt.has_value() ? di_opt.value() :
             type_cache.get_dit_type(0, out->ir_type, nullptr);
 
         break;
     }
-    case BIT_DOUBLE:
+    case TT_FLOAT:
     {
         out->ir_type = Type::getDoubleTy(*ctx->llvm_ctx);
 
         auto di_opt = type_cache.get_dit_type(0, out->ir_type);
 
-        out->di_type =  di_opt.has_value() ? di_opt.value() : 
-            type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("double",64,dwarf::DW_ATE_float));
+        out->di_type = di_opt.has_value() ? di_opt.value() :
+            type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("double", 64, dwarf::DW_ATE_float));
 
-        break;
-    }
-    default:
-    {
-        throw compiler_exeption_t("%s:%zu:%zu: (internal compiler error): unknown built int type '%d'",
-            ctx->ast->source_id.c_str(),
-            node->line,
-            node->pos,
-            node->bit_type);
-    }
-    }
-
-    return out;
-}
-
-value_type_ptr_t
-llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
-{
-    value_type_ptr_t out;
-
-    switch (node->type_cat_id)
-    {
-    case TT_BUILTIN:
-    {
-        out = emit_builtin_type(ctx, PCAST(builtin_type_node_t, node));
         break;
     }
     case TT_FUNCTION:
@@ -169,7 +146,7 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
-            node->type_cat_id); ;
+            node->type_type_id); ;
     }
     };
 
@@ -203,7 +180,7 @@ llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
     dit_args.push_back(ret_type->di_type);
 
     std::vector<Type*>  irt_args;
-    for (auto p : node->var_list->vars_m)
+    for (auto p : node->param_list->vars_m)
     {
         value_type_ptr_t argt = emit_type(ctx, p.second->type);
         irt_args.push_back(argt->ir_type);
@@ -242,7 +219,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     {
         auto ir_arg = ir_fun->getArg(i);
 
-        auto var_node = node->fun_type->var_list->vars_v[i].second;
+        auto var_node = node->fun_type->param_list->vars_v[i].second;
         auto var_name = var_node->id->name;
 
         ir_arg->setName(var_name);

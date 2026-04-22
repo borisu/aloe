@@ -25,7 +25,10 @@ aloe::operator==(const aloe_type_t& t1, const aloe_type_t& t2)
 
 	switch (t1.type_cat_id)
 	{
-	case TT_BUILTIN:
+	case TT_CHAR:
+	case TT_VOID:
+	case TT_FLOAT:
+	case TT_INT:
 	{
 		return (t1.type_cat_id == t2.type_cat_id);
 		break;
@@ -70,4 +73,38 @@ aloe::operator==(const aloe_type_t& t1, const aloe_type_t& t2)
 
 
 
+std::string
+aloe_type_t::to_str()
+{
+	switch (type_cat_id)
+	{
+	case TT_CHAR:
+		return "char";
+	case TT_VOID:
+		return "void";
+	case TT_FLOAT:
+		return "float";
+	case TT_INT:
+		return "int";
+	case TT_FUNCTION:
+	{
+		auto fun_t = dynamic_cast<const aloe_fun_type_t&>(*this);
+		std::string result = "fun(";
+		for (size_t i = 0; i < fun_t.args_type_list.size(); i++)
+		{
+			if (i > 0)
+			{
+				result += ", ";
+			}
+			result += fun_t.args_type_list[i]->to_str();
+		}
+		result += ") -> ";
+		result += fun_t.ret_type->to_str();
+		return result;
+	}
+	default:
+		return "unknown";
+	}
 
+	
+}

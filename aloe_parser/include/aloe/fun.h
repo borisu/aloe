@@ -10,7 +10,6 @@ using namespace std;
 
 namespace aloe
 {
-
 	struct exec_block_node_t : public node_t
 	{
 		exec_block_node_t() : node_t(EXECUTION_BLOCK_NODE) {}
@@ -27,7 +26,7 @@ namespace aloe
 
 		type_node_ptr_t				ret_type;
 
-		var_list_node_ptr_t			var_list;
+		var_list_node_ptr_t			param_list;
 
 	};
 
@@ -62,4 +61,5 @@ namespace aloe
 	typedef shared_ptr<return_node_t> 
 	return_node_ptr_t;
 
+	
 }

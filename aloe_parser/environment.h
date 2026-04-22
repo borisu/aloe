@@ -17,7 +17,7 @@ namespace aloe
 
 		void register_id(identifier_node_ptr_t id, node_ptr_t node);
 
-		bridge_ptr_t find_id(identifier_node_ptr_t id);
+		bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope=false);
 
 		void push_fun(fun_node_ptr_t fun);
 

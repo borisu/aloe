@@ -26,6 +26,7 @@ namespace aloe
 	};
 
 	typedef shared_ptr<ast_t> ast_ptr_t;
+
 		
 }
 

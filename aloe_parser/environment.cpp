@@ -46,7 +46,7 @@ environment_t::top_fun()
 
 
 bridge_ptr_t
-environment_t::find_id(identifier_node_ptr_t id)
+environment_t::find_id(identifier_node_ptr_t id, bool local_scope)
 {
     auto curr_env = shared_from_this();
 
@@ -56,6 +56,10 @@ environment_t::find_id(identifier_node_ptr_t id)
         {
             return curr_env->bridge_map[id];
         }
+
+        if (local_scope)
+			break;
+
         curr_env = curr_env->prev;
     }
     return nullptr;

@@ -8,3 +8,4 @@ fun root:() -> int
 
 	return a;
 }
+

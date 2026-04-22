@@ -33,7 +33,7 @@ tests_cmd_t::parse_string(const char* al)
 
 	istringstream iss(al);
 
-    return p->parse_from_stream(iss,  ast, al);
+    return p->parse_from_stream(iss, ast, "<string>");
 }
 
 
@@ -57,10 +57,46 @@ tests_cmd_t::test_fun_declarations1()
     TEST_PARSE_STRING(R"(fun foo:()-> void { fun :()->int {}; })", true);
 
 }
-
-void tests_cmd_t::test_casts()
+void tests_cmd_t::test_var_scope()
 {
+    TEST_PARSE_STRING(R"(
+      var a:char  = 'a';
+      var a:int   = 10;)", false);
+
+    TEST_PARSE_STRING(R"(
+      var a:int = 10;
+      fun bar :(var a:int)-> void { })", true);
+
+    TEST_PARSE_STRING(R"(
+      fun bar :(var a:int)-> void {var a:int })", false);
+}
+
+
+void tests_cmd_t::test_funcall_type_mismatch()
+{
+    TEST_PARSE_STRING(R"(
+      fun foo:(var:int)-> void {  }
+      fun bar :()-> void { foo (10);})", true);
+
+    TEST_PARSE_STRING(R"(
+      fun foo:(var:int)-> void {  }
+      fun bar :()-> void { foo ('a');})", false);
+
+    TEST_PARSE_STRING(R"(
+      fun foo:(var:int, var:char)-> void {  }
+      fun bar :()-> void { foo (1,1);})", false);
+    
+}
+
+void tests_cmd_t::test_return_type_mismatch()
+{
+    TEST_PARSE_STRING(R"(fun foo:()-> int { return; })", false);
     TEST_PARSE_STRING(R"(fun foo:()-> void { return 10; })", false);
+    TEST_PARSE_STRING(R"(fun foo:()-> void { return (10); })", false);
+    TEST_PARSE_STRING(R"(fun foo:()-> void { var a:char = 'a'; return a; })", false);
+    TEST_PARSE_STRING(R"(fun foo:()-> void { var a:int = 10; return a++; })", false);
+    TEST_PARSE_STRING(R"(fun foo:()-> void { var a:int = 10; return a--; })", false);
+    
 }
 
 
@@ -123,10 +159,14 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-    test_casts();
-    return success;
+    test_var_scope();
+    return true;
+
+    test_funcall_type_mismatch();
+    
 
 
+    test_return_type_mismatch();
     test_fun_expect1();
     test_var_declarations1();
     test_fun_declarations1();

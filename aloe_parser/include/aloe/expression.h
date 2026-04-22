@@ -71,7 +71,7 @@ namespace aloe
 
 	struct expr_node_t : public node_t
 	{
-		expr_node_t(expression_op_e op) :node_t(EXPRESSION_NODE),op_id(op), expr_type(new type_node_t()) {}
+		expr_node_t(expression_op_e op) :node_t(EXPRESSION_NODE),op_id(op) {}
 
 		expression_op_e op_id;
 
@@ -274,6 +274,6 @@ namespace aloe
 	DEFINE_EXPR_NODE_PTR_TYPE(comma);
 
 #define NEW_EXPR_NODE(VAR, NAME) NAME##_expr_node_ptr_t VAR(new NAME##_expr_node_t())
-	
+
 }
 
