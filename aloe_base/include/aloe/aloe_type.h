@@ -30,6 +30,11 @@ namespace aloe
 
 		virtual ~aloe_type_t() {};
 
+		virtual bool is_arithmetic() const 
+		{
+			return ref_count > 0;
+		}
+		
 		string to_str();
 	};
 
@@ -41,6 +46,7 @@ namespace aloe
 	{
 		aloe_void_type_t(size_t ref_count = 0) :aloe_type_t(TT_VOID, ref_count)
 		{
+
 		}
 	};
 
@@ -49,12 +55,22 @@ namespace aloe
 		aloe_char_type_t(size_t ref_count = 0) :aloe_type_t(TT_CHAR, ref_count)
 		{
 		}
+
+		virtual bool is_arithmetic() const override
+		{
+			return true;
+		}
 	};
 
 	struct aloe_int_type_t : public aloe_type_t
 	{
 		aloe_int_type_t(size_t ref_count = 0) :aloe_type_t(TT_INT, ref_count)
 		{
+		}
+
+		virtual bool is_arithmetic() const override
+		{
+			return true;
 		}
 	};
 
@@ -63,6 +79,11 @@ namespace aloe
 		aloe_float_type_t(size_t ref_count = 0) :aloe_type_t(TT_FLOAT)
 		{
 			
+		}
+
+		virtual bool is_arithmetic() const override
+		{
+			return true;
 		}
 	};
 

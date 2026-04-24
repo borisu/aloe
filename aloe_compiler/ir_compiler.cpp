@@ -488,7 +488,7 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
 {
     value_ptr_t val(new value_t());
    
-	value_ptr_t fun_val = emit_expression(ctx, node->function);
+	value_ptr_t fun_val = emit_expression(ctx, node->fun_expr);
 
     std::vector <Value*> args = {};
 

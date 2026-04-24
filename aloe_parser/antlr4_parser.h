@@ -9,7 +9,6 @@ using namespace std;
 namespace aloe
 {
 	
-
 	class antl4_parser_t : public parser_t, public antlr4::BaseErrorListener, private aloeBaseListener
 	{
 	public:
@@ -52,6 +51,15 @@ namespace aloe
 
 		virtual fun_type_node_ptr_t walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx);
 
+        virtual void check_type_equality(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr1, expr_node_ptr_t expr2, const char* op_str);
+
+		virtual void check_binary_arithmetic(environment_ptr_t env, aloeParser::ExpressionContext* ctx, binary_expr_node_ptr_t  expr_node, const char* op_str);
+
+		virtual void check_unary_arithmetic(environment_ptr_t env, aloeParser::ExpressionContext* ctx, unary_expr_node_ptr_t  expr_node, const char* op_str);
+
+		virtual void check_lvalue(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr_node, const char* op_str);
+
+		virtual void check_assignment(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t lhs, expr_node_ptr_t rhs);
 		
 		bool syntax_error_occurred;
 

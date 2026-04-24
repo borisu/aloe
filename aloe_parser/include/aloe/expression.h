@@ -71,11 +71,13 @@ namespace aloe
 
 	struct expr_node_t : public node_t
 	{
-		expr_node_t(expression_op_e op) :node_t(EXPRESSION_NODE),op_id(op) {}
+		expr_node_t(expression_op_e op) :node_t(EXPRESSION_NODE),op_id(op), is_lvalue(true) {}
 
 		expression_op_e op_id;
 
 		type_node_ptr_t expr_type;
+
+		bool is_lvalue;
 	};
 
 	struct arglist_node_t : public node_t
@@ -110,11 +112,14 @@ namespace aloe
 		expr_node_ptr_t operand;
 	};
 
+	typedef shared_ptr<unary_expr_node_t>
+		unary_expr_node_ptr_t;
+
 	struct funcall_expr_node_t : public expr_node_t
 	{
 		funcall_expr_node_t() :expr_node_t(expr_funcall) {}
 
-		expr_node_ptr_t function;
+		expr_node_ptr_t fun_expr;
 
 		arglist_node_ptr_t arg_list;
 	};
@@ -143,6 +148,9 @@ namespace aloe
 
 		expr_node_ptr_t operand2;
 	};
+
+	typedef 
+	shared_ptr<binary_expr_node_t> binary_expr_node_ptr_t;
 
 	struct identifier_expression_node_t : public expr_node_t
 	{

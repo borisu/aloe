@@ -15,7 +15,8 @@ namespace aloe
 		size_t					ref_count;
 
 		type_category_e			type_type_id;
-
+		
+		
 	};
 
 	typedef shared_ptr<type_node_t> 
