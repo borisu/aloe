@@ -250,7 +250,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     if (node->is_defined)
     {
         BasicBlock* ir_block = BasicBlock::Create(*ctx->llvm_ctx, node->id->name, ir_fun);
-
+        
         ctx->llvm_ir->SetInsertPoint(ir_block);
 
         ctx->fun_desc_stack.push(out);
@@ -289,7 +289,7 @@ llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
 		((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
     );
 
-	auto ret_inst = ctx->llvm_ir->CreateRet(emit_r_value(ctx, ret_val));
+	auto ret_inst = ctx->llvm_ir->CreateRet(emit_r_value(ctx, ret_val, &dloc));
 
     ret_inst->setDebugLoc(dloc);
 
@@ -450,21 +450,69 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 		val = emit_expr_identifier(ctx, PCAST(identifier_expr_node_t, node));
         break;
     }
-    default:
+    case expr_assign:
+    {
+        val = emit_expr_assign(ctx, PCAST(assign_expr_node_t, node));
         break;
+    }
+    default:
+
+        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): invalid operation %d '%s'",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos,
+            expr_literal,
+            node->content.c_str());
+
+        break;
+
     }
 
     return val;
 }
 
+value_ptr_t 
+llvmir_compiler_t::emit_expr_assign(compiler_ctx_t* ctx, assign_expr_node_ptr_t node)
+{
+    value_ptr_t val(new value_t());
+
+    value_ptr_t e1 = emit_expression(ctx, node->operand1);
+    value_ptr_t e2 = emit_expression(ctx, node->operand2);
+
+    check_lvalue(ctx, e1, node);
+    check_ssa_type_equality(ctx, e1, e2, node);
+
+    llvm::DebugLoc dloc = llvm::DILocation::get(
+        *ctx->llvm_ctx,
+        node->line,
+        node->pos,
+        ((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+    );
+    
+    auto store_inst = ctx->llvm_ir->CreateStore(emit_r_value(ctx, e2, &dloc), e1->ir_value);
+    store_inst->setDebugLoc(dloc);
+
+    val->ir_value = store_inst;
+   
+    val->ssa_type = e2->ssa_type;
+
+    val->is_lvalue = false;
+
+    return val;
+
+}
+
 Value* 
-llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val) 
+llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val, llvm::DebugLoc* dloc)
 {
     if (!val->is_lvalue)
         return val->ir_value;
 
     // load from address
-    return ctx->llvm_ir->CreateLoad(val->ssa_type->ir_type, val->ir_value);
+    auto load_inst = ctx->llvm_ir->CreateLoad(val->ssa_type->ir_type, val->ir_value);
+    load_inst->setDebugLoc(*dloc);
+
+    return  load_inst;
 }
 
 Value*
@@ -487,6 +535,13 @@ value_ptr_t
 llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr_t node)
 {
     value_ptr_t val(new value_t());
+
+    llvm::DebugLoc dloc = llvm::DILocation::get(
+        *ctx->llvm_ctx,
+        node->line,
+        node->pos,
+        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+    );
    
 	value_ptr_t fun_val = emit_expression(ctx, node->fun_expr);
 
@@ -495,17 +550,18 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
 	for (auto arg : node->arg_list->args)
     {
         value_ptr_t arg_val = emit_expression(ctx, arg);
-        args.push_back(emit_r_value(ctx, arg_val));
+
+        llvm::DebugLoc arg_dloc = llvm::DILocation::get(
+            *ctx->llvm_ctx,
+            arg->line,
+            arg->pos,
+            ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+        );
+        
+        args.push_back(emit_r_value(ctx, arg_val, &arg_dloc));
     }
 
-    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), emit_r_value(ctx, fun_val), args);
-
-    llvm::DebugLoc dloc = llvm::DILocation::get(
-        *ctx->llvm_ctx,
-        node->line,
-        node->pos,
-        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
-    );
+    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), emit_r_value(ctx, fun_val, &dloc), args);
 
     inst->setDebugLoc(dloc);
 
@@ -557,4 +613,30 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
 
     return val;
         
+}
+
+bool 
+llvmir_compiler_t::check_ssa_type_equality(compiler_ctx_t *ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
+{
+    if (v2->ssa_type->ir_type  != v2->ssa_type->ir_type)
+    {
+        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible types '%s'",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos,
+            node->content.c_str());
+    }
+}
+
+bool
+llvmir_compiler_t::check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t node)
+{
+    if (!v->is_lvalue)
+    {
+        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): need lvalue for the operation '%s'",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos,
+            node->content.c_str());
+    }
 }

@@ -38,6 +38,22 @@ namespace aloe
 
 		virtual void emit_return(compiler_ctx_t* ctx, return_node_ptr_t node);
 
+		
+		virtual void emit_var(compiler_ctx_t* ctx, var_node_ptr_t node);
+
+		virtual value_ptr_t emit_default(compiler_ctx_t* ctx, value_type_ptr_t node);
+
+		virtual value_ptr_t emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
+
+		virtual Value* emit_r_value(compiler_ctx_t* ctx, value_ptr_t expr, llvm::DebugLoc *dloc);
+
+		virtual Value* emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_ptr_t target_type, node_ptr_t node);
+
+		
+
+		//
+		// EXPRESSIONS
+		//
 		virtual value_ptr_t emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node);
 
 		virtual value_ptr_t emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr_t node);
@@ -46,15 +62,15 @@ namespace aloe
 
 		virtual value_ptr_t emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node);
 
-		virtual void emit_var(compiler_ctx_t* ctx, var_node_ptr_t node);
+		virtual value_ptr_t emit_expr_assign(compiler_ctx_t* ctx, assign_expr_node_ptr_t node);
 
-		virtual value_ptr_t emit_default(compiler_ctx_t* ctx, value_type_ptr_t node);
+		//
+		// TYPE TESTERS
+		// 
 
-		virtual value_ptr_t emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
+		virtual bool check_ssa_type_equality(compiler_ctx_t *ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
 
-		virtual Value* emit_r_value(compiler_ctx_t* ctx, value_ptr_t expr);
-
-		virtual Value* emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_ptr_t target_type, node_ptr_t node);
+		virtual bool check_lvalue(compiler_ctx_t *ctx, value_ptr_t v, node_ptr_t node);
 
 
 	private:

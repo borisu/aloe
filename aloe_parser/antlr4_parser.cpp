@@ -785,6 +785,8 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->expr_type = expr_node->operand->expr_type;
 
        check_unary_arithmetic(env, ctx, expr_node, "!");
+
+       out = expr_node;
        
    }
    else if (INSTANCE_OF(aloeParser::Expr_bwsnotContext)) {
@@ -973,6 +975,8 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        check_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "<<");
        check_binary_arithmetic(env, ctx, expr_node, "<<");
+
+       out = expr_node;
 
 
    }
@@ -1365,6 +1369,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        expr_node->expr_type = expr_node->operand1->expr_type;
        expr_node->is_lvalue = true;
+
        out = expr_node;
 
    }
@@ -1375,6 +1380,10 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        if (e->argumentExpressionList())
        {
            expr_node->arg_list = walk_arg_list(env, e->argumentExpressionList());
+       }
+       else
+       {
+           throw;
        }
 
        expr_node->expr_type = expr_node->arg_list->args.back()->expr_type;

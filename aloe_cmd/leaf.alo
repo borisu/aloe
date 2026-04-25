@@ -6,16 +6,16 @@ fun root:() -> int
 
 	var b:int = 0;
 
-	var c:int = 0;
+	//var c:int = 0;
 
-	a = 1;
+	a = b;
 
-	b = a + 1;
+	// b = a + 1;
 
-	c = a + b;
+	// c = a + b;
 
 	vera("Hello World!");
 
-	return c;
+	return a;
 }
 
