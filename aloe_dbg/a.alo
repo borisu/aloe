@@ -1,10 +1,14 @@
 expect fun vera: (var msg: ^char) -> void 
 
+var g:int = 1;
+
 fun root:() -> int
 {
-	var a: int = 5;
+	var a:int = 1;
+
+	var b:int = a;
 
 	vera("Hello World!");
 
-	return a;
+	return b;	
 }

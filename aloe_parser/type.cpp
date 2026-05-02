@@ -13,19 +13,19 @@ aloe::convert_type(type_node_ptr_t type)
 	{
 	case TT_VOID:
 	{
-		return aloe_type_ptr_t(new aloe_void_type_t(TT_VOID));
+		return aloe_type_ptr_t(new aloe_void_type_t(type->ref_count));
 	}
 	case TT_CHAR:
 	{
-		return aloe_type_ptr_t(new aloe_char_type_t(TT_CHAR));
+		return aloe_type_ptr_t(new aloe_char_type_t(type->ref_count));
 	}
 	case TT_INT:
 	{
-		return aloe_type_ptr_t(new aloe_int_type_t(TT_INT));
+		return aloe_type_ptr_t(new aloe_int_type_t(type->ref_count));
 	}
 	case TT_FLOAT:
 	{
-		return aloe_type_ptr_t(new aloe_float_type_t(TT_FLOAT));
+		return aloe_type_ptr_t(new aloe_float_type_t(type->ref_count));
 	}
 	case TT_FUNCTION:
 	{
@@ -45,6 +45,7 @@ aloe::convert_type(type_node_ptr_t type)
 			fun_t->args_type_list.push_back(convert_type(var.second->type));
 		}
 
+		fun_t->ref_count = type->ref_count;
 
 		return aloe_type_ptr_t(fun_t);
 	}

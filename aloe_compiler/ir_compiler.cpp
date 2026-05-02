@@ -255,11 +255,27 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
         ctx->fun_desc_stack.push(out);
 
-        auto guard = make_scope_exit([&]() { ctx->fun_desc_stack.pop(); }); // walk may throw, make sure to pop the function from stack
+        auto guard = make_scope_exit([&]() { ctx->fun_desc_stack.pop(); }); // emit may throw, make sure to pop the function from stack
 
         for (auto& statement : node->exec_block->exec_statements)
         {
             emit_exec_statement(ctx, statement);
+        }
+
+        auto terminator = ctx->llvm_ir->GetInsertBlock()->getTerminator();
+        if (!terminator)
+        {
+            if (ir_fun->getReturnType()->isVoidTy()) {
+                ctx->llvm_ir->CreateRetVoid();
+            }
+            else
+            {
+                throw compiler_exeption_t("%s:%zu:%zu: error: control reaches end of non-void function '%s'",
+                    ctx->ast->source_id.c_str(),
+                    node->line,
+                    node->pos,
+                    node->id->name.c_str());
+            }
         }
     }
   
@@ -280,16 +296,25 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 void 
 llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
 {
-    value_ptr_t ret_val = emit_expression(ctx, node->return_expr);
+	llvm::ReturnInst* ret_inst = nullptr;
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-		((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+        ((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
     );
 
-	auto ret_inst = ctx->llvm_ir->CreateRet(emit_r_value(ctx, ret_val, &dloc));
+    if (!node->return_expr)
+    {
+         ret_inst = ctx->llvm_ir->CreateRetVoid();
+    }
+    else
+    {
+        value_ptr_t ret_val = emit_expression(ctx, node->return_expr);
+
+        ret_inst = ctx->llvm_ir->CreateRet(emit_r_value(ctx, ret_val, &dloc));
+    }
 
     ret_inst->setDebugLoc(dloc);
 
@@ -410,11 +435,6 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
     }
     else
     {
-        auto alloca_inst = ctx->llvm_ir->CreateAlloca(out->ssa_type->ir_type, nullptr, node->id->name);
-        out->ir_value  = alloca_inst;
-		out->is_lvalue = true;
-
-        auto store_inst = ctx->llvm_ir->CreateStore(init_val->ir_value, out->ir_value);
         llvm::DebugLoc dloc = llvm::DILocation::get(
             *ctx->llvm_ctx,
             node->line,
@@ -422,6 +442,13 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
             ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
         );
 
+
+        auto alloca_inst = ctx->llvm_ir->CreateAlloca(out->ssa_type->ir_type, nullptr, node->id->name);
+        out->ir_value  = alloca_inst;
+		out->is_lvalue = true;
+
+        auto store_inst = ctx->llvm_ir->CreateStore(emit_r_value(ctx, init_val, &dloc), out->ir_value);
+        
         store_inst->setDebugLoc(dloc);
     }
 
@@ -594,7 +621,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     {
         val->ssa_type   = emit_type(ctx, node->type);
         val->ir_value   = ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
-        val->is_lvalue  = true;
+        val->is_lvalue  = false;
         
         break;
     }
