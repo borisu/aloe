@@ -387,13 +387,12 @@ llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, value_type_ptr_t val_type)
 void 
 llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 {
-    throw; 
-
-	/*value_ptr_t out(new value_t());
+    
+	value_ptr_t out(new value_t());
 
     out->ssa_type = emit_type(ctx, node->type);
 
-	auto init_val = node->initializer ? emit_literal(ctx, node->initializer) : emit_default(ctx, out->ssa_type);
+	auto init_val = node->initializer ? emit_expression(ctx, node->initializer) : emit_default(ctx, out->ssa_type);
 
     if (ctx->fun_desc_stack.empty())
     {
@@ -426,7 +425,7 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
         store_inst->setDebugLoc(dloc);
     }
 
-	id_ssa_cache[node] = out;*/
+	id_ssa_cache[node] = out;
    
 }
 
