@@ -15,8 +15,11 @@ namespace aloe
 		void test_return_type_mismatch();
 		void test_funcall_type_mismatch();
 		void test_var_scope();
+		void test_recursion();
+		void test_ref_deref();
 		
 		bool parse_string(const char* al);
+		
 
 
 		bool success;

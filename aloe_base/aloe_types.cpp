@@ -35,27 +35,36 @@ aloe::operator==(const aloe_type_t& t1, const aloe_type_t& t2)
 	}
 	case TT_FUNCTION:
 	{
-		auto fun_t1 = dynamic_cast<const aloe_fun_type_t&>(t1);
-		auto fun_t2 = dynamic_cast<const aloe_fun_type_t&>(t2);
+		try {
 
-		if (fun_t1.args_type_list.size() != fun_t2.args_type_list.size())
-		{
-			return false;
-		}
+			auto fun_t1 = dynamic_cast<const aloe_fun_type_t&>(t1);
+			auto fun_t2 = dynamic_cast<const aloe_fun_type_t&>(t2);
 
-		if (!(fun_t1.ret_type == fun_t2.ret_type))
-		{
-			return false;
-		}
 
-		for (size_t i = 0; i < fun_t1.args_type_list.size(); i++)
-		{
-			auto arg1 = fun_t1.args_type_list[i];
-			auto arg2 = fun_t2.args_type_list[i];
-			if (arg1 != arg2)
+			if (fun_t1.args_type_list.size() != fun_t2.args_type_list.size())
 			{
 				return false;
 			}
+
+			if (*fun_t1.ret_type != *fun_t2.ret_type)
+			{
+				return false;
+			}
+
+			for (size_t i = 0; i < fun_t1.args_type_list.size(); i++)
+			{
+				auto arg1 = fun_t1.args_type_list[i];
+				auto arg2 = fun_t2.args_type_list[i];
+				if (*arg1 != *arg2)
+				{
+					return false;
+				}
+			}
+
+		}
+		catch (const std::bad_cast&)
+		{
+			return false;
 		}
 
 		return true;

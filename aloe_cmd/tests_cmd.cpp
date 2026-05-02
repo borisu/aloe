@@ -16,12 +16,11 @@ using namespace aloe;
 using namespace std;
 
 #define TEST_PARSE_STRING(CMD,E) {                                                      \
-    printf("TEST PARSE STRING \"%-50s\"",CMD);                                          \
+    printf("TEST PARSE STRING -- \n%-20s \n",CMD);                                          \
     bool test_success = parse_string(CMD) == E;                                         \
-    test_success ? printf("...[OK]\n") : printf("...[FAIL]\n");                         \
+    test_success ? printf("\n...[OK]\n") : printf("\n...[FAIL]\n");                         \
     success &= test_success ;                                                           \
 }
-
 
 
 bool 
@@ -40,12 +39,17 @@ tests_cmd_t::parse_string(const char* al)
 void
 tests_cmd_t::test_var_declarations1()
 {
-    
-
     TEST_PARSE_STRING(R"(var b:A)", false);
     TEST_PARSE_STRING(R"(var a:int)", true);
     TEST_PARSE_STRING(R"(var :int)", true);
     TEST_PARSE_STRING(R"(var :^^^^^int)", true);
+    TEST_PARSE_STRING(R"(var b:int =  1 + 1)", false);
+    TEST_PARSE_STRING(R"(var b:int = 1)", true);
+
+    TEST_PARSE_STRING(R"(fun foo:() -> void { var b:int = 1 + 1 } )", true);
+    TEST_PARSE_STRING(R"(fun foo:() -> void { var b:int = 1 } )", true);
+
+    TEST_PARSE_STRING(R"( fun foo:(var a:int = 1) -> void { "a";})", false);
 }
 
 
@@ -142,6 +146,21 @@ tests_cmd_t::test_fun_expect1()
 }
 
 void 
+tests_cmd_t::test_recursion()
+{
+    TEST_PARSE_STRING(R"( fun foo:() -> void { foo(); })", true);
+    TEST_PARSE_STRING(R"(fun foo:(var a:int)-> void { foo(a); })", true);
+    TEST_PARSE_STRING(R"(fun foo:(var a:int)-> void { foo(); })", false);
+}
+
+void 
+tests_cmd_t::test_ref_deref()
+{
+    
+    
+}
+
+void 
 tests_cmd_t::test_expressions1()
 {
 
@@ -149,7 +168,8 @@ tests_cmd_t::test_expressions1()
     TEST_PARSE_STRING(R"( fun foo:() -> void { '\n';})", true);
     TEST_PARSE_STRING(R"( fun foo:() -> void { 12345;})", true);
     TEST_PARSE_STRING(R"( fun foo:() -> void { (12345);})", true);
-    TEST_PARSE_STRING(R"( fun foo:() -> void { foo(); })", true);
+    TEST_PARSE_STRING(R"( fun foo:() -> void { }; fun bar:()-> void { foo(); })", true);
+    
 
 }
 
@@ -159,20 +179,18 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-    test_var_scope();
-    return true;
-
-    test_funcall_type_mismatch();
     
 
-
+    test_var_scope();
+    test_funcall_type_mismatch();
     test_return_type_mismatch();
     test_fun_expect1();
     test_var_declarations1();
     test_fun_declarations1();
     test_expressions1();
     test_defaults();
+    test_recursion();
+	
     
-
     return success;
 }

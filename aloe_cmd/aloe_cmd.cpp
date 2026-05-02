@@ -15,7 +15,7 @@
 
 using namespace aloe;
 
-char G_NL[1] = { '\n' };
+char G_NL[1] = { ';' };
 
 void aloe::log1(FILE* stream, const char* text)
 {
@@ -116,7 +116,8 @@ int main(int argc, char* argv[])
     }
     case MODE_TEST:
     {
-        tests_cmd_t().run_tests();
+        err_code = tests_cmd_t().run_tests() ? 0 : 1;
+        break;
     }
     }
 

@@ -31,10 +31,7 @@ namespace aloe
 		{
 			bool operator()(const identifier_node_ptr_t& a, const identifier_node_ptr_t& b) const
 			{
-				if (a->name != b->name)
-					return a->name < b->name;
-
-				return a->idt_type_id < b->idt_type_id;
+				return (*a < *b);
 			}
 		};
 

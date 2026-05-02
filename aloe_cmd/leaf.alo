@@ -4,15 +4,11 @@ fun root:() -> int
 {
 	var a:int = 1;
 
-	var b:int = 0;
+	var b:^int = 0;
 
-	//var c:int = 0;
+	b = ^a;
 
-	a = b;
-
-	// b = a + 1;
-
-	// c = a + b;
+	@b = 2;
 
 	vera("Hello World!");
 

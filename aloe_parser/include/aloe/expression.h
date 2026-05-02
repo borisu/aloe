@@ -75,7 +75,7 @@ namespace aloe
 
 		expression_op_e op_id;
 
-		type_node_ptr_t expr_type;
+		type_node_ptr_t type;
 
 		bool is_lvalue;
 	};

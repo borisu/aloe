@@ -28,5 +28,8 @@ namespace aloe
 	typedef shared_ptr<identifier_node_t>
 	identifier_node_ptr_t;
 
+	
+	bool operator < (const identifier_node_t& a, const identifier_node_t& b);
+
 }
 #pragma once
