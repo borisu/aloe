@@ -456,6 +456,171 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
    
 }
 
+value_ptr_t 
+llvmir_compiler_t::emit_arithmetic_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
+{
+
+    value_ptr_t e1 = emit_expression(ctx, node->operand1);
+    value_ptr_t e2 = emit_expression(ctx, node->operand2);
+   
+	return emit_raw_binary_arithmetic(ctx, node->op_id, e1, e2, node);
+}
+
+value_ptr_t 
+llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op_e op, value_ptr_t op1, value_ptr_t op2, node_ptr_t node)
+{
+    value_ptr_t val(new value_t());
+
+    check_ssa_type_equality(ctx, op1, op2, node);
+
+    llvm::DebugLoc dloc = llvm::DILocation::get(
+        *ctx->llvm_ctx,
+        node->line,
+        node->pos,
+        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+    );
+
+    Value* lhs = emit_r_value(ctx, op1, &dloc);
+    Value* rhs = emit_r_value(ctx, op2, &dloc);
+    Value* res = nullptr;
+
+
+    switch (op)
+    {
+    case expr_add: res = ctx->llvm_ir->CreateAdd(lhs, rhs); break;
+    case expr_sub: res = ctx->llvm_ir->CreateSub(lhs, rhs); break;
+    case expr_mult: res = ctx->llvm_ir->CreateMul(lhs, rhs); break;
+    case expr_div: res = ctx->llvm_ir->CreateSDiv(lhs, rhs); break;
+    case expr_mod: res = ctx->llvm_ir->CreateSRem(lhs, rhs); break;
+    case expr_shiftleft: res = ctx->llvm_ir->CreateShl(lhs, rhs); break;
+    case expr_shiftright: res = ctx->llvm_ir->CreateAShr(lhs, rhs); break;
+    case expr_and: res = ctx->llvm_ir->CreateAnd(lhs, rhs); break;
+    case expr_xor: res = ctx->llvm_ir->CreateXor(lhs, rhs); break;
+    case expr_or: res = ctx->llvm_ir->CreateOr(lhs, rhs); break;
+    default: {
+        throw compiler_exeption_t("%s:%zu:%zu: (internal error): unknown binary operator %d",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos,
+            op);
+        break;
+    }
+    }
+
+    Instruction* I = cast<Instruction>(res);
+    if (I)
+    {
+        I->setDebugLoc(dloc);
+    }
+
+    val->ir_value  = res;
+    val->ssa_type  = op1->ssa_type;
+    val->is_lvalue = false;
+
+    return val;
+}
+
+value_ptr_t 
+llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
+{
+    value_ptr_t val(new value_t());
+    auto bn = PCAST(binary_expr_node_t, node);
+
+    value_ptr_t e1 = emit_expression(ctx, bn->operand1);
+    value_ptr_t e2 = emit_expression(ctx, bn->operand2);
+
+    check_ssa_type_equality(ctx, e1, e2, node);
+
+    llvm::DebugLoc dloc = llvm::DILocation::get(
+        *ctx->llvm_ctx,
+        node->line,
+        node->pos,
+        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+    );
+
+    Value* lhs = emit_r_value(ctx, e1, &dloc);
+    Value* rhs = emit_r_value(ctx, e2, &dloc);
+
+    Value* cmp = nullptr;
+
+    switch (node->op_id)
+    {
+    case expr_less: cmp = ctx->llvm_ir->CreateICmpSLT(lhs, rhs); break;
+    case expr_lesseeq: cmp = ctx->llvm_ir->CreateICmpSLE(lhs, rhs); break;
+    case expr_more: cmp = ctx->llvm_ir->CreateICmpSGT(lhs, rhs); break;
+    case expr_moreeq: cmp = ctx->llvm_ir->CreateICmpSGE(lhs, rhs); break;
+    case expr_logicaleq: cmp = ctx->llvm_ir->CreateICmpEQ(lhs, rhs); break;
+    case expr_noteq: cmp = ctx->llvm_ir->CreateICmpNE(lhs, rhs); break;
+    default: 
+    { 
+        throw compiler_exeption_t("%s:%zu:%zu: (internal error): unknown comparison operator %d",
+            ctx->ast->source_id.c_str(),
+            node->line,
+			node->pos,
+			node->op_id
+        );
+        break; 
+    }
+    }
+    Instruction* I = cast<Instruction>(cmp);
+    if (I)
+    {
+        I->setDebugLoc(dloc);
+    }
+
+    // cmp is i1 - extend to operand integer type for downstream compatibility
+    Value* ext = ctx->llvm_ir->CreateZExt(cmp, e1->ssa_type->ir_type);
+    I = cast<Instruction>(ext);
+    if (I)
+    {
+        I->setDebugLoc(dloc);
+    }
+    
+    val->ir_value = ext;
+    val->ssa_type = e1->ssa_type;
+    val->is_lvalue = false;
+	return val;
+}
+
+value_ptr_t 
+llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
+{
+	expression_op_e base_op;
+
+    switch (node->op_id)
+    {
+        // compound-assigns
+    case expr_addassign: base_op = expr_add; break;
+    case expr_subassign: base_op = expr_sub; break;
+    case expr_multassign: base_op = expr_mult; break;
+    case expr_divassign: base_op = expr_div; break;
+    case expr_modassign: base_op = expr_mod; break;
+    case expr_shiftleftassign: base_op = expr_shiftleft; break;
+    case expr_shiftrightassign: base_op = expr_shiftright; break;
+    case expr_andassign: base_op = expr_and; break;
+    case expr_xorassign: base_op = expr_xor; break;
+    case expr_orassign: base_op = expr_or; break;
+    default:
+        throw compiler_exeption_t("%s:%zu:%zu: (internal error): unknown binary assign operator %d",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos,
+            node->op_id);
+        break;
+    }
+
+	value_ptr_t val1 = emit_expression(ctx, node->operand1);
+
+	value_ptr_t val2 = emit_expression(ctx, node->operand2);
+
+	value_ptr_t val3 = emit_raw_binary_arithmetic(ctx, base_op, val1, val2, node);
+
+
+    return emit_raw_assign(ctx, val1, val3, node);
+   
+}
+
+
 value_ptr_t
 llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 {
@@ -465,17 +630,17 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
     {
     case expr_literal:
     {
-        val = emit_expr_literal(ctx, PCAST(literal_expr_node_t,node));
+        val = emit_expr_literal(ctx, PCAST(literal_expr_node_t, node));
         break;
     }
     case expr_funcall:
     {
-        val = emit_expr_fun_call(ctx, PCAST(funcall_expr_node_t,node));
+        val = emit_expr_fun_call(ctx, PCAST(funcall_expr_node_t, node));
         break;
     }
     case expr_identifier:
     {
-		val = emit_expr_identifier(ctx, PCAST(identifier_expr_node_t, node));
+        val = emit_expr_identifier(ctx, PCAST(identifier_expr_node_t, node));
         break;
     }
     case expr_assign:
@@ -483,13 +648,65 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
         val = emit_expr_assign(ctx, PCAST(assign_expr_node_t, node));
         break;
     }
+
+    // binary arithmetic
+    case expr_add:
+    case expr_sub:
+    case expr_mult:
+    case expr_div:
+    case expr_mod:
+    case expr_shiftleft:
+    case expr_shiftright:
+    case expr_and:
+    case expr_xor:
+    case expr_or:
+    {
+        val = emit_arithmetic_binary(ctx, PCAST(binary_expr_node_t, node));
+        break;
+    }
+
+    // comparisons -> produce integer value (extend i1 to operand type)
+    case expr_less:
+    case expr_lesseeq:
+    case expr_more:
+    case expr_moreeq:
+    case expr_logicaleq:
+    case expr_noteq:
+    {
+        val = emit_cmp_binary(ctx, PCAST(binary_expr_node_t, node));
+        break;
+    }
+
+    // compound-assigns
+    case expr_addassign:
+    case expr_subassign:
+    case expr_multassign:
+    case expr_divassign:
+    case expr_modassign:
+    case expr_shiftleftassign:
+    case expr_shiftrightassign:
+    case expr_andassign:
+    case expr_xorassign:
+    case expr_orassign:
+    {
+        val = emit_assign_arithmetic_binary(ctx, PCAST(binary_expr_node_t, node));
+        break;
+    }
+
+    // comma - evaluate args, return last
+    case expr_comma:
+    {
+		val = emit_comma(ctx, PCAST(comma_expr_node_t, node));
+        break;
+    }
+
     default:
 
         throw new compiler_exeption_t("%s:%zu:%zu: (internal error): invalid operation %d '%s'",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
-            expr_literal,
+            node->op_id,
             node->content.c_str());
 
         break;
@@ -499,35 +716,62 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
     return val;
 }
 
+value_ptr_t llvmir_compiler_t::emit_comma(compiler_ctx_t* ctx, comma_expr_node_ptr_t node)
+{
+    value_ptr_t val(new value_t());
+    value_ptr_t last;
+    for (auto& a : node->arg_list->args) {
+        last = emit_expression(ctx, a);
+    }
+    // return rvalue of last
+    if (last) {
+        llvm::DebugLoc dloc = llvm::DILocation::get(
+            *ctx->llvm_ctx,
+            node->line,
+            node->pos,
+            ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+        );
+        // if lvalue convert to rvalue
+        last->ir_value = emit_r_value(ctx, last, &dloc);
+        last->is_lvalue = false;
+        val = last;
+    }
+	return val;
+
+}
+
 value_ptr_t 
-llvmir_compiler_t::emit_expr_assign(compiler_ctx_t* ctx, assign_expr_node_ptr_t node)
+llvmir_compiler_t::emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node)
 {
     value_ptr_t val(new value_t());
 
-    value_ptr_t e1 = emit_expression(ctx, node->operand1);
-    value_ptr_t e2 = emit_expression(ctx, node->operand2);
-
-    check_lvalue(ctx, e1, node);
-    check_ssa_type_equality(ctx, e1, e2, node);
+    check_lvalue(ctx, lhs, node);
+    check_ssa_type_equality(ctx, lhs, rhs, node);
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-        ((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
     );
-    
-    auto store_inst = ctx->llvm_ir->CreateStore(emit_r_value(ctx, e2, &dloc), e1->ir_value);
-    store_inst->setDebugLoc(dloc);
+    auto inst = ctx->llvm_ir->CreateStore(emit_r_value(ctx, rhs, &dloc), lhs->ir_value);
+    inst->setDebugLoc(dloc);
 
-    val->ir_value = store_inst;
-   
-    val->ssa_type = e2->ssa_type;
-
+    val->ir_value  = inst;
+    val->ssa_type  = rhs->ssa_type;
     val->is_lvalue = false;
 
-    return val;
+	return val;
+}
 
+value_ptr_t 
+llvmir_compiler_t::emit_expr_assign(compiler_ctx_t* ctx, assign_expr_node_ptr_t node)
+{
+
+    value_ptr_t op1 = emit_expression(ctx, node->operand1);
+    value_ptr_t op2 = emit_expression(ctx, node->operand2);
+    
+    return emit_raw_assign(ctx,  op1, op2, node);
 }
 
 Value* 
@@ -537,10 +781,10 @@ llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val, llvm::Debu
         return val->ir_value;
 
     // load from address
-    auto load_inst = ctx->llvm_ir->CreateLoad(val->ssa_type->ir_type, val->ir_value);
-    load_inst->setDebugLoc(*dloc);
+    auto inst = ctx->llvm_ir->CreateLoad(val->ssa_type->ir_type, val->ir_value);
+    inst->setDebugLoc(*dloc);
 
-    return  load_inst;
+    return  inst;
 }
 
 Value*
@@ -555,7 +799,7 @@ llvmir_compiler_t::emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_pt
     }
 
     // int, char 
-
+    throw; // TBD
     
 }
 
@@ -643,7 +887,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
         
 }
 
-bool 
+void 
 llvmir_compiler_t::check_ssa_type_equality(compiler_ctx_t *ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
 {
     if (v2->ssa_type->ir_type  != v2->ssa_type->ir_type)
@@ -656,7 +900,7 @@ llvmir_compiler_t::check_ssa_type_equality(compiler_ctx_t *ctx, value_ptr_t v1, 
     }
 }
 
-bool
+void
 llvmir_compiler_t::check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t node)
 {
     if (!v->is_lvalue)

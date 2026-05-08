@@ -3,7 +3,7 @@ fun root:() -> int
 {
 	var a:int = 1;
 
-	var b:int = a;
+	var b:int = a + 1;
 
 	return b;	
 }
