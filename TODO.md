@@ -6,6 +6,6 @@
 - [ ] emit_expr_fun_call must not return nullptr	
 - [ ] unify exception in base
 - [ ] place ast in base
-- [ ] add debugging information for variables (global and local)
-- [ ] check types in when emitting code for expressions (e.g. in emit_expr_binary_op, check if the types of the operands are compatible with the operator)
+- [X] add debugging information for variables (global and local)
+- [X] check types in when emitting code for expressions (e.g. in emit_expr_binary_op, check if the types of the operands are compatible with the operator)
 

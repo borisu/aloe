@@ -57,6 +57,7 @@ llvmir_compiler_t::compile(
 	compiler_ctx.llvm_module    = &module;
 	compiler_ctx.llvm_di        = &dib;
     compiler_ctx.llvm_di_file   = di_file;
+    compiler_ctx.llvm_cu        = cu;
 
     compiler_ctx.ast = ast;
 
@@ -81,10 +82,11 @@ llvmir_compiler_t::compile(
 }
 
 
-
 value_type_ptr_t
 llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 {
+    InitDloc(ctx, node);
+
     value_type_ptr_t out(new value_type_t());
 
     switch (node->type_type_id)
@@ -172,6 +174,8 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 value_type_ptr_t
 llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
 {
+    InitDloc(ctx, node);
+
     value_type_ptr_t out(new value_type_t());
 
     value_type_ptr_t ret_type = emit_type(ctx, node->ret_type);
@@ -205,6 +209,8 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 {
     if (node->ignore)
         return;
+
+    InitDloc(ctx, node);
 
     value_ptr_t out(new value_t());
 	
@@ -296,14 +302,9 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 void 
 llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
 {
-	llvm::ReturnInst* ret_inst = nullptr;
+    InitDloc(ctx, node);
 
-    llvm::DebugLoc dloc = llvm::DILocation::get(
-        *ctx->llvm_ctx,
-        node->line,
-        node->pos,
-        ((Function*)ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
-    );
+	llvm::ReturnInst* ret_inst = nullptr;
 
     if (!node->return_expr)
     {
@@ -313,17 +314,17 @@ llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
     {
         value_ptr_t ret_val = emit_expression(ctx, node->return_expr);
 
-        ret_inst = ctx->llvm_ir->CreateRet(emit_r_value(ctx, ret_val, &dloc));
+        ret_inst = ctx->llvm_ir->CreateRet(emit_r_value(ctx, ret_val));
     }
-
-    ret_inst->setDebugLoc(dloc);
 
 }
 
 void 
-llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
+llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t node)
 {
-    for (auto& decl : prog->decl_statements)
+    InitDloc(ctx, node);
+
+    for (auto& decl : node->decl_statements)
     {
         switch (decl->node_type_id)
         {
@@ -341,6 +342,8 @@ llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t prog)
 value_ptr_t
 llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node)
 {
+    InitDloc(ctx, node);
+
 	value_ptr_t out(new value_t());
 
 	switch (node->ast_def->target->node_type_id)
@@ -373,6 +376,8 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
 void 
 llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
 {
+    InitDloc(ctx, node);
+
     switch (node->node_type_id)
     {
         case EXPRESSION_NODE:
@@ -412,7 +417,8 @@ llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, value_type_ptr_t val_type)
 void 
 llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 {
-    
+    InitDloc(ctx, node);
+
 	value_ptr_t out(new value_t());
 
     out->ssa_type = emit_type(ctx, node->type);
@@ -435,21 +441,12 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
     }
     else
     {
-        llvm::DebugLoc dloc = llvm::DILocation::get(
-            *ctx->llvm_ctx,
-            node->line,
-            node->pos,
-            ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
-        );
-
-
         auto alloca_inst = ctx->llvm_ir->CreateAlloca(out->ssa_type->ir_type, nullptr, node->id->name);
         out->ir_value  = alloca_inst;
 		out->is_lvalue = true;
 
-        auto store_inst = ctx->llvm_ir->CreateStore(emit_r_value(ctx, init_val, &dloc), out->ir_value);
+        ctx->llvm_ir->CreateStore(emit_r_value(ctx, init_val), out->ir_value);
         
-        store_inst->setDebugLoc(dloc);
     }
 
 	id_ssa_cache[node] = out;
@@ -459,6 +456,7 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 value_ptr_t 
 llvmir_compiler_t::emit_arithmetic_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
 {
+    llvm::DebugLoc dloc = InitDloc(ctx, node);
 
     value_ptr_t e1 = emit_expression(ctx, node->operand1);
     value_ptr_t e2 = emit_expression(ctx, node->operand2);
@@ -469,19 +467,14 @@ llvmir_compiler_t::emit_arithmetic_binary(compiler_ctx_t* ctx, binary_expr_node_
 value_ptr_t 
 llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op_e op, value_ptr_t op1, value_ptr_t op2, node_ptr_t node)
 {
+    
     value_ptr_t val(new value_t());
 
     check_ssa_type_equality(ctx, op1, op2, node);
 
-    llvm::DebugLoc dloc = llvm::DILocation::get(
-        *ctx->llvm_ctx,
-        node->line,
-        node->pos,
-        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
-    );
 
-    Value* lhs = emit_r_value(ctx, op1, &dloc);
-    Value* rhs = emit_r_value(ctx, op2, &dloc);
+    Value* lhs = emit_r_value(ctx, op1);
+    Value* rhs = emit_r_value(ctx, op2);
     Value* res = nullptr;
 
 
@@ -507,12 +500,7 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op
     }
     }
 
-    Instruction* I = cast<Instruction>(res);
-    if (I)
-    {
-        I->setDebugLoc(dloc);
-    }
-
+  
     val->ir_value  = res;
     val->ssa_type  = op1->ssa_type;
     val->is_lvalue = false;
@@ -523,6 +511,8 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op
 value_ptr_t 
 llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
 {
+	InitDloc(ctx, node);
+
     value_ptr_t val(new value_t());
     auto bn = PCAST(binary_expr_node_t, node);
 
@@ -531,15 +521,8 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
 
     check_ssa_type_equality(ctx, e1, e2, node);
 
-    llvm::DebugLoc dloc = llvm::DILocation::get(
-        *ctx->llvm_ctx,
-        node->line,
-        node->pos,
-        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
-    );
-
-    Value* lhs = emit_r_value(ctx, e1, &dloc);
-    Value* rhs = emit_r_value(ctx, e2, &dloc);
+    Value* lhs = emit_r_value(ctx, e1);
+    Value* rhs = emit_r_value(ctx, e2);
 
     Value* cmp = nullptr;
 
@@ -562,19 +545,10 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
         break; 
     }
     }
-    Instruction* I = cast<Instruction>(cmp);
-    if (I)
-    {
-        I->setDebugLoc(dloc);
-    }
+   
 
     // cmp is i1 - extend to operand integer type for downstream compatibility
     Value* ext = ctx->llvm_ir->CreateZExt(cmp, e1->ssa_type->ir_type);
-    I = cast<Instruction>(ext);
-    if (I)
-    {
-        I->setDebugLoc(dloc);
-    }
     
     val->ir_value = ext;
     val->ssa_type = e1->ssa_type;
@@ -585,6 +559,8 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
 value_ptr_t 
 llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
 {
+	InitDloc(ctx, node);
+
 	expression_op_e base_op;
 
     switch (node->op_id)
@@ -610,9 +586,7 @@ llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_t* ctx, binary_exp
     }
 
 	value_ptr_t val1 = emit_expression(ctx, node->operand1);
-
 	value_ptr_t val2 = emit_expression(ctx, node->operand2);
-
 	value_ptr_t val3 = emit_raw_binary_arithmetic(ctx, base_op, val1, val2, node);
 
 
@@ -624,6 +598,8 @@ llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_t* ctx, binary_exp
 value_ptr_t
 llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 {
+    InitDloc(ctx, node);
+
     value_ptr_t val(new value_t());
 
     switch (node->op_id)
@@ -699,7 +675,21 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 		val = emit_comma(ctx, PCAST(comma_expr_node_t, node));
         break;
     }
-
+	case expr_preplusplus:
+    case expr_preminmin:
+    case expr_plus:
+    case expr_min:
+    {
+        val = emit_prefix(ctx, PCAST(unary_expr_node_t, node));
+        break;
+	}
+    case expr_sfxplusplus:
+    case expr_sfxminmin:
+    {
+         val = emit_postfix(ctx, PCAST(unary_expr_node_t, node));
+         break;
+	}
+    
     default:
 
         throw new compiler_exeption_t("%s:%zu:%zu: (internal error): invalid operation %d '%s'",
@@ -714,6 +704,111 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
     }
 
     return val;
+}
+
+value_ptr_t 
+llvmir_compiler_t::emit_postfix(compiler_ctx_t* ctx, unary_expr_node_ptr_t node)
+{
+    InitDloc(ctx, node);
+
+    value_ptr_t val(new value_t());
+
+    value_ptr_t operand_val = emit_expression(ctx, node->operand);
+    check_lvalue(ctx, operand_val, node);
+
+    value_ptr_t operand_rval(new value_t());
+    *operand_rval = *operand_val;
+
+    operand_rval->ir_value = emit_r_value(ctx, operand_val);
+    operand_rval->is_lvalue = false;
+
+    val = operand_rval;
+
+    switch (node->op_id)
+    {
+    case expr_sfxminmin:
+    case expr_sfxplusplus:
+    {
+        value_ptr_t const_val = emit_constant(ctx, 1, TT_INT);
+
+        check_ssa_type_equality(ctx, operand_val, const_val, node);
+        value_ptr_t math_val = emit_raw_binary_arithmetic(ctx, node->op_id == expr_sfxminmin ? expr_sub : expr_add, 
+            operand_rval,
+            const_val, 
+            node);
+
+        check_ssa_type_equality(ctx, operand_val, math_val, node);
+        value_ptr_t assign_val = emit_raw_assign(ctx, operand_val, math_val, node);
+        break;
+    }
+    default:
+        throw compiler_exeption_t("%s:%zu:%zu: (internal error): unknown prefix operator %d",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos,
+            node->op_id);
+        break;
+    }
+
+    return val;
+}
+
+value_ptr_t 
+llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
+{
+	InitDloc(ctx, node);
+
+    value_ptr_t val(new value_t());
+    value_ptr_t operand_val = emit_expression(ctx, node->operand);
+
+    switch (node->op_id)
+    {
+    case expr_plus:
+    {
+        value_ptr_t operand_rval = operand_val;
+        operand_rval->ir_value = emit_r_value(ctx, operand_val);
+        operand_rval->is_lvalue = false;
+
+        val = operand_rval;
+        break;
+    }
+    case expr_min:
+    {
+        Value* neg = ctx->llvm_ir->CreateNeg(val->ir_value);
+	
+        val->ir_value = neg;
+        val->ssa_type = operand_val->ssa_type;
+		val->is_lvalue = false;
+
+        break;
+    }
+    case expr_preplusplus:
+    case expr_preminmin:
+    {
+		check_lvalue(ctx, operand_val, node);
+		value_ptr_t const_val = emit_constant(ctx, 1 , TT_INT);
+
+        check_ssa_type_equality(ctx, operand_val, const_val, node);
+        value_ptr_t math_val = emit_raw_binary_arithmetic(ctx,  node->op_id == expr_preminmin ? expr_sub : expr_add, operand_val, const_val, node);
+
+        check_ssa_type_equality(ctx, operand_val, math_val, node);
+        value_ptr_t assign_val = emit_raw_assign(ctx, operand_val, math_val, node);
+
+        val = assign_val;
+		
+        break;
+    }
+    default:
+        throw compiler_exeption_t("%s:%zu:%zu: (internal error): unknown prefix operator %d",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos,
+            node->op_id);
+        break;
+    }
+
+	return val;
+
 }
 
 value_ptr_t llvmir_compiler_t::emit_comma(compiler_ctx_t* ctx, comma_expr_node_ptr_t node)
@@ -732,7 +827,7 @@ value_ptr_t llvmir_compiler_t::emit_comma(compiler_ctx_t* ctx, comma_expr_node_p
             ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
         );
         // if lvalue convert to rvalue
-        last->ir_value = emit_r_value(ctx, last, &dloc);
+        last->ir_value = emit_r_value(ctx, last);
         last->is_lvalue = false;
         val = last;
     }
@@ -748,25 +843,19 @@ llvmir_compiler_t::emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_p
     check_lvalue(ctx, lhs, node);
     check_ssa_type_equality(ctx, lhs, rhs, node);
 
-    llvm::DebugLoc dloc = llvm::DILocation::get(
-        *ctx->llvm_ctx,
-        node->line,
-        node->pos,
-        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
-    );
-    auto inst = ctx->llvm_ir->CreateStore(emit_r_value(ctx, rhs, &dloc), lhs->ir_value);
-    inst->setDebugLoc(dloc);
-
-    val->ir_value  = inst;
-    val->ssa_type  = rhs->ssa_type;
+    val->ir_value = emit_r_value(ctx, rhs);
+    val->ssa_type = rhs->ssa_type;
     val->is_lvalue = false;
 
+    ctx->llvm_ir->CreateStore(val->ir_value, lhs->ir_value);
+   
 	return val;
 }
 
 value_ptr_t 
 llvmir_compiler_t::emit_expr_assign(compiler_ctx_t* ctx, assign_expr_node_ptr_t node)
 {
+    InitDloc(ctx, node);
 
     value_ptr_t op1 = emit_expression(ctx, node->operand1);
     value_ptr_t op2 = emit_expression(ctx, node->operand2);
@@ -775,21 +864,22 @@ llvmir_compiler_t::emit_expr_assign(compiler_ctx_t* ctx, assign_expr_node_ptr_t 
 }
 
 Value* 
-llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val, llvm::DebugLoc* dloc)
+llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val)
 {
     if (!val->is_lvalue)
         return val->ir_value;
 
     // load from address
     auto inst = ctx->llvm_ir->CreateLoad(val->ssa_type->ir_type, val->ir_value);
-    inst->setDebugLoc(*dloc);
-
+   
     return  inst;
 }
 
 Value*
 llvmir_compiler_t::emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_ptr_t target_type, node_ptr_t node)
 {
+    InitDloc(ctx, node);
+
     if (val->is_lvalue)
     {
        throw compiler_exeption_t("%s:%zu:%zu: (internal error): cannot cast lvalue, expected rvalue",
@@ -806,15 +896,9 @@ llvmir_compiler_t::emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_pt
 value_ptr_t
 llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr_t node)
 {
-    value_ptr_t val(new value_t());
+    InitDloc(ctx, node);
 
-    llvm::DebugLoc dloc = llvm::DILocation::get(
-        *ctx->llvm_ctx,
-        node->line,
-        node->pos,
-        ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
-    );
-   
+    value_ptr_t val(new value_t());
 	value_ptr_t fun_val = emit_expression(ctx, node->fun_expr);
 
     std::vector <Value*> args = {};
@@ -823,19 +907,12 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
     {
         value_ptr_t arg_val = emit_expression(ctx, arg);
 
-        llvm::DebugLoc arg_dloc = llvm::DILocation::get(
-            *ctx->llvm_ctx,
-            arg->line,
-            arg->pos,
-            ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
-        );
-        
-        args.push_back(emit_r_value(ctx, arg_val, &arg_dloc));
+        args.push_back(emit_r_value(ctx, arg_val));
     }
 
-    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), emit_r_value(ctx, fun_val, &dloc), args);
-
-    inst->setDebugLoc(dloc);
+    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), emit_r_value(ctx, fun_val), args);
+    
+    val->ir_value = inst;
 
     return nullptr;
 }
@@ -843,12 +920,16 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
 value_ptr_t
 llvmir_compiler_t::emit_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node)
 {
+    InitDloc(ctx, node);
+
 	return emit_literal(ctx, node->literal);
 }
 
 value_ptr_t
 llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
 {
+	InitDloc(ctx, node);
+
     value_ptr_t val(new value_t());
    
     switch (node->lit_type_id)
@@ -911,4 +992,51 @@ llvmir_compiler_t::check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t n
             node->pos,
             node->content.c_str());
     }
+}
+
+value_ptr_t 
+llvmir_compiler_t::emit_constant(compiler_ctx_t* ctx, variant<int, float, double, char> var, type_category_e type)
+{
+    value_ptr_t val(new value_t());
+
+    switch (type)
+    {
+    case TT_INT:
+    {
+        val->ssa_type = emit_type(ctx, make_shared<type_node_t>(TT_INT));
+        val->ir_value = ConstantInt::get(val->ssa_type->ir_type, std::get<int>(var), true);
+        val->is_lvalue = false;
+        break;
+    }
+    case TT_FLOAT:
+    {
+        val->ssa_type = emit_type(ctx, make_shared<type_node_t>(TT_FLOAT));
+        val->ir_value = ConstantFP::get(val->ssa_type->ir_type, std::get<double>(var));
+        val->is_lvalue = false;
+		break;
+    }
+    default:
+    {
+        throw compiler_exeption_t("%s:%zu:%zu: (internal error): unsupported constant type %d",
+            ctx->ast->source_id.c_str(),
+            0,
+            0,
+            type);
+    }
+	}
+	return val;
+}
+
+llvm::DebugLoc llvmir_compiler_t::InitDloc(compiler_ctx_t* ctx, node_ptr_t node)
+{
+    llvm::DebugLoc dloc = llvm::DILocation::get(
+        *ctx->llvm_ctx,
+        node->line,
+        node->pos,
+        ctx->fun_desc_stack.empty() ? ctx->llvm_cu : ir_sc<DIScope>( ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram())
+	);
+    
+    ctx->llvm_ir->SetCurrentDebugLocation(dloc);
+
+    return dloc;
 }

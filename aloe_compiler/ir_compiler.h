@@ -14,6 +14,7 @@ namespace aloe
 		IRBuilder<>* llvm_ir = nullptr;
 		DIBuilder* llvm_di = nullptr;
 		DIFile* llvm_di_file = nullptr;
+		DICompileUnit* llvm_cu = nullptr;
 		ast_ptr_t		ast;
 		std::stack<value_ptr_t> fun_desc_stack;
 	};
@@ -45,7 +46,7 @@ namespace aloe
 
 		virtual value_ptr_t emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
 
-		virtual Value* emit_r_value(compiler_ctx_t* ctx, value_ptr_t expr, llvm::DebugLoc* dloc);
+		virtual Value* emit_r_value(compiler_ctx_t* ctx, value_ptr_t expr);
 
 		virtual Value* emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_ptr_t target_type, node_ptr_t node);
 
@@ -72,10 +73,16 @@ namespace aloe
 
 		virtual value_ptr_t emit_comma(compiler_ctx_t* ctx, comma_expr_node_ptr_t node);
 
+		virtual value_ptr_t emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t node);
 
+		virtual value_ptr_t emit_postfix(compiler_ctx_t* ctx, unary_expr_node_ptr_t node);
+
+	
 		//
-		// RAW VALUE EMISSION
+		// HELPERS
 		//
+		virtual value_ptr_t emit_constant(compiler_ctx_t* ctx, variant<int,float, double, char> val, type_category_e type);
+
 		virtual value_ptr_t emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node);
 
 		virtual value_ptr_t emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op_e base_op,  value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node);
@@ -83,10 +90,11 @@ namespace aloe
 		//
 		// TYPE TESTERS
 		// 
-
 		virtual void check_ssa_type_equality(compiler_ctx_t* ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
 
 		virtual void check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t node);
+
+		virtual llvm::DebugLoc InitDloc(compiler_ctx_t* ctx, node_ptr_t node);
 
 
 	private:
