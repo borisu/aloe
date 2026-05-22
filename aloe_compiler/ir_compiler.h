@@ -1,21 +1,24 @@
 #pragma once
 #include <stack>
-#include "aloe\type.h"
+#include "aloe\aloe_type.h"
 #include "value.h"
-#include "type_cache.h"
+#include "di_cache.h"
 
 using namespace llvm;
 
 namespace aloe
 {
 	struct compiler_ctx_t {
-		LLVMContext* llvm_ctx = nullptr;
-		Module* llvm_module = nullptr;
-		IRBuilder<>* llvm_ir = nullptr;
-		DIBuilder* llvm_di = nullptr;
-		DIFile* llvm_di_file = nullptr;
-		DICompileUnit* llvm_cu = nullptr;
+
+		LLVMContext* llvm_ctx	= nullptr;
+		Module* llvm_module		= nullptr;
+		IRBuilder<>* llvm_ir	= nullptr;
+		DIBuilder* llvm_di		= nullptr;
+		DIFile* llvm_di_file	= nullptr;
+		DICompileUnit* llvm_cu	= nullptr;
+
 		ast_ptr_t		ast;
+
 		std::stack<value_ptr_t> fun_desc_stack;
 	};
 
@@ -29,9 +32,9 @@ namespace aloe
 
 		virtual void walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t node);
 
-		virtual value_type_ptr_t emit_type(compiler_ctx_t* ctx, type_node_ptr_t node);
+		virtual Type* emit_type(compiler_ctx_t* ctx, type_node_ptr_t node);
 
-		virtual value_type_ptr_t emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node);
+		virtual Type* emit_type(compiler_ctx_t* ctx, aloe_type_ptr_t type);
 
 		virtual void emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node);
 
@@ -39,19 +42,15 @@ namespace aloe
 
 		virtual void emit_return(compiler_ctx_t* ctx, return_node_ptr_t node);
 
-
 		virtual void emit_var(compiler_ctx_t* ctx, var_node_ptr_t node);
 
-		virtual value_ptr_t emit_default(compiler_ctx_t* ctx, value_type_ptr_t node);
+		virtual value_ptr_t emit_default(compiler_ctx_t* ctx, aloe_type_ptr_t type);
 
 		virtual value_ptr_t emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node);
 
 		virtual Value* emit_r_value(compiler_ctx_t* ctx, value_ptr_t expr);
 
-		virtual Value* emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_ptr_t target_type, node_ptr_t node);
-
-
-
+	
 		//
 		// EXPRESSIONS
 		//
@@ -81,7 +80,7 @@ namespace aloe
 		//
 		// HELPERS
 		//
-		virtual value_ptr_t emit_constant(compiler_ctx_t* ctx, variant<int,float, double, char> val, type_category_e type);
+		virtual value_ptr_t emit_constant(compiler_ctx_t* ctx, variant<int,float, double, char> val, aloe_type_ptr_t type);
 
 		virtual value_ptr_t emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node);
 
@@ -90,7 +89,7 @@ namespace aloe
 		//
 		// TYPE TESTERS
 		// 
-		virtual void check_ssa_type_equality(compiler_ctx_t* ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
+		virtual void check_val_type_equality(compiler_ctx_t* ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
 
 		virtual void check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t node);
 
@@ -99,9 +98,9 @@ namespace aloe
 
 	private:
 
-		type_cache_t type_cache;
+		di_cache_ptr_t di_cache;
 
-		map<node_ptr_t, value_ptr_t> id_ssa_cache;
+		map<node_ptr_t, value_ptr_t> id_cache;
 
 
 	};

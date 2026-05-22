@@ -3,9 +3,9 @@
 #include <map>
 #include <vector>
 #include "node.h"
-#include "type.h"
 #include "literal.h"
 #include "expression.h"
+#include "type.h"
 
 using namespace std;
 
@@ -14,8 +14,13 @@ namespace aloe
 	struct var_node_t : public node_t
 	{
 		var_node_t() :node_t(VAR_NODE) {};
+
 		identifier_node_ptr_t	id;
-		type_node_ptr_t			type;
+
+		type_node_ptr_t			type_node;
+
+		aloe_type_ptr_t			type;
+
 		expr_node_ptr_t			initializer;
 	};
 
@@ -31,16 +36,16 @@ namespace aloe
 	typedef vector<var_id_t> 
 	var_vec_t;
 
-	struct var_node_list_t : public node_t
+	struct var_list_node_t : public node_t
 	{
-		var_node_list_t() :node_t(VAR_LIST_NODE) {};
+		var_list_node_t() :node_t(VAR_LIST_NODE) {};
 
 		var_map_t vars_m;
 
 		var_vec_t vars_v;
 	};
 
-	typedef shared_ptr<var_node_list_t>
+	typedef shared_ptr<var_list_node_t>
 	var_list_node_ptr_t;
 
 }

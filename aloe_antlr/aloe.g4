@@ -49,22 +49,17 @@ double
     : DoubleType
     ;
 
-builtinType 
-    : int
-    | char
-    | double
-    | void
-    ;
-
 type 
-    : '^' type
-    | baseType;
-    
-
-baseType
-    : funType
-    | builtinType
+    : int                           #type_int
+    | char                          #type_char
+    | double                        #type_double
+    | void                          #type_void
+    | funType                       #type_fun
+    | type '[' DigitSequence? ']'   #type_array
+    | '^' type                      #type_pointer
+    | '(' type ')'                  #type_grouped
     ;
+
 
 /********************/
 /* Var Decalaration */
@@ -172,7 +167,7 @@ expression
     // -------- Precedence 8                                
     | expression '&'  expression                           #expr_and
     // -------- Precedence 9                                
-    | expression 'xor'  expression                           #expr_xor
+    | expression 'xor'  expression                         #expr_xor
     // -------- Precedence 10                               
     | expression '|'  expression                           #expr_or
     // -------- Precedence 11                               
@@ -191,7 +186,7 @@ expression
     | expression '<<='  expression                         #expr_shiftleftassign
     | expression '>>='  expression                         #expr_shiftrightassign
     | expression '&='  expression                          #expr_andassign
-    | expression 'xor='  expression                          #expr_xorassign
+    | expression 'xor='  expression                        #expr_xorassign
     | expression '|='  expression                          #expr_orassign
     // -------- Precedence 15                               
     | '(' argumentExpressionList ')'                      #expr_comma

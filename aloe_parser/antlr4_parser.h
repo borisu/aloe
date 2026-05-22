@@ -31,9 +31,9 @@ namespace aloe
 
 		virtual prog_node_ptr_t walk_prog(environment_ptr_t env,  aloeParser::ProgContext* ctx);
 
-		virtual type_node_ptr_t walk_type(environment_ptr_t env,  aloeParser::TypeContext* ctx, int ref_count = 0);
+		virtual type_node_ptr_t walk_type(environment_ptr_t env,  aloeParser::TypeContext* ctx);
 
-		virtual type_node_ptr_t walk_base_type(environment_ptr_t env, aloeParser::BaseTypeContext* ctx);
+		virtual type_node_ptr_t walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx);
 
 		virtual var_list_node_ptr_t walk_var_list(environment_ptr_t env, aloeParser::VarListContext* ctx, compile_flags_e flags);
 
@@ -53,10 +53,6 @@ namespace aloe
 
 		virtual exec_block_node_ptr_t walk_execution_block(environment_ptr_t env, aloeParser::ExecutionBlockContext* ctx);
 
-		virtual type_node_ptr_t walk_built_in_type(environment_ptr_t env, aloeParser::BuiltinTypeContext* ctx);
-
-		virtual fun_type_node_ptr_t walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx);
-
         virtual void check_type_equality(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr1, expr_node_ptr_t expr2, const char* op_str);
 
 		virtual void check_binary_arithmetic(environment_ptr_t env, aloeParser::ExpressionContext* ctx, binary_expr_node_ptr_t  expr_node, const char* op_str);
@@ -66,6 +62,8 @@ namespace aloe
 		virtual void check_lvalue(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr_node, const char* op_str);
 
 		virtual void check_assignment(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t lhs, expr_node_ptr_t rhs);
+
+		virtual void check_pointer(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr_node, const char* op_str);
 		
 		bool syntax_error_occurred;
 

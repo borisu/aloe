@@ -1,8 +1,6 @@
 fun root:() -> int
 {
-	var a:int = 1;
+	var a: int = 5;
 
-	var b:int = ++a;
-
-	return b;	
+	return a;	
 }

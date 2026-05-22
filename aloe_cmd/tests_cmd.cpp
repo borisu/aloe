@@ -179,8 +179,7 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-    
-
+  
     test_var_scope();
     test_funcall_type_mismatch();
     test_return_type_mismatch();

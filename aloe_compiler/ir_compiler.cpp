@@ -5,16 +5,11 @@
 #include "compiler_exception.h"
 #include "ir_compiler.h"
 #include "utils.h"
+#include "i64_platform.h"
 
 using namespace aloe;
 using namespace llvm;
 using namespace llvm::dwarf;
-
-#define ALOE_INT_SIZE 64
-#define ALOE_PTR_SIZE 64
-#define ALOE_CHAR_SIZE 8
-#define ALOE_DOUBLE_SIZE 64
-
 
 
 compiler_ptr_t
@@ -61,6 +56,9 @@ llvmir_compiler_t::compile(
 
     compiler_ctx.ast = ast;
 
+	di_cache = make_shared<di_cache_t>(dib);
+
+
 	bool res = false;
     try
     {
@@ -81,124 +79,71 @@ llvmir_compiler_t::compile(
     return res;
 }
 
-
-value_type_ptr_t
+Type* 
 llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
 {
     InitDloc(ctx, node);
+    return emit_type(ctx, node->type);
+}
 
-    value_type_ptr_t out(new value_type_t());
 
-    switch (node->type_type_id)
+Type*
+llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, aloe_type_ptr_t type)
+{
+    Type* out = nullptr;
+
+    switch (type->type_id)
     {
-    case TT_INT:
+    case ALOE_TYPE_INT:
     {
-        out->ir_type = Type::getInt64Ty(*ctx->llvm_ctx);
-
-        auto di_opt = type_cache.get_dit_type(0, out->ir_type);
-
-        out->di_type = di_opt.has_value() ? di_opt.value() :
-            type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("int", ALOE_INT_SIZE, dwarf::DW_ATE_signed));
+        out = Type::getInt64Ty(*ctx->llvm_ctx);
+        
+        break;
+    }
+    case ALOE_TYPE_CHAR:
+    {
+        out = Type::getInt8Ty(*ctx->llvm_ctx);
 
         break;
     }
-    case TT_CHAR:
+    case ALOE_TYPE_VOID:
     {
-        out->ir_type = Type::getInt8Ty(*ctx->llvm_ctx);
-
-        auto di_opt = type_cache.get_dit_type(0, out->ir_type);
-
-        out->di_type = di_opt.has_value() ? di_opt.value() :
-            type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("char", ALOE_CHAR_SIZE, dwarf::DW_ATE_signed_char));
+        out = Type::getVoidTy(*ctx->llvm_ctx);
 
         break;
     }
-    case TT_VOID:
+    case ALOE_TYPE_DOUBLE:
     {
-        out->ir_type = Type::getVoidTy(*ctx->llvm_ctx);
-
-        auto di_opt = type_cache.get_dit_type(0, out->ir_type);
-
-        out->di_type = di_opt.has_value() ? di_opt.value() :
-            type_cache.get_dit_type(0, out->ir_type, nullptr);
+        out = Type::getDoubleTy(*ctx->llvm_ctx);
 
         break;
     }
-    case TT_FLOAT:
+    case ALOE_TYPE_PTR:
     {
-        out->ir_type = Type::getDoubleTy(*ctx->llvm_ctx);
-
-        auto di_opt = type_cache.get_dit_type(0, out->ir_type);
-
-        out->di_type = di_opt.has_value() ? di_opt.value() :
-            type_cache.get_dit_type(0, out->ir_type, ctx->llvm_di->createBasicType("double", 64, dwarf::DW_ATE_float));
+        out = PointerType::getUnqual(*ctx->llvm_ctx); // collapse pointer types, we will preserve the original type in debug info for each level of indirection
 
         break;
     }
-    case TT_FUNCTION:
+    case ALOE_TYPE_FUNCTION:
     {
-        out = emit_fun_type(ctx, PCAST(fun_type_node_t, node));
+        Type* ret_type = emit_type(ctx, type->fun_ret_type);
+
+        std::vector<Type*>  irt_args;
+        for (auto p : type->fun_param_types)
+        {
+            Type* argt = emit_type(ctx, p);
+            irt_args.push_back(argt);
+        };
+
+        out  = FunctionType::get(ret_type, irt_args, false);
         break;
 
     }
     default:
     {
-
-        throw  compiler_exeption_t("%s:%zu:%zu: (internal error): unknown type %d",
-            ctx->ast->source_id.c_str(),
-            node->line,
-            node->pos,
-            node->type_type_id); ;
+        assert(false && "(internal compiler error): unknown type id");
     }
     };
-
-    if (node->ref_count > 0)
-    {
-        out->ref_count = node->ref_count;
-        out->pointee_ir_type = out->ir_type;
-        out->pointee_di_type = out->di_type;
-		out->ir_type = PointerType::getUnqual(*ctx->llvm_ctx); // collapse pointer types, we will preserve the original type in debug info for each level of indirection
-
-        for (int i = 1; i <= out->ref_count; i++)
-        {
-			auto di_opt = type_cache.get_dit_type(i, out->ir_type);
-            out->di_type = di_opt.has_value() ? di_opt.value() :
-                type_cache.get_dit_type(i, out->ir_type, ctx->llvm_di->createPointerType(out->di_type, 64));
-        }
-    }
-
-    return out;
-
-}
-
-value_type_ptr_t
-llvmir_compiler_t::emit_fun_type(compiler_ctx_t* ctx, fun_type_node_ptr_t node)
-{
-    InitDloc(ctx, node);
-
-    value_type_ptr_t out(new value_type_t());
-
-    value_type_ptr_t ret_type = emit_type(ctx, node->ret_type);
-
-    SmallVector<Metadata*, 8>   dit_args;
-    dit_args.push_back(ret_type->di_type);
-
-    std::vector<Type*>  irt_args;
-    for (auto p : node->param_list->vars_m)
-    {
-        value_type_ptr_t argt = emit_type(ctx, p.second->type);
-        irt_args.push_back(argt->ir_type);
-        dit_args.push_back(argt->di_type);
-    };
-
-    out->ir_type = FunctionType::get(ret_type->ir_type, irt_args, false);
-
-	auto di_opt = type_cache.get_dit_type(0, out->ir_type);
-
-    out->di_type = di_opt.has_value() ? di_opt.value() : type_cache.get_dit_type(
-        0,
-        out->ir_type,
-        ctx->llvm_di->createSubroutineType(ctx->llvm_di->getOrCreateTypeArray(dit_args)));
 
     return out;
 }
@@ -213,19 +158,19 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     InitDloc(ctx, node);
 
     value_ptr_t out(new value_t());
-	
-    out->ssa_type  = emit_fun_type(ctx, node->fun_type);
-    out->is_lvalue  = false;
 
+    Type *ir_fun_type  = emit_type(ctx, node->type_node);
+	out->di_type = di_cache->get_dit_type(node->type);
+  
     Function* ir_fun =
-        Function::Create(ir_sc<FunctionType>(out->ssa_type->ir_type),
+        Function::Create(ir_sc<FunctionType>(ir_fun_type),
             Function::ExternalLinkage, node->id->name, ctx->llvm_module);
 
 	for (int i = 0; i < ir_fun->arg_size(); i++)
     {
-        auto ir_arg = ir_fun->getArg(i);
+        Argument* ir_arg = ir_fun->getArg(i);
 
-        auto var_node = node->fun_type->param_list->vars_v[i].second;
+		auto var_node = node->type_node->fun_params_node->vars_v[i].second;
         auto var_name = var_node->id->name;
 
         ir_arg->setName(var_name);
@@ -233,7 +178,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 		value_ptr_t var(new value_t());
 		var->ir_value = ir_arg;
 	
-		id_ssa_cache[var_node] = var;
+		id_cache[var_node] = var;
 		
     }
    
@@ -243,7 +188,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
         node->id->name,            // Mangled function name.
         ctx->llvm_di_file,        // File where this variable is defined.
         node->line,                // Line number.
-        ir_sc<DISubroutineType> (out->ssa_type->di_type), // fnType
+		ir_sc<DISubroutineType>(di_cache->get_dit_type(node->type)), // type
         node->line,                 // scope line
         DINode::FlagZero,
 		node->is_defined ? DISubprogram::SPFlagDefinition : DISubprogram::SPFlagZero
@@ -295,7 +240,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
             node->id->name.c_str());
     }
 
-    id_ssa_cache[node] = out;
+    id_cache[node] = out;
 		
 }
 
@@ -350,13 +295,13 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
     {
         case FUNCTION_NODE:
         {
-            out = PCAST(value_t, id_ssa_cache[node->ast_def->target]);
+            out = PCAST(value_t, id_cache[node->ast_def->target]);
 
             break;
         }
         case VAR_NODE:
         {
-            out = PCAST(value_t, id_ssa_cache[node->ast_def->target]);
+            out = PCAST(value_t, id_cache[node->ast_def->target]);
 
             break;
         }
@@ -401,13 +346,14 @@ llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, value_type_ptr_t val_type)
+llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, aloe_type_ptr_t type)
 {
 	value_ptr_t out(new value_t());
 
     out->is_lvalue = false;
-    out->ir_value = Constant::getNullValue(val_type->ir_type);
-    out->ssa_type = val_type;
+    out->ir_value  = Constant::getNullValue(emit_type(ctx, type));
+    out->di_type   = di_cache->get_dit_type(type);
+    out->aloe_type = type;
    
     return out;
 
@@ -418,18 +364,17 @@ void
 llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 {
     InitDloc(ctx, node);
-
 	value_ptr_t out(new value_t());
 
-    out->ssa_type = emit_type(ctx, node->type);
+    Type *ir_var_type  = emit_type(ctx, node->type_node);
 
-	auto init_val = node->initializer ? emit_expression(ctx, node->initializer) : emit_default(ctx, out->ssa_type);
+	auto init_val = node->initializer ? emit_expression(ctx, node->initializer) : emit_default(ctx, node->type);
 
     if (ctx->fun_desc_stack.empty())
     {
         out->ir_value = new GlobalVariable(
             *ctx->llvm_module,
-            out->ssa_type->ir_type,
+            ir_var_type,
             false,
             GlobalValue::ExternalLinkage,
             ir_sc <Constant>(init_val->ir_value),
@@ -441,15 +386,16 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
     }
     else
     {
-        auto alloca_inst = ctx->llvm_ir->CreateAlloca(out->ssa_type->ir_type, nullptr, node->id->name);
+        auto alloca_inst = ctx->llvm_ir->CreateAlloca(ir_var_type, nullptr, node->id->name);
         out->ir_value  = alloca_inst;
 		out->is_lvalue = true;
+		out->aloe_type = node->type;
 
         ctx->llvm_ir->CreateStore(emit_r_value(ctx, init_val), out->ir_value);
         
     }
 
-	id_ssa_cache[node] = out;
+	id_cache[node] = out;
    
 }
 
@@ -470,7 +416,7 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op
     
     value_ptr_t val(new value_t());
 
-    check_ssa_type_equality(ctx, op1, op2, node);
+    check_val_type_equality(ctx, op1, op2, node);
 
 
     Value* lhs = emit_r_value(ctx, op1);
@@ -502,8 +448,8 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op
 
   
     val->ir_value  = res;
-    val->ssa_type  = op1->ssa_type;
     val->is_lvalue = false;
+	val->aloe_type = op1->aloe_type;
 
     return val;
 }
@@ -519,7 +465,7 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
     value_ptr_t e1 = emit_expression(ctx, bn->operand1);
     value_ptr_t e2 = emit_expression(ctx, bn->operand2);
 
-    check_ssa_type_equality(ctx, e1, e2, node);
+    check_val_type_equality(ctx, e1, e2, node);
 
     Value* lhs = emit_r_value(ctx, e1);
     Value* rhs = emit_r_value(ctx, e2);
@@ -536,22 +482,16 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
     case expr_noteq: cmp = ctx->llvm_ir->CreateICmpNE(lhs, rhs); break;
     default: 
     { 
-        throw compiler_exeption_t("%s:%zu:%zu: (internal error): unknown comparison operator %d",
-            ctx->ast->source_id.c_str(),
-            node->line,
-			node->pos,
-			node->op_id
-        );
-        break; 
+		assert(false && "unknown comparison operator");
     }
     }
    
 
     // cmp is i1 - extend to operand integer type for downstream compatibility
-    Value* ext = ctx->llvm_ir->CreateZExt(cmp, e1->ssa_type->ir_type);
+    Value* ext = ctx->llvm_ir->CreateZExt(cmp, e1->ir_value->getType());
     
-    val->ir_value = ext;
-    val->ssa_type = e1->ssa_type;
+    val->ir_value  = ext;
+    val->aloe_type = e1->aloe_type;
     val->is_lvalue = false;
 	return val;
 }
@@ -692,12 +632,11 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
     
     default:
 
-        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): invalid operation %d '%s'",
+        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): invalid operation %d",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
-            node->op_id,
-            node->content.c_str());
+            node->op_id);
 
         break;
 
@@ -729,15 +668,15 @@ llvmir_compiler_t::emit_postfix(compiler_ctx_t* ctx, unary_expr_node_ptr_t node)
     case expr_sfxminmin:
     case expr_sfxplusplus:
     {
-        value_ptr_t const_val = emit_constant(ctx, 1, TT_INT);
+        value_ptr_t const_val = emit_constant(ctx, 1, make_shared<aloe_type_t>(ALOE_TYPE_INT));
 
-        check_ssa_type_equality(ctx, operand_val, const_val, node);
+        check_val_type_equality(ctx, operand_val, const_val, node);
         value_ptr_t math_val = emit_raw_binary_arithmetic(ctx, node->op_id == expr_sfxminmin ? expr_sub : expr_add, 
             operand_rval,
             const_val, 
             node);
 
-        check_ssa_type_equality(ctx, operand_val, math_val, node);
+        check_val_type_equality(ctx, operand_val, math_val, node);
         value_ptr_t assign_val = emit_raw_assign(ctx, operand_val, math_val, node);
         break;
     }
@@ -777,7 +716,7 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
         Value* neg = ctx->llvm_ir->CreateNeg(val->ir_value);
 	
         val->ir_value = neg;
-        val->ssa_type = operand_val->ssa_type;
+        val->aloe_type = operand_val->aloe_type;
 		val->is_lvalue = false;
 
         break;
@@ -786,12 +725,12 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
     case expr_preminmin:
     {
 		check_lvalue(ctx, operand_val, node);
-		value_ptr_t const_val = emit_constant(ctx, 1 , TT_INT);
+		value_ptr_t const_val = emit_constant(ctx, 1 , make_shared<aloe_type_t>(ALOE_TYPE_INT));
 
-        check_ssa_type_equality(ctx, operand_val, const_val, node);
+        check_val_type_equality(ctx, operand_val, const_val, node);
         value_ptr_t math_val = emit_raw_binary_arithmetic(ctx,  node->op_id == expr_preminmin ? expr_sub : expr_add, operand_val, const_val, node);
 
-        check_ssa_type_equality(ctx, operand_val, math_val, node);
+        check_val_type_equality(ctx, operand_val, math_val, node);
         value_ptr_t assign_val = emit_raw_assign(ctx, operand_val, math_val, node);
 
         val = assign_val;
@@ -841,10 +780,10 @@ llvmir_compiler_t::emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_p
     value_ptr_t val(new value_t());
 
     check_lvalue(ctx, lhs, node);
-    check_ssa_type_equality(ctx, lhs, rhs, node);
+    check_val_type_equality(ctx, lhs, rhs, node);
 
     val->ir_value = emit_r_value(ctx, rhs);
-    val->ssa_type = rhs->ssa_type;
+    val->aloe_type = rhs->aloe_type;
     val->is_lvalue = false;
 
     ctx->llvm_ir->CreateStore(val->ir_value, lhs->ir_value);
@@ -870,28 +809,11 @@ llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val)
         return val->ir_value;
 
     // load from address
-    auto inst = ctx->llvm_ir->CreateLoad(val->ssa_type->ir_type, val->ir_value);
+    auto inst = ctx->llvm_ir->CreateLoad(emit_type(ctx, val->aloe_type), val->ir_value);
    
     return  inst;
 }
 
-Value*
-llvmir_compiler_t::emit_cast(compiler_ctx_t* ctx, value_ptr_t val, value_type_ptr_t target_type, node_ptr_t node)
-{
-    InitDloc(ctx, node);
-
-    if (val->is_lvalue)
-    {
-       throw compiler_exeption_t("%s:%zu:%zu: (internal error): cannot cast lvalue, expected rvalue",
-            ctx->ast->source_id.c_str(),
-            node->line,
-		    node->pos);
-    }
-
-    // int, char 
-    throw; // TBD
-    
-}
 
 value_ptr_t
 llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr_t node)
@@ -910,7 +832,7 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         args.push_back(emit_r_value(ctx, arg_val));
     }
 
-    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ssa_type->ir_type), emit_r_value(ctx, fun_val), args);
+    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ir_value->getType()), emit_r_value(ctx, fun_val), args);
     
     val->ir_value = inst;
 
@@ -936,15 +858,15 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     {
     case LIT_INT:
     {
-        val->ssa_type  = emit_type(ctx, node->type);
-	    val->ir_value   = ConstantInt::get(val->ssa_type->ir_type, std::get<int>(node->value), true);
+        Type * ir_type = emit_type(ctx, node->type);
+	    val->ir_value   = ConstantInt::get(ir_type, std::get<int>(node->value), true);
 		val->is_lvalue  = false;
 
 	    break;
     }
     case LIT_STRING:
     {
-        val->ssa_type   = emit_type(ctx, node->type);
+        Type * ir_type  = emit_type(ctx, node->type);
         val->ir_value   = ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
         val->is_lvalue  = false;
         
@@ -952,8 +874,8 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     }
     case LIT_CHAR:
     {
-        auto type = emit_type(ctx, node->type);
-        val->ir_value   = ConstantInt::get(type->ir_type, std::get<char>(node->value));
+        Type * ir_type = emit_type(ctx, node->type);
+        val->ir_value   = ConstantInt::get(ir_type, std::get<char>(node->value));
         val->is_lvalue  = false;
         break;
     }
@@ -969,15 +891,14 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
 }
 
 void 
-llvmir_compiler_t::check_ssa_type_equality(compiler_ctx_t *ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
+llvmir_compiler_t::check_val_type_equality(compiler_ctx_t *ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
 {
-    if (v2->ssa_type->ir_type  != v2->ssa_type->ir_type)
+	if (v2->ir_value->getType() != v1->ir_value->getType())
     {
-        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible types '%s'",
+        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible types",
             ctx->ast->source_id.c_str(),
             node->line,
-            node->pos,
-            node->content.c_str());
+            node->pos);
     }
 }
 
@@ -986,32 +907,31 @@ llvmir_compiler_t::check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t n
 {
     if (!v->is_lvalue)
     {
-        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): need lvalue for the operation '%s'",
+        throw new compiler_exeption_t("%s:%zu:%zu: (internal error): need lvalue for the operation",
             ctx->ast->source_id.c_str(),
             node->line,
-            node->pos,
-            node->content.c_str());
+            node->pos);
     }
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_constant(compiler_ctx_t* ctx, variant<int, float, double, char> var, type_category_e type)
+llvmir_compiler_t::emit_constant(compiler_ctx_t* ctx, variant<int, float, double, char> var, aloe_type_ptr_t type)
 {
     value_ptr_t val(new value_t());
 
-    switch (type)
+    switch (type->type_id)
     {
-    case TT_INT:
+    case ALOE_TYPE_INT:
     {
-        val->ssa_type = emit_type(ctx, make_shared<type_node_t>(TT_INT));
-        val->ir_value = ConstantInt::get(val->ssa_type->ir_type, std::get<int>(var), true);
+        Type * ir_type = emit_type(ctx, type);
+        val->ir_value = ConstantInt::get(ir_type, std::get<int>(var), true);
         val->is_lvalue = false;
         break;
     }
-    case TT_FLOAT:
+    case ALOE_TYPE_DOUBLE:
     {
-        val->ssa_type = emit_type(ctx, make_shared<type_node_t>(TT_FLOAT));
-        val->ir_value = ConstantFP::get(val->ssa_type->ir_type, std::get<double>(var));
+        Type * ir_type = emit_type(ctx, type);
+        val->ir_value = ConstantFP::get(ir_type, std::get<double>(var));
         val->is_lvalue = false;
 		break;
     }

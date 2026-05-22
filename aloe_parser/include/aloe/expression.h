@@ -5,7 +5,8 @@
 #include "node.h"
 #include "literal.h"
 #include "identifier.h"
-
+#include "bridge.h"
+#include "type.h"
 
 using namespace std;
 
@@ -75,7 +76,7 @@ namespace aloe
 
 		expression_op_e op_id;
 
-		type_node_ptr_t type;
+		aloe_type_ptr_t type;
 
 		bool is_lvalue;
 	};
@@ -128,16 +129,17 @@ namespace aloe
 	{
 		cast_expr_node_t() :expr_node_t(expr_cast) {}
 
-		type_node_ptr_t	type_node;
-
 		expr_node_ptr_t operand;
+
+		type_node_ptr_t type_node;
 	};
 
 	struct sizeoftype_expr_node_t : public expr_node_t
 	{
 		sizeoftype_expr_node_t() :expr_node_t(expr_sizeoftype) {}
 
-		type_node_ptr_t	type_node;
+		type_node_ptr_t type_node;
+
 	};
 
 	struct binary_expr_node_t : public expr_node_t

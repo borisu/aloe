@@ -3,8 +3,8 @@
 #include <vector>
 #include <variant>
 #include "node.h"
-#include "type.h"
 #include "var.h"
+#include "aloe/aloe_type.h"
 
 
 using namespace std;
@@ -31,7 +31,7 @@ namespace aloe
 
 		literal_type_e lit_type_id;
 
-		type_node_ptr_t type;
+		aloe_type_ptr_t type;
 
 		variant<string, int, char> value;
 

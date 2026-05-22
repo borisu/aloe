@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include "node.h"
-#include "type.h"
 #include "var.h"
 #include "expression.h"
 
@@ -19,20 +18,7 @@ namespace aloe
 	typedef shared_ptr<exec_block_node_t> 
 	exec_block_node_ptr_t;
 
-	struct fun_type_node_t : public type_node_t
-	{
-		fun_type_node_t() :type_node_t(TT_FUNCTION)
-		{}
-
-		type_node_ptr_t				ret_type;
-
-		var_list_node_ptr_t			param_list;
-
-	};
-
-	typedef shared_ptr<fun_type_node_t>
-	fun_type_node_ptr_t;
-
+	
 	struct fun_node_t : public node_t
 	{
 		fun_node_t() :node_t(FUNCTION_NODE),
@@ -40,22 +26,22 @@ namespace aloe
 
 		identifier_node_ptr_t	id;
 
-		fun_type_node_ptr_t 	fun_type;
+		type_node_ptr_t 		type_node;
+
+		aloe_type_ptr_t			type;
 		
 		exec_block_node_ptr_t	exec_block;
-
+	
 		bool is_defined;
 	};
 
 	typedef shared_ptr<fun_node_t> fun_node_ptr_t;
-
 
 	struct return_node_t : public node_t
 	{
 		return_node_t() :node_t(RETURN_NODE){}
 
 		expr_node_ptr_t return_expr;
-	
 	};
 
 	typedef shared_ptr<return_node_t> 

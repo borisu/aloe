@@ -1,6 +1,5 @@
 #pragma once
 #include "node.h"
-#include "type.h"
 #include "var.h"
 #include "fun.h"
 #include "prog.h"
@@ -8,6 +7,7 @@
 #include "literal.h"
 #include "identifier.h"
 #include "bridge.h"
+#include "type.h"
 
 
 using namespace std;

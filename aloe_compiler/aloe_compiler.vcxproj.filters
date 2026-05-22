@@ -20,15 +20,15 @@
     </ClInclude>
     <ClInclude Include="ir_compiler.h" />
     <ClInclude Include="compiler_exception.h" />
-    <ClInclude Include="value_type.h" />
     <ClInclude Include="value.h" />
-    <ClInclude Include="type_cache.h" />
+    <ClInclude Include="di_cache.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="i64_platform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="ir_compiler.cpp" />
     <ClCompile Include="compiler_exception.cpp" />
-    <ClCompile Include="type_cache.cpp" />
+    <ClCompile Include="di_cache.cpp" />
   </ItemGroup>
 </Project>
