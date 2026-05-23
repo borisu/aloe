@@ -5,6 +5,11 @@ namespace aloe
 	{
 	public:
 		bool run_tests();
+
+		void set_validate(bool validate);
+
+		void set_dump_ir(bool dump_ir);
+
 	private:
 		
 		void test_var_declarations1();
@@ -18,11 +23,14 @@ namespace aloe
 		void test_recursion();
 		void test_ref_deref();
 		
-		bool parse_string(const char* al);
+		void run_test(const char* test_name, const char* al, bool expected);
 		
-
-
 		bool success;
+
+		bool validate = true;
+
+		bool dump_ir = false;
+
 		
 	};
 

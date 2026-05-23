@@ -93,6 +93,10 @@ antl4_parser_t::syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offen
     node->line = (int)ctx->getStart()->getLine(); \
     node->pos  = (int)ctx->getStart()->getStartIndex();
 
+#define INIT_END_POS(node, ctx) \
+    node->line = (int)ctx->getStop()->getLine(); \
+    node->pos  = (int)ctx->getStop()->getStartIndex();
+
 prog_node_ptr_t
 antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
 {
@@ -171,9 +175,7 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx)
     else if (INSTANCE_OF(aloeParser::Type_pointerContext))
     {
 		out->type = aloe_type_ptr_t(new aloe_type_t(ALOE_TYPE_PTR));
-
 		out->ptr_pointee_type_node = walk_type(env, e->type());
-
 		out->type->ptr_pointee_type = out->ptr_pointee_type_node->type;
     }
 	else if (INSTANCE_OF(aloeParser::Type_arrayContext))
@@ -292,6 +294,9 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
 		new_env->push_fun(fun_node);
         fun_node->exec_block = walk_execution_block(new_env, ctx->executionBlock());
     }
+
+	fun_node->end_of_fun = marker_node_ptr_t(new marker_node_t());
+	INIT_END_POS(fun_node->end_of_fun, ctx);
    
     return fun_node;
 }
@@ -320,6 +325,7 @@ antl4_parser_t::walk_execution_block(environment_ptr_t env, aloeParser::Executio
         {
             block_node->exec_statements.push_back(walk_return(env, exec_ctx->returnStatement()));
         }
+		
     } // for 
 
 	return block_node;

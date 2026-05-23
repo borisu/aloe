@@ -17,11 +17,22 @@ aloe::create_compiler()
 {
     return compiler_ptr_t(new llvmir_compiler_t());
 }
-    
+
+llvmir_compiler_t::llvmir_compiler_t()
+{
+	validate = true;
+}
+
+void 
+llvmir_compiler_t::set_validate(bool validate)
+{
+    this->validate = validate;
+}
+
 bool 
 llvmir_compiler_t::compile(
     ast_ptr_t ast,
-    ostream& out)
+	ostream& out)
 {
     LLVMContext ctx;
     Module module(ast->source_id, ctx);
@@ -155,8 +166,6 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
     if (node->ignore)
         return;
 
-    InitDloc(ctx, node);
-
     value_ptr_t out(new value_t());
 
     Type *ir_fun_type  = emit_type(ctx, node->type_node);
@@ -217,6 +226,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
         if (!terminator)
         {
             if (ir_fun->getReturnType()->isVoidTy()) {
+				InitDloc(ctx, node->end_of_fun);
                 ctx->llvm_ir->CreateRetVoid();
             }
             else
@@ -232,7 +242,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
   
     bool is_broken = llvm::verifyFunction(*ir_fun);
 
-    if (is_broken) {
+    if (is_broken && validate) {
         throw compiler_exeption_t("%s:%zu:%zu: (internal error): generated IR for function '%s' is broken",
             ctx->ast->source_id.c_str(),
             node->line,
@@ -949,12 +959,16 @@ llvmir_compiler_t::emit_constant(compiler_ctx_t* ctx, variant<int, float, double
 
 llvm::DebugLoc llvmir_compiler_t::InitDloc(compiler_ctx_t* ctx, node_ptr_t node)
 {
+    Metadata * scope = ctx->fun_desc_stack.empty() ? 
+        ctx->llvm_cu : 
+        ir_sc<DIScope>(ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram());
+
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->llvm_ctx,
         node->line,
         node->pos,
-        ctx->fun_desc_stack.empty() ? ctx->llvm_cu : ir_sc<DIScope>( ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram())
-	);
+        scope
+    );
     
     ctx->llvm_ir->SetCurrentDebugLocation(dloc);
 

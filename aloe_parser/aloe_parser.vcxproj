@@ -156,6 +156,7 @@
     <ClInclude Include="include\aloe\fun.h" />
     <ClInclude Include="include\aloe\identifier.h" />
     <ClInclude Include="include\aloe\literal.h" />
+    <ClInclude Include="include\aloe\marker.h" />
     <ClInclude Include="include\aloe\node.h" />
     <ClInclude Include="include\aloe\parser.h" />
     <ClInclude Include="include\aloe\prog.h" />

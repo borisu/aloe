@@ -15,24 +15,63 @@
 using namespace aloe;
 using namespace std;
 
-#define TEST_PARSE_STRING(CMD,E) {                                                      \
-    printf("TEST PARSE STRING -- \n%-20s \n",CMD);                                          \
-    bool test_success = parse_string(CMD) == E;                                         \
-    test_success ? printf("\n...[OK]\n") : printf("\n...[FAIL]\n");                         \
-    success &= test_success ;                                                           \
+#define TEST_PARSE_STRING(CMD,E)   run_test(__FUNCTION__, CMD, E)      
+
+void tests_cmd_t::set_validate(bool validate)
+{
+	this->validate = validate;
 }
 
-
-bool 
-tests_cmd_t::parse_string(const char* al)
+void tests_cmd_t::set_dump_ir(bool dump_ir)
 {
-    auto p = create_parser();
+	this->dump_ir = dump_ir;
+}
 
-    ast_ptr_t ast;
+void 
+tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
+{
+    printf("TEST \n%-20s \n", test_name);
 
-	istringstream iss(al);
+    bool run_res = false;
+    bool test_res = false;
 
-    return p->parse_from_stream(iss, ast, "<string>");
+    try {
+
+        auto p = create_parser();
+
+        auto c = create_compiler();
+
+        c->set_validate(validate);
+
+        ast_ptr_t ast;
+
+        istringstream iss(al);
+
+        if (run_res = p->parse_from_stream(iss, ast, "<string>"))
+        {
+            if (expected)
+            {
+                stringstream ss;
+                run_res = c->compile(ast, ss);
+				if (dump_ir)
+				{
+					printf("\nIR:\n%s\n", ss.str().c_str());
+				}
+            }
+        }
+        
+        test_res = run_res == expected;
+        
+    }
+	catch (std::exception* ex)
+	{
+		printf("exception:%s\n", ex->what());
+		test_res = false; // never pass the test if an exception is thrown, even if the test expected a failure
+	}
+    
+    test_res ? printf("\n...[OK]\n") : printf("\n...[FAIL]\n");
+
+	success = success && test_res;
 }
 
 
@@ -148,7 +187,7 @@ tests_cmd_t::test_fun_expect1()
 void 
 tests_cmd_t::test_recursion()
 {
-    TEST_PARSE_STRING(R"( fun foo:() -> void { foo(); })", true);
+    TEST_PARSE_STRING(R"(fun foo:() -> void { foo(); })", true);
     TEST_PARSE_STRING(R"(fun foo:(var a:int)-> void { foo(a); })", true);
     TEST_PARSE_STRING(R"(fun foo:(var a:int)-> void { foo(); })", false);
 }
@@ -179,7 +218,19 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-  
+    /*set_validate(false);
+	set_dump_ir(true);
+
+    run_test(
+        __FUNCTION__, 
+        R"(
+        var a:int = 10;
+        fun bar:(var a:int)->void { }
+        )", 
+        true);
+
+    return success;*/
+
     test_var_scope();
     test_funcall_type_mismatch();
     test_return_type_mismatch();
@@ -190,6 +241,7 @@ tests_cmd_t::run_tests()
     test_defaults();
     test_recursion();
 	
+  
     
     return success;
 }

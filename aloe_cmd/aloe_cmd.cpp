@@ -41,6 +41,9 @@ int main(int argc, char* argv[])
     std::string output_file;
 
     bool verbose = false;
+	bool validate_ir = true;
+	bool dump_ir = false;
+
     auto mode = MODE_UNKNOWN;
 
     for (int i = 1; i < argc; ++i) {
@@ -69,6 +72,12 @@ int main(int argc, char* argv[])
             }
             mode = MODE_TEST;
             break;
+        }
+        else if (arg == "--no-validate") {
+            validate_ir = false;
+        }
+        else if (arg == "--dump-ir") {
+            dump_ir = true;
         }
         else {
             std::cerr << "Unknown option: " << arg << "\n";
@@ -116,6 +125,10 @@ int main(int argc, char* argv[])
     }
     case MODE_TEST:
     {
+		tests_cmd_t test_runner;
+		test_runner.set_validate(validate_ir);
+        test_runner.set_dump_ir(dump_ir);
+
         err_code = tests_cmd_t().run_tests() ? 0 : 1;
         break;
     }

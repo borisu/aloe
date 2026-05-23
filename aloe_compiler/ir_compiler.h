@@ -24,9 +24,15 @@ namespace aloe
 
 	class llvmir_compiler_t : public compiler_t
 	{
+	public:
+
+		llvmir_compiler_t();
+
 		virtual bool compile(
 			ast_ptr_t ast,
 			ostream& out) override;
+
+		virtual void set_validate(bool validate) override;
 
 	protected:
 
@@ -95,13 +101,13 @@ namespace aloe
 
 		virtual llvm::DebugLoc InitDloc(compiler_ctx_t* ctx, node_ptr_t node);
 
-
 	private:
 
 		di_cache_ptr_t di_cache;
 
 		map<node_ptr_t, value_ptr_t> id_cache;
 
+		bool validate;
 
 	};
 

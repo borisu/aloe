@@ -4,6 +4,7 @@
 #include "node.h"
 #include "var.h"
 #include "expression.h"
+#include "marker.h"
 
 using namespace std;
 
@@ -31,6 +32,8 @@ namespace aloe
 		aloe_type_ptr_t			type;
 		
 		exec_block_node_ptr_t	exec_block;
+
+		marker_node_ptr_t		end_of_fun;
 	
 		bool is_defined;
 	};

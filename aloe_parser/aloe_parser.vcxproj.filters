@@ -40,6 +40,9 @@
     <ClInclude Include="include\aloe\type.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="include\aloe\marker.h">
+      <Filter>include\aloe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

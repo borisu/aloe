@@ -19,6 +19,8 @@ namespace aloe
 		virtual bool compile(
 			ast_ptr_t ast,
 			ostream& out) = 0;
+
+		virtual void set_validate(bool validate) = 0;
 	
 	};
 

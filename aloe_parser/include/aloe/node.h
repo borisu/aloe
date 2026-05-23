@@ -18,7 +18,8 @@ namespace aloe
 		VAR_LIST_NODE,
 		EXPRESSION_NODE,
 		ARG_LIST_NODE,
-		LITERAL_NODE
+		LITERAL_NODE,
+		MARKER_NODE
 	};
 
 	struct node_t;
