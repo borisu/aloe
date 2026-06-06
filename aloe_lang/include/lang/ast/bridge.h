@@ -1,5 +1,5 @@
 #pragma once
-#include "aloe/node.h"
+#include "lang/ast/node.h"
 namespace aloe
 {
 	struct bridge_t

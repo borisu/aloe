@@ -108,7 +108,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\aloe_parser\include;..\aloe_base\include\;..\aloe_compiler\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\aloe_base\include;..\aloe_lang\include;..\aloe_parser\include;..\aloe_compiler\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -146,6 +146,9 @@
     </ProjectReference>
     <ProjectReference Include="..\aloe_compiler\aloe_compiler.vcxproj">
       <Project>{6bbf1cea-d45d-48e9-9015-7df6be6689a9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\aloe_lang\aloe_lang.vcxproj">
+      <Project>{54218a71-74b2-42f5-9381-8d7c93deccb6}</Project>
     </ProjectReference>
     <ProjectReference Include="..\aloe_parser\aloe_parser.vcxproj">
       <Project>{434e4115-5200-4840-a3ad-8bf20270432b}</Project>

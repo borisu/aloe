@@ -1,6 +1,8 @@
 #pragma once
 #include <stack>
-#include "aloe\aloe_type.h"
+#include "lang\aloe_type.h"
+#include "lang\ast\ast.h"
+#include "lang\compiler.h"
 #include "value.h"
 #include "di_cache.h"
 

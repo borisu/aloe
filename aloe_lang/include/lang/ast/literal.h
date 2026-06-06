@@ -4,7 +4,7 @@
 #include <variant>
 #include "node.h"
 #include "var.h"
-#include "aloe/aloe_type.h"
+#include "lang/aloe_type.h"
 
 
 using namespace std;

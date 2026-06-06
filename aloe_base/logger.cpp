@@ -1,5 +1,6 @@
 #include "pch.h"
-#include "aloe/logger.h"
+#include "base/logger.h"
+#include "base/defs.h"
 
 using namespace aloe;
 
@@ -10,7 +11,6 @@ void logva(LOG_LEVEL log_level, const char* format, va_list args)
 	vsprintf_s(result, format, args);
 	log1(stderr, result);
 }
-
 
 void
 aloe::logf(LOG_LEVEL log_level, const char* format, ...)

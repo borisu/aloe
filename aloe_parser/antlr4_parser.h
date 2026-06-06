@@ -1,7 +1,6 @@
 #pragma once
-#include <stack>
-#include "aloe/aloe-antlr4.h"
-#include "aloe/parser.h"
+#include "lang/parser.h"
+#include "antlr4/aloe-antlr4.h"
 #include "environment.h"
 
 using namespace std;
@@ -66,8 +65,6 @@ namespace aloe
 		virtual void check_pointer(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr_node, const char* op_str);
 		
 		bool syntax_error_occurred;
-
-		
 
 	};
 

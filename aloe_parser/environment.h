@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "aloe/ast.h"
+#include "lang/ast/ast.h"
 
 using namespace std;
 

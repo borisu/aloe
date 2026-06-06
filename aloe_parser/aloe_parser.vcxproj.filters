@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="antlr4_parser.h" />
     <ClInclude Include="environment.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="include\aloe\parser.h">
@@ -33,7 +32,6 @@
     <ClInclude Include="include\aloe\var.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
-    <ClInclude Include="parse_exception.h" />
     <ClInclude Include="include\aloe\bridge.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
@@ -43,6 +41,8 @@
     <ClInclude Include="include\aloe\marker.h">
       <Filter>include\aloe</Filter>
     </ClInclude>
+    <ClInclude Include="include\antlr4_parser\parser.h" />
+    <ClInclude Include="antlr4_parser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -50,7 +50,6 @@
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="environment.cpp" />
     <ClCompile Include="type.cpp" />
-    <ClCompile Include="parse_exception.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">

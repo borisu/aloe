@@ -6,9 +6,9 @@
 #include <sstream>
 #include <string>
 
-#include "aloe/logger.h"
-#include "aloe/parser.h"
-#include "aloe/compiler.h"
+#include "base/logger.h"
+#include "antlr4_parser/parser.h"
+#include "llvm_compiler/compiler.h"
 #include "compile_cmd.h"
 
 
@@ -37,9 +37,9 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 
     try {
 
-        auto p = create_parser();
+        auto p = create_antlr4_parser();
 
-        auto c = create_compiler();
+        auto c = create_llvm_compiler();
 
         c->set_validate(validate);
 

@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>17.0</VCProjectVersion>
+    <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{9ed379b2-0bcb-4129-a739-76c7c89815fe}</ProjectGuid>
-    <RootNamespace>aloeantlr</RootNamespace>
+    <ProjectGuid>{54218a71-74b2-42f5-9381-8d7c93deccb6}</ProjectGuid>
+    <RootNamespace>aloelang</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,18 +70,13 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Label="Vcpkg">
-    <VcpkgEnableManifest>false</VcpkgEnableManifest>
-  </PropertyGroup>
-  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <VcpkgConfiguration>Debug</VcpkgConfiguration>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -90,6 +85,9 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -99,33 +97,38 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>
       </SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;ANTLR4CPP_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(VCPKG_ROOT)\installed\x64-windows\include\antlr4-runtime</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>..\aloe_base\include;.\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -135,50 +138,48 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>
       </SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="gengen\aloeBaseListener.h" />
-    <ClInclude Include="gengen\aloeLexer.h" />
-    <ClInclude Include="gengen\aloeListener.h" />
-    <ClInclude Include="gengen\aloeParser.h" />
-    <ClInclude Include="include\antlr4\aloe-antlr4.h" />
+    <ClInclude Include="include\lang\aloe_type.h" />
+    <ClInclude Include="include\lang\ast\ast.h" />
+    <ClInclude Include="include\lang\ast\bridge.h" />
+    <ClInclude Include="include\lang\ast\expression.h" />
+    <ClInclude Include="include\lang\ast\fun.h" />
+    <ClInclude Include="include\lang\ast\identifier.h" />
+    <ClInclude Include="include\lang\ast\literal.h" />
+    <ClInclude Include="include\lang\ast\marker.h" />
+    <ClInclude Include="include\lang\ast\node.h" />
+    <ClInclude Include="include\lang\ast\prog.h" />
+    <ClInclude Include="include\lang\ast\type.h" />
+    <ClInclude Include="include\lang\ast\var.h" />
+    <ClInclude Include="include\lang\compiler.h" />
+    <ClInclude Include="include\lang\aloe_exception.h" />
+    <ClInclude Include="include\lang\intrinsics.h" />
+    <ClInclude Include="include\lang\parser.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="gengen\aloeBaseListener.cpp" />
-    <ClCompile Include="gengen\aloeLexer.cpp" />
-    <ClCompile Include="gengen\aloeListener.cpp" />
-    <ClCompile Include="gengen\aloeParser.cpp" />
+    <ClCompile Include="aloe_types.cpp" />
+    <ClCompile Include="aloe_exception.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="aloe.g4">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">java -jar .\antlr4-tools\antlr-4.13.2-complete.jar -Dlanguage=Cpp -o gengen -package aloe %(Identity)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\gengen\aloe.interp;.\gengen\aloe.tokens;.\gengen\aloeBaseListener.cpp;.\gengen\aloeBaseListener.h;.\gengen\aloeLexer.cpp;.\gengen\aloeLexer.h;.\gengen\aloeLexer.interp;.\gengen\aloeLexer.tokens;.\gengen\aloeListener.cpp;.\gengen\aloeListener.h;.\gengen\aloeParser.cpp;.\gengen\aloeParser.h</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="gengen\aloe.interp" />
-    <None Include="gengen\aloe.tokens" />
-    <None Include="gengen\aloeLexer.interp" />
-    <None Include="gengen\aloeLexer.tokens" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

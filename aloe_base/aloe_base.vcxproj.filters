@@ -3,27 +3,14 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="include\aloe\logger.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aloe\defs.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aloe\scope_guard.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aloe\intrinsics.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aloe\aloe_type.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
+    <ClInclude Include="include\base\defs.h" />
+    <ClInclude Include="include\base\intrinsics.h" />
+    <ClInclude Include="include\base\logger.h" />
+    <ClInclude Include="include\base\scope_guard.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="logger.cpp" />
-    <ClCompile Include="intrinsics.cpp" />
-    <ClCompile Include="aloe_types.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">

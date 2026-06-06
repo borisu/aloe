@@ -113,7 +113,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>.\include;..\aloe_base\include;..\aloe_parser\include;C:\Program Files (x86)\LLVM\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\LLVM\include;..\aloe_base\include;..\aloe_lang\include;..\aloe_parser\include;.\include</AdditionalIncludeDirectories>
       <AdditionalOptions>-std:c++17  -D_GLIBCXX_ASSERTIONS -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_SCL_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS -DUNICODE -D_UNICODE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS  /GR- %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
@@ -152,19 +152,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="compiler_exception.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="i64_platform.h" />
-    <ClInclude Include="include\aloe\compiler.h" />
-    <ClInclude Include="ir_compiler.h" />
+    <ClInclude Include="include\llvm_compiler\compiler.h" />
+    <ClInclude Include="llvm_compiler.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="value.h" />
     <ClInclude Include="di_cache.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="compiler_exception.cpp" />
-    <ClCompile Include="ir_compiler.cpp" />
+    <ClCompile Include="intrinsics.cpp" />
+    <ClCompile Include="llvm_compiler.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

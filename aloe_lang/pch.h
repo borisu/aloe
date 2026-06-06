@@ -9,18 +9,5 @@
 
 // add headers that you want to pre-compile here
 #include "framework.h"
-#include <iostream>
-#include <string>
-#include <stack>
-#include <map>
-#include <variant>
-#include <memory>
-#include <typeindex>
-#include <typeinfo>
-#include <stdarg.h>
-
-#include "antlr4/aloe-antlr4.h"
-#include "base/logger.h"
-
 
 #endif //PCH_H

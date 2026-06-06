@@ -1,10 +1,11 @@
 #include "pch.h"
 #include "antlr4_parser.h"
-#include "parse_exception.h"
+#include "lang/aloe_exception.h"
+#include "base/defs.h"
+#include "lang/aloe_type.h"
+#include "lang/ast/ast.h"
+#include "antlr4_parser/parser.h"
 #include "utils.h"
-#include "aloe/defs.h"
-#include "aloe/aloe_type.h"
-#include "aloe/ast.h"
 
 using namespace aloe;
 using namespace std;
@@ -18,7 +19,7 @@ static int anonymous_id_counter = 0;
 #define CHECK_TYPE(type, expected_type) \
     if (*type != *expected_type) \
     { \
-        throw parse_exeption_t("%s:%zu:%zu: error: expected expression of type '%s' but got '%s'", \
+        throw aloe_exception_t("%s:%zu:%zu: error: expected expression of type '%s' but got '%s'", \
             env->source_id.c_str(), \
             ctx->getStart()->getLine(), \
             ctx->getStart()->getStartIndex(), \
@@ -27,7 +28,7 @@ static int anonymous_id_counter = 0;
     } \
 
 parser_ptr_t
-aloe::create_parser()
+aloe::create_antlr4_parser()
 {
     return parser_ptr_t(new antl4_parser_t());
 }
@@ -63,11 +64,11 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast, const string&
 
         if (syntax_error_occurred)
         {
-            throw parse_exeption_t("compilation failed: see previous errors for more details.");
+            throw aloe_exception_t("compilation failed: see previous errors for more details.");
 		}
 
     }
-    catch (parse_exeption_t& e)
+    catch (aloe_exception_t& e)
     {
         loginl("%s", e.what());
         success = false;
@@ -107,7 +108,7 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
 
     if (syntax_error_occurred)
     {
-        throw parse_exeption_t("compilation failed: see previous errors for more details.");
+        throw aloe_exception_t("compilation failed: see previous errors for more details.");
 	}
 
 	if (ctx->moduleStatement())
@@ -129,7 +130,7 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
             }
             
         }
-        catch (parse_exeption_t &e)
+        catch (aloe_exception_t &e)
         {
             loginl("%s", e.what());
             res = false; // not failing immediately, giving chance for see other parsing errors;
@@ -137,7 +138,7 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
     }
 
     if (!res)
-        throw parse_exeption_t("compilation failed: see previous errors for more details.");
+        throw aloe_exception_t("compilation failed: see previous errors for more details.");
     
     return prog;
 }
@@ -186,7 +187,7 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx)
     }
     else
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: unknown type '%s'",
+        throw aloe_exception_t("%s:%zu:%zu: error: unknown type '%s'",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
@@ -225,7 +226,7 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
 
     if (ctx->expect() && ctx->executionBlock())
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: function was declared as 'expect' but has body",
+        throw aloe_exception_t("%s:%zu:%zu: error: function was declared as 'expect' but has body",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex());
@@ -233,7 +234,7 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
 
     if (!ctx->expect() && !ctx->executionBlock())
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: function was not declared as 'expect' but has no body",
+        throw aloe_exception_t("%s:%zu:%zu: error: function was not declared as 'expect' but has no body",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex());
@@ -251,7 +252,7 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
     {
         if (prev_fun->is_defined && fun_node->is_defined)
         {
-            throw parse_exeption_t("%s:%zu:%zu: error: function %s was already defined",
+            throw aloe_exception_t("%s:%zu:%zu: error: function %s was already defined",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex(),
@@ -268,7 +269,7 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
     {
         if (*prev_fun->type_node->type != *fun_node->type_node->type)
         {
-            throw parse_exeption_t("%s:%zu:%zu: error: function %s was already declared with different type",
+            throw aloe_exception_t("%s:%zu:%zu: error: function %s was already declared with different type",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex(),
@@ -363,7 +364,7 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
         auto prev_node = env->find_id(out->id,true);
         if (prev_node)
         {
-            throw parse_exeption_t("%s:%zu:%zu: error: var %s was already defined",
+            throw aloe_exception_t("%s:%zu:%zu: error: var %s was already defined",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex(),
@@ -378,7 +379,7 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
     {
         if (flags & CF_NO_INITIALIZATION)
         {
-            throw parse_exeption_t("%s:%zu:%zu: error: variable initialization is not allowed in this context",
+            throw aloe_exception_t("%s:%zu:%zu: error: variable initialization is not allowed in this context",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex());
@@ -386,7 +387,7 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
 
         if (env->top_fun() == nullptr && !dynamic_cast<aloeParser::Expr_literalContext*>(ctx->expression()))
         {
-            throw parse_exeption_t("%s:%zu:%zu: error: only literal expressions are allowed for global variable initialization",
+            throw aloe_exception_t("%s:%zu:%zu: error: only literal expressions are allowed for global variable initialization",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex());
@@ -395,7 +396,7 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
         out->initializer = walk_expression(env, ctx->expression());
         if (*out->initializer->type != *out->type_node->type)
         {
-            throw parse_exeption_t("%s:%zu:%zu: error: cannot initialize variable of type '%s' with expression of type '%s'",
+            throw aloe_exception_t("%s:%zu:%zu: error: cannot initialize variable of type '%s' with expression of type '%s'",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex(),
@@ -427,7 +428,7 @@ antl4_parser_t::walk_identifier(environment_ptr_t env, aloeParser::IdentifierCon
     auto prev_node = env->find_id(id_node);
     if (!prev_node && must_exist)
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: identifier '%s' is not defined",
+        throw aloe_exception_t("%s:%zu:%zu: error: identifier '%s' is not defined",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
@@ -480,7 +481,7 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
     else
     {
         throw 
-            parse_exeption_t("%s:%zu:%zu: error: cannot parse literal %s", env->source_id.c_str(), ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), ctx->getText().c_str());
+            aloe_exception_t("%s:%zu:%zu: error: cannot parse literal %s", env->source_id.c_str(), ctx->getStart()->getLine(), ctx->getStart()->getStartIndex(), ctx->getText().c_str());
     }
 
     return literal_node;
@@ -505,7 +506,7 @@ antl4_parser_t::walk_return(environment_ptr_t env, aloeParser::ReturnStatementCo
 {
     if (env->top_fun() == nullptr)
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: 'return' statement is not allowed outside of function",
+        throw aloe_exception_t("%s:%zu:%zu: error: 'return' statement is not allowed outside of function",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex());
@@ -520,7 +521,7 @@ antl4_parser_t::walk_return(environment_ptr_t env, aloeParser::ReturnStatementCo
 
         if (*return_node->return_expr->type != *env->top_fun()->type->fun_ret_type)
         {
-            throw parse_exeption_t("%s:%zu:%zu: error: cannot return expression of type '%s' from function with return type '%s'",
+            throw aloe_exception_t("%s:%zu:%zu: error: cannot return expression of type '%s' from function with return type '%s'",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex(),
@@ -531,7 +532,7 @@ antl4_parser_t::walk_return(environment_ptr_t env, aloeParser::ReturnStatementCo
     } 
     else if (env->top_fun()->type->fun_ret_type->type_id != ALOE_TYPE_VOID) 
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: must return expression of type '%s'",
+        throw aloe_exception_t("%s:%zu:%zu: error: must return expression of type '%s'",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
@@ -567,7 +568,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        }
        default:
        {
-           throw parse_exeption_t("%s:%zu:%zu: error: identifier '%s' is not a variable or function",
+           throw aloe_exception_t("%s:%zu:%zu: error: identifier '%s' is not a variable or function",
                env->source_id.c_str(),
                ctx->getStart()->getLine(),
                ctx->getStart()->getStartIndex(),
@@ -630,7 +631,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   expr_node->fun_expr = walk_expression(env, e->expression());
        if (expr_node->fun_expr->type->type_id != ALOE_TYPE_FUNCTION)
        {
-           throw parse_exeption_t("%s:%zu:%zu: error: expression %s is not of a function type",
+           throw aloe_exception_t("%s:%zu:%zu: error: expression %s is not of a function type",
                env->source_id.c_str(),
                ctx->getStart()->getLine(),
                ctx->getStart()->getStartIndex(),
@@ -644,7 +645,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        if (expr_node->arg_list->args.size() != fun_node_type->fun_param_types.size())
        {
-           throw parse_exeption_t("%s:%zu:%zu: error: expected %zu arguments in function call but %zu were provided",
+           throw aloe_exception_t("%s:%zu:%zu: error: expected %zu arguments in function call but %zu were provided",
                env->source_id.c_str(),
                ctx->getStart()->getLine(),
                ctx->getStart()->getStartIndex(),
@@ -658,7 +659,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 		   auto param   = fun_node_type->fun_param_types[i];
 		   if (*arg->type != *param)
            {
-               throw parse_exeption_t("%s:%zu:%zu: error: cannot convert argument %d of type '%s' to parameter of type '%s'",
+               throw aloe_exception_t("%s:%zu:%zu: error: cannot convert argument %d of type '%s' to parameter of type '%s'",
                    env->source_id.c_str(),
                    ctx->getStart()->getLine(),
                    ctx->getStart()->getStartIndex(),
@@ -1158,7 +1159,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        check_type_equality(env, ctx, expr_node->true_expr, expr_node->false_expr, "?");
        if (!is_arithmetic(expr_node->condition->type->type_id))
        {
-           throw parse_exeption_t("%s:%zu:%zu: error: operator '%s' cannot be applied to conditional expressions of type '%s'",
+           throw aloe_exception_t("%s:%zu:%zu: error: operator '%s' cannot be applied to conditional expressions of type '%s'",
                env->source_id.c_str(),
                ctx->getStart()->getLine(),
                ctx->getStart()->getStartIndex(),
@@ -1374,7 +1375,7 @@ antl4_parser_t::check_type_equality(environment_ptr_t env, aloeParser::Expressio
 {
     if (*expr1->type != *expr2->type)
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: operator '%s' cannot be applied to expressions of different types '%s' and '%s'",
+        throw aloe_exception_t("%s:%zu:%zu: error: operator '%s' cannot be applied to expressions of different types '%s' and '%s'",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
@@ -1389,7 +1390,7 @@ antl4_parser_t::check_binary_arithmetic(environment_ptr_t env, aloeParser::Expre
 {
     if (!is_arithmetic(expr_node->operand1->type->type_id) || !is_arithmetic(expr_node->operand2->type->type_id))
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: operator '%s' cannot be applied to expressions of type '%s' and '%s'",
+        throw aloe_exception_t("%s:%zu:%zu: error: operator '%s' cannot be applied to expressions of type '%s' and '%s'",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
@@ -1407,7 +1408,7 @@ antl4_parser_t::check_unary_arithmetic(environment_ptr_t env, aloeParser::Expres
 
     if (!is_arithmetic(expr_node->operand->type->type_id))
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: operator '%s' cannot be applied to expressions of type '%s'",
+        throw aloe_exception_t("%s:%zu:%zu: error: operator '%s' cannot be applied to expressions of type '%s'",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
@@ -1422,7 +1423,7 @@ antl4_parser_t::check_lvalue(environment_ptr_t env, aloeParser::ExpressionContex
 {
     if (expr_node->is_lvalue == false)
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: operator '%s' cannot be applied to rvalue expression of type '%s'",
+        throw aloe_exception_t("%s:%zu:%zu: error: operator '%s' cannot be applied to rvalue expression of type '%s'",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
@@ -1438,7 +1439,7 @@ antl4_parser_t::check_assignment(environment_ptr_t env, aloeParser::ExpressionCo
 
     if (lhs->type != rhs->type)
     {
-        throw parse_exeption_t("%s:%zu:%zu: error: cannot assign expression of type '%s' to expression of type '%s'",
+        throw aloe_exception_t("%s:%zu:%zu: error: cannot assign expression of type '%s' to expression of type '%s'",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
@@ -1452,7 +1453,7 @@ antl4_parser_t::check_pointer(environment_ptr_t env, aloeParser::ExpressionConte
 {
 	if (expr_node->type->type_id != ALOE_TYPE_PTR)
 	{
-		throw parse_exeption_t("%s:%zu:%zu: error: operator '%s' cannot be applied to expression of non-pointer type '%s'",
+		throw aloe_exception_t("%s:%zu:%zu: error: operator '%s' cannot be applied to expression of non-pointer type '%s'",
 			env->source_id.c_str(),
 			ctx->getStart()->getLine(),
 			ctx->getStart()->getStartIndex(),

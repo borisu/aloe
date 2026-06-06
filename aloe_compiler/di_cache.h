@@ -1,6 +1,6 @@
 #pragma once
 #include <map>
-#include "aloe\aloe_type.h"
+#include "lang\aloe_type.h"
 #include "value.h"
 
 using namespace llvm;

@@ -1,5 +1,5 @@
 #pragma once
-#include "ast.h"
+#include "ast/ast.h"
 
 using namespace std;
 
@@ -14,8 +14,6 @@ namespace aloe
 	};
 
 	typedef shared_ptr<parser_t> parser_ptr_t;
-
-	parser_ptr_t create_parser();
 
 }
 

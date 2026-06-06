@@ -1,7 +1,5 @@
 #pragma once
 
-#define ALOE_MAX_LOG_LEN 4096
-
 namespace aloe
 {
 	extern void log1(FILE* stream, const char* text);

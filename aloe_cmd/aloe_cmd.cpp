@@ -6,9 +6,9 @@
 #include <fstream>
 #include <string>
 
-#include "aloe/logger.h"
-#include "aloe/parser.h"
-#include "aloe/compiler.h"
+#include "base/logger.h"
+#include "lang/parser.h"
+#include "lang/compiler.h"
 #include "tests_cmd.h"
 #include "compile_cmd.h"
 

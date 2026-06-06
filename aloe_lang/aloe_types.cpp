@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "aloe/aloe_type.h"
-#include "aloe/defs.h"
+#include "base/defs.h"
+#include "lang/aloe_type.h"
 
 using namespace aloe;
 

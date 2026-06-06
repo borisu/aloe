@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "aloe/ast.h"
+#include "lang/ast/ast.h"
 
 using namespace std;
 
@@ -25,8 +25,5 @@ namespace aloe
 	};
 
 	typedef shared_ptr<compiler_t> compiler_ptr_t;
-
-	compiler_ptr_t create_compiler();
-
 	
 }

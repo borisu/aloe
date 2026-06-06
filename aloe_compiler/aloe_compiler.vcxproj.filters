@@ -5,30 +5,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="include">
-      <UniqueIdentifier>{6bf5fc41-db33-4c9a-b8f1-43eec7912bd4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="include\aloe">
-      <UniqueIdentifier>{e20f988f-3df6-4725-8c7f-1362b96ff46b}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="include\aloe\compiler.h">
-      <Filter>include\aloe</Filter>
-    </ClInclude>
-    <ClInclude Include="ir_compiler.h" />
-    <ClInclude Include="compiler_exception.h" />
+    <ClInclude Include="llvm_compiler.h" />
     <ClInclude Include="value.h" />
     <ClInclude Include="di_cache.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="i64_platform.h" />
+    <ClInclude Include="include\llvm_compiler\compiler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="ir_compiler.cpp" />
-    <ClCompile Include="compiler_exception.cpp" />
+    <ClCompile Include="llvm_compiler.cpp" />
     <ClCompile Include="di_cache.cpp" />
+    <ClCompile Include="intrinsics.cpp" />
   </ItemGroup>
 </Project>

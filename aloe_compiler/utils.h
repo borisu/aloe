@@ -1,6 +1,6 @@
 #pragma once
 #include "llvm/IR/Function.h"
-#include "compiler_exception.h"
+#include "lang/aloe_exception.h"
 
 using namespace llvm;
 
@@ -12,7 +12,7 @@ namespace aloe
 		if (isa<T2>(ptr))
 			return (T2*)(ptr);
 
-		throw compiler_exeption_t("internal compiler error: failed to cast IR value to expected type");
+		throw aloe_exception_t("internal compiler error: failed to cast IR value to expected type");
 			
 	}
 
