@@ -3,9 +3,19 @@
 
 using namespace aloe;
 
-environment_t::environment_t(environment_ptr_t env) :prev(env) 
+environment_t::environment_t(scope_e scope, environment_ptr_t env) :prev(env)
 {
 	this->source_id = env ? env->source_id : "";
+	this->scope_id  = scope;
+	this->fun       = env ? env->fun : nullptr;
+};
+
+
+environment_t::environment_t(scope_e scope, fun_node_ptr_t fun, environment_ptr_t env) :prev(env)
+{
+    this->source_id = env ? env->source_id : "";
+    this->scope_id  = scope;
+    this->fun       = fun;
 };
 
 void
@@ -22,26 +32,16 @@ environment_t::register_id(identifier_node_ptr_t id, node_ptr_t node)
     }
 }
 
-void environment_t::push_fun(fun_node_ptr_t fun)
+fun_node_ptr_t 
+environment_t::curr_fun()
 {
-    fun_stack.push(fun);
+	return this->fun;
 }
 
-fun_node_ptr_t 
-environment_t::top_fun()
+const scope_e&
+environment_t::curr_scope()
 {
-    auto curr_env = shared_from_this();
-
-    while (curr_env != nullptr)
-    {
-        if (!curr_env->fun_stack.empty())
-        {
-            return curr_env->fun_stack.top();
-        }
-        curr_env = curr_env->prev;
-	}
-
-   return fun_node_ptr_t();
+   return scope_id;
 }
 
 

@@ -4,14 +4,14 @@
 namespace aloe
 {
     template<typename F>
-    struct scope_exit_t
+    struct scope_guard_t
     {
         F func;
         bool active = true;
 
-        scope_exit_t(F f) : func(std::move(f)) {}
+        scope_guard_t(F f) : func(std::move(f)) {}
 
-        ~scope_exit_t()
+        ~scope_guard_t()
         {
             if (active) func();
         }
@@ -21,9 +21,9 @@ namespace aloe
 
     // helper
     template<typename F>
-    scope_exit_t<F> make_scope_exit(F f)
+    scope_guard_t<F> make_scope_guard(F f)
     {
-        return scope_exit_t<F>(f);
+        return scope_guard_t<F>(f);
     }
 
 }

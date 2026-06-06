@@ -6,7 +6,7 @@
 #include "lang/ast/ast.h"
 #include "antlr4_parser/parser.h"
 #include "utils.h"
-
+#include "base/scope_guard.h"
 using namespace aloe;
 using namespace std;
 using namespace antlr4;
@@ -15,17 +15,6 @@ static int object_id = 0;
 static int anonymous_id_counter = 0;
 
 #define INSTANCE_OF(C) C* e = dynamic_cast<C*>(ctx)    
-
-#define CHECK_TYPE(type, expected_type) \
-    if (*type != *expected_type) \
-    { \
-        throw aloe_exception_t("%s:%zu:%zu: error: expected expression of type '%s' but got '%s'", \
-            env->source_id.c_str(), \
-            ctx->getStart()->getLine(), \
-            ctx->getStart()->getStartIndex(), \
-            expected_type->content.c_str(), \
-            type->content.c_str()); \
-    } \
 
 parser_ptr_t
 aloe::create_antlr4_parser()
@@ -57,7 +46,7 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast, const string&
         ast.reset(new ast_t());
         ast->source_id = source_id;
 
-        environment_ptr_t env(new  environment_t());
+        environment_ptr_t env(new  environment_t(CTX_GLOBAL));
         env->source_id = source_id;
 
         ast->prog = walk_prog(env, parser.prog());
@@ -66,7 +55,6 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast, const string&
         {
             throw aloe_exception_t("compilation failed: see previous errors for more details.");
 		}
-
     }
     catch (aloe_exception_t& e)
     {
@@ -105,7 +93,7 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
     INIT_POS(prog, ctx);
 
 	bool res = true;
-
+   
     if (syntax_error_occurred)
     {
         throw aloe_exception_t("compilation failed: see previous errors for more details.");
@@ -122,7 +110,7 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
         {
             if (stmt->varDeclaration())
             {
-                prog->decl_statements.push_back(walk_var(env, stmt->varDeclaration(),CF_NONE));
+                prog->decl_statements.push_back(walk_var(env, stmt->varDeclaration()));
             }
             else if (stmt->funDeclaration())
             {
@@ -208,7 +196,8 @@ antl4_parser_t::walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext*
     out->fun_ret_type_node = walk_type(env, ctx->type());
     out->type->fun_ret_type = out->fun_ret_type_node->type;
 
-    out->fun_params_node = walk_var_list(env, ctx->varList(), CF_NO_INITIALIZATION);
+	environment_ptr_t new_env(new environment_t(CTX_FUN_ARGS, env));
+    out->fun_params_node = walk_var_list(new_env, ctx->varList());
     for (auto& var : out->fun_params_node->vars_v)
     {
         out->type->fun_param_types.push_back(var.second->type);
@@ -221,8 +210,8 @@ antl4_parser_t::walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext*
 fun_node_ptr_t
 antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDeclarationContext* ctx)
 {
-    fun_node_ptr_t fun_node = fun_node_ptr_t(new fun_node_t());
-    INIT_POS(fun_node, ctx);
+    fun_node_ptr_t out = fun_node_ptr_t(new fun_node_t());
+    INIT_POS(out, ctx);
 
     if (ctx->expect() && ctx->executionBlock())
     {
@@ -240,40 +229,40 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
             ctx->getStart()->getStartIndex());
     }
     
-	fun_node->is_defined = ctx->expect() == nullptr;
+	out->is_defined = ctx->expect() == nullptr;
+    out->id         = walk_identifier(env, ctx->identifier(), ID_NONTYPE,false);
 
-    fun_node->id        = walk_identifier(env, ctx->identifier(), ID_NONTYPE,false);
-
-    auto prev_node      = fun_node->id  ? env->find_id(fun_node->id) : nullptr;
+    auto prev_node      = out->id  ? env->find_id(out->id) : nullptr;
     auto prev_fun       = prev_node ? PCAST(fun_node_t, prev_node->target) : nullptr;
 
     // check that function is defined twice
     if (prev_node)
     {
-        if (prev_fun->is_defined && fun_node->is_defined)
+        if (prev_fun->is_defined && out->is_defined)
         {
             throw aloe_exception_t("%s:%zu:%zu: error: function %s was already defined",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex(),
-                fun_node->id->name.c_str());
+                out->id->name.c_str());
         }
     }
     
-    environment_ptr_t new_env(new environment_t(env));
-    fun_node->type_node = walk_fun_type(new_env, ctx->funType());
-	fun_node->type = fun_node->type_node->type;
+    environment_ptr_t fun_env(new environment_t(CTX_FUNCTION, out, env));
+
+    out->type_node = walk_fun_type(fun_env, ctx->funType());
+	out->type = out->type_node->type;
 
 	// check that function is not defined with different type
     if (prev_node)
     {
-        if (*prev_fun->type_node->type != *fun_node->type_node->type)
+        if (*prev_fun->type_node->type != *out->type_node->type)
         {
             throw aloe_exception_t("%s:%zu:%zu: error: function %s was already declared with different type",
                 env->source_id.c_str(),
                 ctx->getStart()->getLine(),
                 ctx->getStart()->getStartIndex(),
-                fun_node->id->name.c_str());
+                out->id->name.c_str());
         }
 
     }
@@ -283,23 +272,22 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
     {
         if (prev_fun->is_defined)
         {
-			fun_node->ignore = true; 
+			out->ignore = true; 
         }
     }
 
-    if (!fun_node->ignore)
-        env->register_id(fun_node->id, fun_node); // it will mark previous node as ignore
+    if (!out->ignore)
+        env->register_id(out->id, out); // it will mark previous node as ignore
    
-    if (fun_node->is_defined)
+    if (out->is_defined)
     {
-		new_env->push_fun(fun_node);
-        fun_node->exec_block = walk_execution_block(new_env, ctx->executionBlock());
+        out->exec_block = walk_execution_block(fun_env, ctx->executionBlock());
     }
 
-	fun_node->end_of_fun = marker_node_ptr_t(new marker_node_t());
-	INIT_END_POS(fun_node->end_of_fun, ctx);
+	out->end_of_fun = marker_node_ptr_t(new marker_node_t());
+	INIT_END_POS(out->end_of_fun, ctx);
    
-    return fun_node;
+    return out;
 }
 
 exec_block_node_ptr_t
@@ -312,7 +300,7 @@ antl4_parser_t::walk_execution_block(environment_ptr_t env, aloeParser::Executio
     {
         if (exec_ctx->varDeclaration())
         {
-            block_node->exec_statements.push_back(walk_var(env, exec_ctx->varDeclaration(), CF_NONE));
+            block_node->exec_statements.push_back(walk_var(env, exec_ctx->varDeclaration()));
         }
         else if (exec_ctx->funDeclaration())
         {
@@ -333,7 +321,7 @@ antl4_parser_t::walk_execution_block(environment_ptr_t env, aloeParser::Executio
 }
 
 var_list_node_ptr_t
-antl4_parser_t::walk_var_list( environment_ptr_t env, aloeParser::VarListContext* ctx, compile_flags_e flags)
+antl4_parser_t::walk_var_list( environment_ptr_t env, aloeParser::VarListContext* ctx)
 {
     var_list_node_ptr_t var_list(new var_list_node_t());
     INIT_POS(var_list, ctx);
@@ -342,7 +330,7 @@ antl4_parser_t::walk_var_list( environment_ptr_t env, aloeParser::VarListContext
     
     for (auto& varCtx : ctx->varDeclaration())
     {
-        auto var_ptr = walk_var(env, varCtx, flags);
+        auto var_ptr = walk_var(env, varCtx);
 		var_list->vars_m[var_ptr->id] = var_ptr;
 		var_list->vars_v.push_back(var_id_t(var_ptr->id, var_ptr));
     };
@@ -351,7 +339,7 @@ antl4_parser_t::walk_var_list( environment_ptr_t env, aloeParser::VarListContext
 }
 
 var_node_ptr_t 
-antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContext* ctx, compile_flags_e flags)
+antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContext* ctx)
 {
   
     var_node_ptr_t out  = var_node_ptr_t(new var_node_t());
@@ -371,13 +359,20 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
                 out->id->name.c_str());
         }
     }
+    else if (env->curr_scope() != CTX_FUN_ARGS)
+    {
+		throw aloe_exception_t("%s:%zu:%zu: error: variable declaration must have an identifier in this scope",
+			env->source_id.c_str(),
+			ctx->getStart()->getLine(),
+			ctx->getStart()->getStartIndex());
+    }
     
     out->type_node = walk_type(env, ctx->type());
 	out->type = out->type_node->type;
    
     if (ctx->expression())
     {
-        if (flags & CF_NO_INITIALIZATION)
+        if (env->curr_scope() == CTX_FUN_ARGS)
         {
             throw aloe_exception_t("%s:%zu:%zu: error: variable initialization is not allowed in this context",
                 env->source_id.c_str(),
@@ -385,7 +380,7 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
                 ctx->getStart()->getStartIndex());
         }
 
-        if (env->top_fun() == nullptr && !dynamic_cast<aloeParser::Expr_literalContext*>(ctx->expression()))
+        if (env->curr_scope() != CTX_GLOBAL && !dynamic_cast<aloeParser::Expr_literalContext*>(ctx->expression()))
         {
             throw aloe_exception_t("%s:%zu:%zu: error: only literal expressions are allowed for global variable initialization",
                 env->source_id.c_str(),
@@ -504,7 +499,7 @@ antl4_parser_t::walk_arg_list(environment_ptr_t env, aloeParser::ArgumentExpress
 return_node_ptr_t  
 antl4_parser_t::walk_return(environment_ptr_t env, aloeParser::ReturnStatementContext* ctx)
 {
-    if (env->top_fun() == nullptr)
+    if (!env->curr_fun())
     {
         throw aloe_exception_t("%s:%zu:%zu: error: 'return' statement is not allowed outside of function",
             env->source_id.c_str(),
@@ -519,7 +514,7 @@ antl4_parser_t::walk_return(environment_ptr_t env, aloeParser::ReturnStatementCo
     {
         return_node->return_expr = walk_expression(env, ctx->expression());
 
-        if (*return_node->return_expr->type != *env->top_fun()->type->fun_ret_type)
+        if (*return_node->return_expr->type != *env->curr_fun()->type->fun_ret_type)
         {
             throw aloe_exception_t("%s:%zu:%zu: error: cannot return expression of type '%s' from function with return type '%s'",
                 env->source_id.c_str(),
@@ -527,16 +522,16 @@ antl4_parser_t::walk_return(environment_ptr_t env, aloeParser::ReturnStatementCo
                 ctx->getStart()->getStartIndex(),
                 ctx->expression()->getText().c_str(),
                 return_node->return_expr->type->to_str().c_str(),
-                env->top_fun()->type->to_str().c_str());
+                env->curr_fun()->type->to_str().c_str());
         }
     } 
-    else if (env->top_fun()->type->fun_ret_type->type_id != ALOE_TYPE_VOID) 
+    else if (env->curr_fun()->type->fun_ret_type->type_id != ALOE_TYPE_VOID) 
     {
         throw aloe_exception_t("%s:%zu:%zu: error: must return expression of type '%s'",
             env->source_id.c_str(),
             ctx->getStart()->getLine(),
             ctx->getStart()->getStartIndex(),
-            env->top_fun()->type->to_str().c_str());
+            env->curr_fun()->type->to_str().c_str());
     }
 
 	return return_node;

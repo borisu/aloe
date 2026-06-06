@@ -181,10 +181,12 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
         Argument* ir_arg = ir_fun->getArg(i);
 
 		auto var_node = node->type_node->fun_params_node->vars_v[i].second;
-        auto var_name = var_node->id->name;
-
-        ir_arg->setName(var_name);
-
+        if (var_node->id)
+        {
+            auto var_name = var_node->id->name;
+            ir_arg->setName(var_name);
+        }
+        
 		value_ptr_t var(new value_t());
 		var->ir_value = ir_arg;
 	
@@ -216,7 +218,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
         ctx->fun_desc_stack.push(out);
 
-        auto guard = make_scope_exit([&]() { ctx->fun_desc_stack.pop(); }); // emit may throw, make sure to pop the function from stack
+        auto guard = make_scope_guard([&]() { ctx->fun_desc_stack.pop(); }); // emit may throw, make sure to pop the function from stack
 
         for (auto& statement : node->exec_block->exec_statements)
         {

@@ -9,19 +9,30 @@ namespace aloe
 	class environment_t;
 	typedef shared_ptr<environment_t> environment_ptr_t;
 
+	enum scope_e
+	{
+		CTX_UNKNOWN,
+		CTX_GLOBAL,
+		CTX_FUNCTION,
+		CTX_FUN_ARGS,
+		CTX_EXEC_BLOCK,
+	};
+
 	class environment_t : public std::enable_shared_from_this<environment_t>
 	{
 	public:
 
-		environment_t(environment_ptr_t env = nullptr);
+		environment_t(scope_e scope, environment_ptr_t env = nullptr);
+
+		environment_t(scope_e scope, fun_node_ptr_t fun, environment_ptr_t env = nullptr);
 
 		void register_id(identifier_node_ptr_t id, node_ptr_t node);
 
 		bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope=false);
 
-		void push_fun(fun_node_ptr_t fun);
+		const scope_e& curr_scope();
 
-		fun_node_ptr_t top_fun();
+		fun_node_ptr_t curr_fun();
 
 		string source_id;
 
@@ -41,9 +52,11 @@ namespace aloe
 
 		bridge_map_t  bridge_map;
 
-		stack<fun_node_ptr_t> fun_stack;
-
 		environment_ptr_t prev;
+
+		scope_e scope_id;
+
+		fun_node_ptr_t fun;
 
 	};
 
