@@ -256,8 +256,9 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
 
     environment_ptr_t fun_mod(new fun_modifier_t(out, env));
     environment_ptr_t scope_mod(new scope_modifier_t(CTX_FUNCTION, fun_mod));
+	environment_ptr_t env_mod(new environment_modifier_t(scope_mod));
     
-    environment_ptr_t new_env = scope_mod;
+    environment_ptr_t new_env = env_mod;
 
     out->type_node = walk_fun_type(new_env, ctx->funType());
 	out->type = out->type_node->type;
@@ -389,7 +390,7 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
                 ctx->getStart()->getStartIndex());
         }
 
-        if (env->curr_scope() != CTX_GLOBAL && !dynamic_cast<aloeParser::Expr_literalContext*>(ctx->expression()))
+        if (env->curr_scope() == CTX_GLOBAL && !dynamic_cast<aloeParser::Expr_literalContext*>(ctx->expression()))
         {
             throw aloe_exception_t("%s:%zu:%zu: error: only literal expressions are allowed for global variable initialization",
                 env->source().c_str(),
@@ -474,13 +475,6 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
         literal_node->value = unescape(ctx->CharacterConstant()->getText())[0];
         literal_node->type  = make_shared<aloe_type_t>(ALOE_TYPE_CHAR);
 		
-    }
-    else if (ctx->pointerToVoid())
-    {
-        literal_node->lit_type_id = LIT_POINTER_VOID;
-        literal_node->value = std::stoi(ctx->pointerToVoid()->DigitSequence()->getText());
-        literal_node->type = make_shared<aloe_type_t>(ALOE_TYPE_PTR);
-        literal_node->type->ptr_pointee_type = make_shared<aloe_type_t>(ALOE_TYPE_VOID);
     }
     else
     {

@@ -86,8 +86,8 @@ tests_cmd_t::test_var_declarations1()
 {
     TEST_PARSE_STRING(R"(var b:A)", false);
     TEST_PARSE_STRING(R"(var a:int)", true);
-    TEST_PARSE_STRING(R"(var :int)", true);
-    TEST_PARSE_STRING(R"(var :^^^^^int)", true);
+    TEST_PARSE_STRING(R"(var :int)", false);
+    TEST_PARSE_STRING(R"(var a:^^^^^int)", true);
     TEST_PARSE_STRING(R"(var b:int =  1 + 1)", false);
     TEST_PARSE_STRING(R"(var b:int = 1)", true);
 
@@ -154,8 +154,6 @@ tests_cmd_t::test_defaults()
 {
     TEST_PARSE_STRING(R"(var a:void     =   0)", false);
     TEST_PARSE_STRING(R"(var a:int     =   0)", true);
-    TEST_PARSE_STRING(R"(var a:^void   =  ^0)", true);
-    TEST_PARSE_STRING(R"(var a:^^void  = ^^0)", true);
     TEST_PARSE_STRING(R"(var a:^char   = "ok")", true);
     TEST_PARSE_STRING(R"(var a:char    = 'o')", true);
     TEST_PARSE_STRING(R"(var a:char    = 123)", false);

@@ -111,11 +111,6 @@ literal
     : DigitSequence
     | StringLiteral+
     | CharacterConstant
-    | pointerToVoid
-    ;
-
-pointerToVoid
-    :pl_pfx+='^'+ DigitSequence
     ;
 
 /********************/
