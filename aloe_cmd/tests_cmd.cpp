@@ -27,6 +27,11 @@ void tests_cmd_t::set_dump_ir(bool dump_ir)
 	this->dump_ir = dump_ir;
 }
 
+void tests_cmd_t::set_compile(bool compile)
+{
+	this->compile = compile;
+}
+
 void 
 tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 {
@@ -197,13 +202,6 @@ tests_cmd_t::test_recursion()
 }
 
 void 
-tests_cmd_t::test_ref_deref()
-{
-    
-    
-}
-
-void 
 tests_cmd_t::test_expressions1()
 {
 
@@ -222,6 +220,7 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
+ 
     test_var_scope();
     test_funcall_type_mismatch();
     test_return_type_mismatch();
@@ -231,8 +230,7 @@ tests_cmd_t::run_tests()
     test_expressions1();
     test_defaults();
     test_recursion();
-	
-  
+   
     
     return success;
 }

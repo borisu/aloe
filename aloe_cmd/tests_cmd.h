@@ -10,6 +10,8 @@ namespace aloe
 
 		void set_dump_ir(bool dump_ir);
 
+		void set_compile(bool compile);
+
 	private:
 		
 		void test_var_declarations1();
@@ -21,7 +23,7 @@ namespace aloe
 		void test_funcall_type_mismatch();
 		void test_var_scope();
 		void test_recursion();
-		void test_ref_deref();
+		
 		
 		void run_test(const char* test_name, const char* al, bool expected);
 		
@@ -31,7 +33,7 @@ namespace aloe
 
 		bool dump_ir = false;
 
-		bool compile = false;
+		bool compile = true;
 
 		
 	};

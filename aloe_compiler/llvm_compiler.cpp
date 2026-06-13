@@ -210,6 +210,10 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
 	out->ir_value = ir_fun;
 
+    bool x = (isa<Function>(out->ir_value));
+
+    id_cache[node] = out;
+
     if (node->is_defined)
     {
         BasicBlock* ir_block = BasicBlock::Create(*ctx->llvm_ctx, node->id->name, ir_fun);
@@ -252,8 +256,6 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
             node->pos,
             node->id->name.c_str());
     }
-
-    id_cache[node] = out;
 		
 }
 
@@ -845,7 +847,8 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         args.push_back(emit_r_value(ctx, arg_val));
     }
 
-    auto inst = ctx->llvm_ir->CreateCall(ir_sc<FunctionType>(fun_val->ir_value->getType()), emit_r_value(ctx, fun_val), args);
+    auto inst = ctx->llvm_ir->CreateCall(
+        ir_sc<Function>(fun_val->ir_value)->getFunctionType(), emit_r_value(ctx, fun_val), args);
     
     val->ir_value = inst;
 
@@ -866,6 +869,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
 	InitDloc(ctx, node);
 
     value_ptr_t val(new value_t());
+    val->aloe_type = node->type;
    
     switch (node->lit_type_id)
     {
@@ -880,7 +884,8 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     case LIT_STRING:
     {
         Type * ir_type  = emit_type(ctx, node->type);
-        val->ir_value   = ctx->llvm_ir->CreateGlobalString(std::get<string>(node->value));
+        string s = std::get<string>(node->value);
+        val->ir_value   = ctx->llvm_ir->CreateGlobalString(s,"",0,ctx->llvm_module);
         val->is_lvalue  = false;
         
         break;

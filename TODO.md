@@ -4,8 +4,9 @@
 - [X] add expression initialization for variables (e.g. int x = 5 + 3)
 - [ ] casting infrastructure
 - [ ] emit_expr_fun_call must not return nullptr	
-- [ ] unify exception in base
-- [ ] place ast in base
+- [X] unify exception in base
+- [X] place ast in base
 - [X] add debugging information for variables (global and local)
 - [X] check types in when emitting code for expressions (e.g. in emit_expr_binary_op, check if the types of the operands are compatible with the operator)
+- [ ] revision value again
 
