@@ -49,7 +49,7 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 
         if (run_res = p->parse_from_stream(iss, ast, "<string>"))
         {
-            if (expected)
+            if (expected && compile)
             {
                 stringstream ss;
                 run_res = c->compile(ast, ss);
@@ -65,11 +65,17 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
     }
 	catch (std::exception* ex)
 	{
-		printf("exception:%s\n", ex->what());
+        printf("exception:%s\n", ex->what());
 		test_res = false; // never pass the test if an exception is thrown, even if the test expected a failure
+	}
+
+    if (!test_res)
+	{
+		printf("\n%s\n", al);
 	}
     
     test_res ? printf("\n...[OK]\n") : printf("\n...[FAIL]\n");
+    
 
 	success = success && test_res;
 }
@@ -217,19 +223,6 @@ bool
 tests_cmd_t::run_tests()
 {
     success = true;
-
-    /*set_validate(false);
-	set_dump_ir(true);
-
-    run_test(
-        __FUNCTION__, 
-        R"(
-        var a:int = 10;
-        fun bar:(var a:int)->void { }
-        )", 
-        true);
-
-    return success;*/
 
     test_var_scope();
     test_funcall_type_mismatch();

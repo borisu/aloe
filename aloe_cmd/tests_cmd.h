@@ -31,6 +31,8 @@ namespace aloe
 
 		bool dump_ir = false;
 
+		bool compile = false;
+
 		
 	};
 

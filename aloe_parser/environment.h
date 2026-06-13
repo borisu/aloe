@@ -18,25 +18,55 @@ namespace aloe
 		CTX_EXEC_BLOCK,
 	};
 
-	class environment_t : public std::enable_shared_from_this<environment_t>
+	class environment_t 
+	{
+	public:
+		
+		virtual void register_id(identifier_node_ptr_t id, node_ptr_t node) = 0;
+
+		virtual bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope = false) = 0;
+
+		virtual scope_e curr_scope() = 0;
+
+		virtual fun_node_ptr_t curr_fun() = 0;
+
+		virtual const string& source() = 0;
+	
+	};
+
+	class base_modifier_t : public virtual environment_t
 	{
 	public:
 
-		environment_t(scope_e scope, environment_ptr_t env = nullptr);
+		base_modifier_t(environment_ptr_t env = nullptr);
 
-		environment_t(scope_e scope, fun_node_ptr_t fun, environment_ptr_t env = nullptr);
+		void register_id(identifier_node_ptr_t id, node_ptr_t node) override;
 
-		void register_id(identifier_node_ptr_t id, node_ptr_t node);
+		bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope) override;
 
-		bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope=false);
+		scope_e curr_scope() override;
 
-		const scope_e& curr_scope();
+		fun_node_ptr_t curr_fun() override;
 
-		fun_node_ptr_t curr_fun();
+		const string& source() override;
 
-		string source_id;
+	protected:
 
-	private:
+		environment_ptr_t prev;
+	};
+
+
+	class environment_modifier_t : public virtual base_modifier_t
+	{
+	public:
+
+		environment_modifier_t(environment_ptr_t env = nullptr);
+
+		void register_id(identifier_node_ptr_t id, node_ptr_t node) override;
+
+		bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope) override;
+		
+	protected:
 
 		struct id_ptr_map_cmp
 		{
@@ -46,18 +76,41 @@ namespace aloe
 			}
 		};
 
-
 		typedef map<identifier_node_ptr_t, bridge_ptr_t, id_ptr_map_cmp>
 		bridge_map_t;
 
 		bridge_map_t  bridge_map;
+	};
 
-		environment_ptr_t prev;
+	class scope_modifier_t : public virtual base_modifier_t
+	{
+	public:
+		scope_modifier_t(scope_e scope, environment_ptr_t env = nullptr);
 
+		scope_e curr_scope() override;
+		
 		scope_e scope_id;
+	};
+
+	class fun_modifier_t : public virtual base_modifier_t
+	{
+	public:
+		fun_modifier_t(fun_node_ptr_t fun = nullptr, environment_ptr_t env = nullptr);
+		
+		// function scope accessors
+		fun_node_ptr_t curr_fun() override;
 
 		fun_node_ptr_t fun;
+	};
+	 
+	class source_modifier_t : public virtual base_modifier_t
+	{
+	public:
+		source_modifier_t(string source);
 
+		const string& source() override;
+
+		string source_name;
 	};
 
 }
