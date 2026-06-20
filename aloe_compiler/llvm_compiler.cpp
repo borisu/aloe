@@ -368,7 +368,6 @@ llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, aloe_type_ptr_t type)
     out->is_lvalue = false;
     out->ir_value  = Constant::getNullValue(emit_type(ctx, type));
     out->di_type   = di_cache->get_dit_type(type);
-    out->aloe_type = type;
    
     return out;
 
@@ -382,6 +381,7 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 	value_ptr_t out(new value_t());
 
     Type *ir_var_type  = emit_type(ctx, node->type_node);
+    out->lvl_type = ir_var_type;
 
 	auto init_val = node->initializer ? emit_expression(ctx, node->initializer) : emit_default(ctx, node->type);
 
@@ -404,8 +404,7 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
         auto alloca_inst = ctx->llvm_ir->CreateAlloca(ir_var_type, nullptr, node->id->name);
         out->ir_value  = alloca_inst;
 		out->is_lvalue = true;
-		out->aloe_type = node->type;
-
+	
         ctx->llvm_ir->CreateStore(emit_r_value(ctx, init_val), out->ir_value);
         
     }
@@ -464,7 +463,6 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op
   
     val->ir_value  = res;
     val->is_lvalue = false;
-	val->aloe_type = op1->aloe_type;
 
     return val;
 }
@@ -506,7 +504,6 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
     Value* ext = ctx->llvm_ir->CreateZExt(cmp, e1->ir_value->getType());
     
     val->ir_value  = ext;
-    val->aloe_type = e1->aloe_type;
     val->is_lvalue = false;
 	return val;
 }
@@ -731,7 +728,6 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
         Value* neg = ctx->llvm_ir->CreateNeg(val->ir_value);
 	
         val->ir_value = neg;
-        val->aloe_type = operand_val->aloe_type;
 		val->is_lvalue = false;
 
         break;
@@ -797,8 +793,7 @@ llvmir_compiler_t::emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_p
     check_lvalue(ctx, lhs, node);
     check_val_type_equality(ctx, lhs, rhs, node);
 
-    val->ir_value = emit_r_value(ctx, rhs);
-    val->aloe_type = rhs->aloe_type;
+    val->ir_value  = emit_r_value(ctx, rhs);
     val->is_lvalue = false;
 
     ctx->llvm_ir->CreateStore(val->ir_value, lhs->ir_value);
@@ -824,7 +819,7 @@ llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val)
         return val->ir_value;
 
     // load from address
-    auto inst = ctx->llvm_ir->CreateLoad(emit_type(ctx, val->aloe_type), val->ir_value);
+    auto inst = ctx->llvm_ir->CreateLoad(val->lvl_type, val->ir_value);
    
     return  inst;
 }
@@ -869,7 +864,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
 	InitDloc(ctx, node);
 
     value_ptr_t val(new value_t());
-    val->aloe_type = node->type;
+    
    
     switch (node->lit_type_id)
     {

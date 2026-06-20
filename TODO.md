@@ -8,5 +8,6 @@
 - [X] place ast in base
 - [X] add debugging information for variables (global and local)
 - [X] check types in when emitting code for expressions (e.g. in emit_expr_binary_op, check if the types of the operands are compatible with the operator)
-- [ ] revision value again
+- [X] revision value again
+- [ ] review di types 
 
