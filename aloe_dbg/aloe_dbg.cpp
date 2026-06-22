@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-extern "C" int32_t root();
+extern "C" int64_t root();
 
 int main()
 {

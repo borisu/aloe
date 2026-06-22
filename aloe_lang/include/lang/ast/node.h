@@ -31,10 +31,10 @@ namespace aloe
 
 		node_type_e node_type_id;
 
-		int line;
+		size_t line;
 
-		int pos;
-
+		size_t pos;
+		
 		bool ignore;
 
 		virtual ~node_t() {}

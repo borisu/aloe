@@ -381,7 +381,7 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 	value_ptr_t out(new value_t());
 
     Type *ir_var_type  = emit_type(ctx, node->type_node);
-    out->lvl_type = ir_var_type;
+    out->lval_type = ir_var_type;
 
 	auto init_val = node->initializer ? emit_expression(ctx, node->initializer) : emit_default(ctx, node->type);
 
@@ -644,7 +644,7 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
     
     default:
 
-        throw new aloe_exception_t("%s:%zu:%zu: (internal error): invalid operation %d",
+        throw aloe_exception_t("%s:%zu:%zu: (internal error): invalid operation %d",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos,
@@ -682,13 +682,13 @@ llvmir_compiler_t::emit_postfix(compiler_ctx_t* ctx, unary_expr_node_ptr_t node)
     {
         value_ptr_t const_val = emit_constant(ctx, 1, make_shared<aloe_type_t>(ALOE_TYPE_INT));
 
-        check_val_type_equality(ctx, operand_val, const_val, node);
+        check_val_type_equality(ctx, operand_rval, const_val, node);
         value_ptr_t math_val = emit_raw_binary_arithmetic(ctx, node->op_id == expr_sfxminmin ? expr_sub : expr_add, 
             operand_rval,
             const_val, 
             node);
 
-        check_val_type_equality(ctx, operand_val, math_val, node);
+        check_val_type_equality(ctx, operand_rval, math_val, node);
         value_ptr_t assign_val = emit_raw_assign(ctx, operand_val, math_val, node);
         break;
     }
@@ -716,7 +716,7 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
     {
     case expr_plus:
     {
-        value_ptr_t operand_rval = operand_val;
+        value_ptr_t operand_rval(new value_t());
         operand_rval->ir_value = emit_r_value(ctx, operand_val);
         operand_rval->is_lvalue = false;
 
@@ -738,10 +738,14 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
 		check_lvalue(ctx, operand_val, node);
 		value_ptr_t const_val = emit_constant(ctx, 1 , make_shared<aloe_type_t>(ALOE_TYPE_INT));
 
-        check_val_type_equality(ctx, operand_val, const_val, node);
-        value_ptr_t math_val = emit_raw_binary_arithmetic(ctx,  node->op_id == expr_preminmin ? expr_sub : expr_add, operand_val, const_val, node);
+        value_ptr_t operand_rval(new value_t());
+        operand_rval->ir_value = emit_r_value(ctx, operand_val);
+        operand_rval->is_lvalue = false;
 
-        check_val_type_equality(ctx, operand_val, math_val, node);
+        check_val_type_equality(ctx, operand_rval, const_val, node);
+        value_ptr_t math_val = emit_raw_binary_arithmetic(ctx,  node->op_id == expr_preminmin ? expr_sub : expr_add, operand_rval, const_val, node);
+
+        check_assign_val_type_equality(ctx, operand_val, math_val, node);
         value_ptr_t assign_val = emit_raw_assign(ctx, operand_val, math_val, node);
 
         val = assign_val;
@@ -790,8 +794,8 @@ llvmir_compiler_t::emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_p
 {
     value_ptr_t val(new value_t());
 
-    check_lvalue(ctx, lhs, node);
-    check_val_type_equality(ctx, lhs, rhs, node);
+    
+    check_assign_val_type_equality(ctx, lhs, rhs, node);
 
     val->ir_value  = emit_r_value(ctx, rhs);
     val->is_lvalue = false;
@@ -819,7 +823,7 @@ llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val)
         return val->ir_value;
 
     // load from address
-    auto inst = ctx->llvm_ir->CreateLoad(val->lvl_type, val->ir_value);
+    auto inst = ctx->llvm_ir->CreateLoad(val->lval_type, val->ir_value);
    
     return  inst;
 }
@@ -903,12 +907,25 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
         
 }
 
+void llvmir_compiler_t::check_assign_val_type_equality(compiler_ctx_t* ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
+{
+    check_lvalue(ctx, v1, node);
+    if (v1->lval_type != v2->ir_value->getType())
+    {
+        throw aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform assignment on incompatible types",
+            ctx->ast->source_id.c_str(),
+            node->line,
+            node->pos);
+    }
+
+}
+
 void 
 llvmir_compiler_t::check_val_type_equality(compiler_ctx_t *ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
 {
 	if (v2->ir_value->getType() != v1->ir_value->getType())
     {
-        throw new aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible types",
+        throw aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible types",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos);
@@ -920,7 +937,7 @@ llvmir_compiler_t::check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t n
 {
     if (!v->is_lvalue)
     {
-        throw new aloe_exception_t("%s:%zu:%zu: (internal error): need lvalue for the operation",
+        throw aloe_exception_t("%s:%zu:%zu: (internal error): need lvalue for the operation",
             ctx->ast->source_id.c_str(),
             node->line,
             node->pos);

@@ -12,6 +12,8 @@ namespace aloe
 
 		void set_compile(bool compile);
 
+		
+
 	private:
 		
 		void test_var_declarations1();
@@ -23,6 +25,8 @@ namespace aloe
 		void test_funcall_type_mismatch();
 		void test_var_scope();
 		void test_recursion();
+		void test_postfix();
+		void test_prefix();
 		
 		
 		void run_test(const char* test_name, const char* al, bool expected);

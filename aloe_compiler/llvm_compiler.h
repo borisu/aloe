@@ -99,6 +99,8 @@ namespace aloe
 		// 
 		virtual void check_val_type_equality(compiler_ctx_t* ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
 
+		virtual void check_assign_val_type_equality(compiler_ctx_t* ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
+
 		virtual void check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t node);
 
 		virtual llvm::DebugLoc InitDloc(compiler_ctx_t* ctx, node_ptr_t node);

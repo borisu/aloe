@@ -85,6 +85,17 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 	success = success && test_res;
 }
 
+void
+tests_cmd_t::test_postfix()
+{
+	TEST_PARSE_STRING(R"(fun root:() -> int { var a : int = 1; return a++; })", true);
+}
+
+void
+tests_cmd_t::test_prefix()
+{
+    TEST_PARSE_STRING(R"(fun root:() -> int { var a : int = 1; return ++a; })", true);
+}
 
 void
 tests_cmd_t::test_var_declarations1()
@@ -220,7 +231,8 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
- 
+    
+
     test_var_scope();
     test_funcall_type_mismatch();
     test_return_type_mismatch();
@@ -230,6 +242,8 @@ tests_cmd_t::run_tests()
     test_expressions1();
     test_defaults();
     test_recursion();
+    test_postfix();
+    test_prefix();
    
     
     return success;

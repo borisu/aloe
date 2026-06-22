@@ -8,7 +8,7 @@ namespace aloe
 		value_t() :
 			ir_value(nullptr), 
 			is_lvalue(false), 
-			lvl_type(nullptr),
+			lval_type(nullptr),
 			di_type(nullptr) {}
 
 		Value* ir_value;
@@ -17,7 +17,7 @@ namespace aloe
 
 		//aloe_type_ptr_t aloe_type;
 
-		Type* lvl_type;
+		Type* lval_type;
 
 		DIType* di_type;
 		
