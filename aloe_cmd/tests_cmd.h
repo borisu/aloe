@@ -27,6 +27,7 @@ namespace aloe
 		void test_recursion();
 		void test_postfix();
 		void test_prefix();
+		void test_mutable_parameters();
 		
 		
 		void run_test(const char* test_name, const char* al, bool expected);

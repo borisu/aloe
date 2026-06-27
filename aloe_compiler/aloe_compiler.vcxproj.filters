@@ -15,11 +15,13 @@
     <ClInclude Include="utils.h" />
     <ClInclude Include="i64_platform.h" />
     <ClInclude Include="include\llvm_compiler\compiler.h" />
+    <ClInclude Include="compiler_ctx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="llvm_compiler.cpp" />
     <ClCompile Include="di_cache.cpp" />
     <ClCompile Include="intrinsics.cpp" />
+    <ClCompile Include="compiler_ctx.cpp" />
   </ItemGroup>
 </Project>

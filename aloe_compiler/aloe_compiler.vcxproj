@@ -152,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="compiler_ctx.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="i64_platform.h" />
     <ClInclude Include="include\llvm_compiler\compiler.h" />
@@ -162,6 +163,7 @@
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="compiler_ctx.cpp" />
     <ClCompile Include="intrinsics.cpp" />
     <ClCompile Include="llvm_compiler.cpp" />
     <ClCompile Include="pch.cpp">

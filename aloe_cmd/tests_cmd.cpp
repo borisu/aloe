@@ -225,12 +225,29 @@ tests_cmd_t::test_expressions1()
 
 }
 
+void 
+tests_cmd_t::test_mutable_parameters()
+{
+    TEST_PARSE_STRING(R"( fun foo:(var a:int) -> void { ++a;})", true);
+}
+
 
 bool
 tests_cmd_t::run_tests()
 {
     success = true;
 
+    if (false)
+    {
+		validate = false;
+        dump_ir = true;
+
+        TEST_PARSE_STRING(R"(
+            var a:int = 10;
+        fun bar :(var a:int)-> void { })", true);
+
+        return true;
+    }
     
 
     test_var_scope();
@@ -244,6 +261,7 @@ tests_cmd_t::run_tests()
     test_recursion();
     test_postfix();
     test_prefix();
+    test_mutable_parameters();
    
     
     return success;

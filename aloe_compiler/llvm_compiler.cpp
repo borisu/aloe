@@ -57,16 +57,9 @@ llvmir_compiler_t::compile(
 
     IRBuilder<> ir(ctx);
     
-    compiler_ctx_t compiler_ctx;
+    compiler_ctx_ptr_t compiler_ctx(new llvm_ctx_modifier_t(&ctx, &module, &ir, &dib, di_file, cu));
+    compiler_ctx_ptr_t ast_ctx(new ast_ctx_modifier_t(ast, compiler_ctx));
 
-    compiler_ctx.llvm_ctx       = &ctx;
-	compiler_ctx.llvm_ir        = &ir;
-	compiler_ctx.llvm_module    = &module;
-	compiler_ctx.llvm_di        = &dib;
-    compiler_ctx.llvm_di_file   = di_file;
-    compiler_ctx.llvm_cu        = cu;
-
-    compiler_ctx.ast = ast;
 
 	di_cache = make_shared<di_cache_t>(dib);
 
@@ -74,7 +67,7 @@ llvmir_compiler_t::compile(
 	bool res = false;
     try
     {
-        walk_prog(&compiler_ctx, ast->prog);
+        walk_prog(ast_ctx, ast->prog);
 		res = true;
 
         dib.finalize();
@@ -92,15 +85,15 @@ llvmir_compiler_t::compile(
 }
 
 Type* 
-llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, type_node_ptr_t node)
+llvmir_compiler_t::emit_type(compiler_ctx_ptr_t ctx, type_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
     return emit_type(ctx, node->type);
 }
 
 
 Type*
-llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, aloe_type_ptr_t type)
+llvmir_compiler_t::emit_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type)
 {
     Type* out = nullptr;
 
@@ -108,31 +101,31 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, aloe_type_ptr_t type)
     {
     case ALOE_TYPE_INT:
     {
-        out = Type::getInt64Ty(*ctx->llvm_ctx);
+        out = Type::getInt64Ty(*ctx->ctx());
         
         break;
     }
     case ALOE_TYPE_CHAR:
     {
-        out = Type::getInt8Ty(*ctx->llvm_ctx);
+        out = Type::getInt8Ty(*ctx->ctx());
 
         break;
     }
     case ALOE_TYPE_VOID:
     {
-        out = Type::getVoidTy(*ctx->llvm_ctx);
+        out = Type::getVoidTy(*ctx->ctx());
 
         break;
     }
     case ALOE_TYPE_DOUBLE:
     {
-        out = Type::getDoubleTy(*ctx->llvm_ctx);
+        out = Type::getDoubleTy(*ctx->ctx());
 
         break;
     }
     case ALOE_TYPE_PTR:
     {
-        out = PointerType::getUnqual(*ctx->llvm_ctx); // collapse pointer types, we will preserve the original type in debug info for each level of indirection
+        out = PointerType::getUnqual(*ctx->ctx()); // collapse pointer types, we will preserve the original type in debug info for each level of indirection
 
         break;
     }
@@ -161,44 +154,26 @@ llvmir_compiler_t::emit_type(compiler_ctx_t* ctx, aloe_type_ptr_t type)
 }
 
 
-void
-llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
+value_ptr_t
+llvmir_compiler_t::emit_fun(compiler_ctx_ptr_t ctx, fun_node_ptr_t node)
 {
     if (node->ignore)
-        return;
+        value_ptr_t();
 
     value_ptr_t out(new value_t());
 
-    Type *ir_fun_type  = emit_type(ctx, node->type_node);
-	out->di_type = di_cache->get_dit_type(node->type);
+    Type *ir_fun_type   = emit_type(ctx, node->type_node);
+	out->di_type        = di_cache->get_dit_type(node->type);
   
     Function* ir_fun =
         Function::Create(ir_sc<FunctionType>(ir_fun_type),
-            Function::ExternalLinkage, node->id->name, ctx->llvm_module);
-
-	for (int i = 0; i < ir_fun->arg_size(); i++)
-    {
-        Argument* ir_arg = ir_fun->getArg(i);
-
-		auto var_node = node->type_node->fun_params_node->vars_v[i].second;
-        if (var_node->id)
-        {
-            auto var_name = var_node->id->name;
-            ir_arg->setName(var_name);
-        }
-        
-		value_ptr_t var(new value_t());
-		var->ir_value = ir_arg;
-	
-		id_cache[var_node] = var;
-		
-    }
+            Function::ExternalLinkage, node->id->name, ctx->module());
    
-    DISubprogram* sp = ctx->llvm_di->createFunction(
-        ctx->llvm_di_file,         // Function scope.  
+    DISubprogram* sp = ctx->di_builder()->createFunction(
+        ctx->di_file(),         // Function scope.  
         node->id->name,            // Function name.
         node->id->name,            // Mangled function name.
-        ctx->llvm_di_file,         // File where this variable is defined.
+        ctx->di_file(),         // File where this variable is defined.
         node->line,                // Line number.
 		ir_sc<DISubroutineType>(di_cache->get_dit_type(node->type)), // type
         node->line,                 // scope line
@@ -208,81 +183,116 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t* ctx, fun_node_ptr_t node)
 
     ir_fun->setSubprogram(sp);
 
-	out->ir_value = ir_fun;
-
-    bool x = (isa<Function>(out->ir_value));
-
-    id_cache[node] = out;
-
+    out->ir_value   = ir_fun;
+    id_cache[node]  = out;
+	
     if (node->is_defined)
     {
-        BasicBlock* ir_block = BasicBlock::Create(*ctx->llvm_ctx, node->id->name, ir_fun);
+        // new scope for function body
+        compiler_ctx_ptr_t new_ctx(new fun_ctx_modifier_t(ir_fun, ctx));
         
-        ctx->llvm_ir->SetInsertPoint(ir_block);
-
-        ctx->fun_desc_stack.push(out);
-
-        auto guard = make_scope_guard([&]() { ctx->fun_desc_stack.pop(); }); // emit may throw, make sure to pop the function from stack
-
-        for (auto& statement : node->exec_block->exec_statements)
-        {
-            emit_exec_statement(ctx, statement);
-        }
-
-        auto terminator = ctx->llvm_ir->GetInsertBlock()->getTerminator();
-        if (!terminator)
-        {
-            if (ir_fun->getReturnType()->isVoidTy()) {
-				InitDloc(ctx, node->end_of_fun);
-                ctx->llvm_ir->CreateRetVoid();
-            }
-            else
-            {
-                throw aloe_exception_t("%s:%zu:%zu: error: control reaches end of non-void function '%s'",
-                    ctx->ast->source_id.c_str(),
-                    node->line,
-                    node->pos,
-                    node->id->name.c_str());
-            }
-        }
+		emit_fun_definition(new_ctx, ir_fun, node);
+       
     }
   
     bool is_broken = llvm::verifyFunction(*ir_fun);
-
+    
     if (is_broken && validate) {
         throw aloe_exception_t("%s:%zu:%zu: (internal error): generated IR for function '%s' is broken",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos,
             node->id->name.c_str());
     }
+
+    return out;
 		
 }
 
 void 
-llvmir_compiler_t::emit_return(compiler_ctx_t* ctx, return_node_ptr_t node)
+llvmir_compiler_t::emit_fun_definition(compiler_ctx_ptr_t ctx, Function* fun, fun_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
+
+    BasicBlock* ir_block = BasicBlock::Create(*ctx->ctx(), node->id->name, fun);
+
+    ctx->builder()->SetInsertPoint(ir_block);
+
+    for (int i = 0; i < fun->arg_size(); i++)
+    {
+        Argument* ir_arg = fun->getArg(i);
+
+        auto arg_node = node->type_node->fun_params_node->vars_v[i].second;
+        if (arg_node->id)
+        {
+            auto var_name = arg_node->id->name;
+            ir_arg->setName(var_name);
+        }
+
+        // temporary storage for better debuggability and mutability of parameters
+        auto* arg_slot = ctx->builder()->CreateAlloca(ir_arg->getType());
+        ctx->builder()->CreateStore(ir_arg, arg_slot);
+
+        value_ptr_t arg_val(new value_t());
+        arg_val->ir_value = arg_slot;
+        arg_val->is_lvalue = true;
+        arg_val->lval_type = ir_arg->getType();
+        arg_val->aloe_type = arg_node->type;
+
+        id_cache[arg_node] = arg_val;
+
+    }
+
+    // emit fucntion statements
+    for (auto& statement : node->exec_block->exec_statements)
+    {
+        emit_exec_statement(ctx, statement);
+    }
+
+    // emit terminator if not present
+    auto terminator = ctx->builder()->GetInsertBlock()->getTerminator();
+    if (!terminator)
+    {
+        if (fun->getReturnType()->isVoidTy()) {
+            init_dloc(ctx, node->end_of_fun);
+            ctx->builder()->CreateRetVoid();
+        }
+        else
+        {
+            throw aloe_exception_t("%s:%zu:%zu: error: control reaches end of non-void function '%s'",
+                ctx->ast()->source_id.c_str(),
+                node->line,
+                node->pos,
+                node->id->name.c_str());
+        }
+    }
+
+}
+
+void 
+llvmir_compiler_t::emit_return(compiler_ctx_ptr_t ctx, return_node_ptr_t node)
+{
+    init_dloc(ctx, node);
 
 	llvm::ReturnInst* ret_inst = nullptr;
 
     if (!node->return_expr)
     {
-         ret_inst = ctx->llvm_ir->CreateRetVoid();
+         ret_inst = ctx->builder()->CreateRetVoid();
     }
     else
     {
         value_ptr_t ret_val = emit_expression(ctx, node->return_expr);
 
-        ret_inst = ctx->llvm_ir->CreateRet(emit_r_value(ctx, ret_val));
+        ret_inst = ctx->builder()->CreateRet(emit_r_value(ctx, ret_val));
     }
 
 }
 
 void 
-llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t node)
+llvmir_compiler_t::walk_prog(compiler_ctx_ptr_t ctx, prog_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 
     for (auto& decl : node->decl_statements)
     {
@@ -300,9 +310,9 @@ llvmir_compiler_t::walk_prog(compiler_ctx_t* ctx, prog_node_ptr_t node)
 }
 
 value_ptr_t
-llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_node_ptr_t node)
+llvmir_compiler_t::emit_expr_identifier(compiler_ctx_ptr_t ctx, identifier_expr_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 
 	value_ptr_t out(new value_t());
 
@@ -323,7 +333,7 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
         default:
         {
             throw aloe_exception_t("%s:%zu:%zu: (internal error): identifier '%s' points to unsupported type",
-                ctx->ast->source_id.c_str(),
+                ctx->ast()->source_id.c_str(),
                 node->line,
                 node->pos,
 				node->id->name.c_str());
@@ -334,9 +344,9 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t* ctx, identifier_expr_nod
 }
 
 void 
-llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
+llvmir_compiler_t::emit_exec_statement(compiler_ctx_ptr_t ctx, node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 
     switch (node->node_type_id)
     {
@@ -361,7 +371,7 @@ llvmir_compiler_t::emit_exec_statement(compiler_ctx_t* ctx, node_ptr_t node)
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, aloe_type_ptr_t type)
+llvmir_compiler_t::emit_default(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type)
 {
 	value_ptr_t out(new value_t());
 
@@ -375,9 +385,9 @@ llvmir_compiler_t::emit_default(compiler_ctx_t* ctx, aloe_type_ptr_t type)
 
 
 void 
-llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
+llvmir_compiler_t::emit_var(compiler_ctx_ptr_t ctx, var_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 	value_ptr_t out(new value_t());
 
     Type *ir_var_type  = emit_type(ctx, node->type_node);
@@ -385,10 +395,10 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 
 	auto init_val = node->initializer ? emit_expression(ctx, node->initializer) : emit_default(ctx, node->type);
 
-    if (ctx->fun_desc_stack.empty())
+    if (!ctx->curr_fun())
     {
         out->ir_value = new GlobalVariable(
-            *ctx->llvm_module,
+            *ctx->module(),
             ir_var_type,
             false,
             GlobalValue::ExternalLinkage,
@@ -401,11 +411,11 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
     }
     else
     {
-        auto alloca_inst = ctx->llvm_ir->CreateAlloca(ir_var_type, nullptr, node->id->name);
+        auto alloca_inst = ctx->builder()->CreateAlloca(ir_var_type, nullptr, node->id->name);
         out->ir_value  = alloca_inst;
 		out->is_lvalue = true;
 	
-        ctx->llvm_ir->CreateStore(emit_r_value(ctx, init_val), out->ir_value);
+        ctx->builder()->CreateStore(emit_r_value(ctx, init_val), out->ir_value);
         
     }
 
@@ -414,9 +424,9 @@ llvmir_compiler_t::emit_var(compiler_ctx_t* ctx, var_node_ptr_t node)
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_arithmetic_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
+llvmir_compiler_t::emit_arithmetic_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_t node)
 {
-    llvm::DebugLoc dloc = InitDloc(ctx, node);
+    llvm::DebugLoc dloc = init_dloc(ctx, node);
 
     value_ptr_t e1 = emit_expression(ctx, node->operand1);
     value_ptr_t e2 = emit_expression(ctx, node->operand2);
@@ -425,7 +435,7 @@ llvmir_compiler_t::emit_arithmetic_binary(compiler_ctx_t* ctx, binary_expr_node_
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op_e op, value_ptr_t op1, value_ptr_t op2, node_ptr_t node)
+llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_ptr_t ctx, expression_op_e op, value_ptr_t op1, value_ptr_t op2, node_ptr_t node)
 {
     
     value_ptr_t val(new value_t());
@@ -440,19 +450,19 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op
 
     switch (op)
     {
-    case expr_add: res = ctx->llvm_ir->CreateAdd(lhs, rhs); break;
-    case expr_sub: res = ctx->llvm_ir->CreateSub(lhs, rhs); break;
-    case expr_mult: res = ctx->llvm_ir->CreateMul(lhs, rhs); break;
-    case expr_div: res = ctx->llvm_ir->CreateSDiv(lhs, rhs); break;
-    case expr_mod: res = ctx->llvm_ir->CreateSRem(lhs, rhs); break;
-    case expr_shiftleft: res = ctx->llvm_ir->CreateShl(lhs, rhs); break;
-    case expr_shiftright: res = ctx->llvm_ir->CreateAShr(lhs, rhs); break;
-    case expr_and: res = ctx->llvm_ir->CreateAnd(lhs, rhs); break;
-    case expr_xor: res = ctx->llvm_ir->CreateXor(lhs, rhs); break;
-    case expr_or: res = ctx->llvm_ir->CreateOr(lhs, rhs); break;
+    case expr_add: res = ctx->builder()->CreateAdd(lhs, rhs); break;
+    case expr_sub: res = ctx->builder()->CreateSub(lhs, rhs); break;
+    case expr_mult: res = ctx->builder()->CreateMul(lhs, rhs); break;
+    case expr_div: res = ctx->builder()->CreateSDiv(lhs, rhs); break;
+    case expr_mod: res = ctx->builder()->CreateSRem(lhs, rhs); break;
+    case expr_shiftleft: res = ctx->builder()->CreateShl(lhs, rhs); break;
+    case expr_shiftright: res = ctx->builder()->CreateAShr(lhs, rhs); break;
+    case expr_and: res = ctx->builder()->CreateAnd(lhs, rhs); break;
+    case expr_xor: res = ctx->builder()->CreateXor(lhs, rhs); break;
+    case expr_or: res = ctx->builder()->CreateOr(lhs, rhs); break;
     default: {
         throw aloe_exception_t("%s:%zu:%zu: (internal error): unknown binary operator %d",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos,
             op);
@@ -468,9 +478,9 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_t* ctx, expression_op
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
+llvmir_compiler_t::emit_cmp_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_t node)
 {
-	InitDloc(ctx, node);
+	init_dloc(ctx, node);
 
     value_ptr_t val(new value_t());
     auto bn = PCAST(binary_expr_node_t, node);
@@ -487,12 +497,12 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
 
     switch (node->op_id)
     {
-    case expr_less: cmp = ctx->llvm_ir->CreateICmpSLT(lhs, rhs); break;
-    case expr_lesseeq: cmp = ctx->llvm_ir->CreateICmpSLE(lhs, rhs); break;
-    case expr_more: cmp = ctx->llvm_ir->CreateICmpSGT(lhs, rhs); break;
-    case expr_moreeq: cmp = ctx->llvm_ir->CreateICmpSGE(lhs, rhs); break;
-    case expr_logicaleq: cmp = ctx->llvm_ir->CreateICmpEQ(lhs, rhs); break;
-    case expr_noteq: cmp = ctx->llvm_ir->CreateICmpNE(lhs, rhs); break;
+    case expr_less: cmp = ctx->builder()->CreateICmpSLT(lhs, rhs); break;
+    case expr_lesseeq: cmp = ctx->builder()->CreateICmpSLE(lhs, rhs); break;
+    case expr_more: cmp = ctx->builder()->CreateICmpSGT(lhs, rhs); break;
+    case expr_moreeq: cmp = ctx->builder()->CreateICmpSGE(lhs, rhs); break;
+    case expr_logicaleq: cmp = ctx->builder()->CreateICmpEQ(lhs, rhs); break;
+    case expr_noteq: cmp = ctx->builder()->CreateICmpNE(lhs, rhs); break;
     default: 
     { 
 		assert(false && "unknown comparison operator");
@@ -501,7 +511,7 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
    
 
     // cmp is i1 - extend to operand integer type for downstream compatibility
-    Value* ext = ctx->llvm_ir->CreateZExt(cmp, e1->ir_value->getType());
+    Value* ext = ctx->builder()->CreateZExt(cmp, e1->ir_value->getType());
     
     val->ir_value  = ext;
     val->is_lvalue = false;
@@ -509,9 +519,9 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t n
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_t* ctx, binary_expr_node_ptr_t node)
+llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_t node)
 {
-	InitDloc(ctx, node);
+	init_dloc(ctx, node);
 
 	expression_op_e base_op;
 
@@ -530,7 +540,7 @@ llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_t* ctx, binary_exp
     case expr_orassign: base_op = expr_or; break;
     default:
         throw aloe_exception_t("%s:%zu:%zu: (internal error): unknown binary assign operator %d",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos,
             node->op_id);
@@ -548,9 +558,9 @@ llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_t* ctx, binary_exp
 
 
 value_ptr_t
-llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
+llvmir_compiler_t::emit_expression(compiler_ctx_ptr_t ctx, expr_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 
     value_ptr_t val(new value_t());
 
@@ -645,7 +655,7 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
     default:
 
         throw aloe_exception_t("%s:%zu:%zu: (internal error): invalid operation %d",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos,
             node->op_id);
@@ -658,9 +668,9 @@ llvmir_compiler_t::emit_expression(compiler_ctx_t* ctx, expr_node_ptr_t node)
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_postfix(compiler_ctx_t* ctx, unary_expr_node_ptr_t node)
+llvmir_compiler_t::emit_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 
     value_ptr_t val(new value_t());
 
@@ -694,7 +704,7 @@ llvmir_compiler_t::emit_postfix(compiler_ctx_t* ctx, unary_expr_node_ptr_t node)
     }
     default:
         throw aloe_exception_t("%s:%zu:%zu: (internal error): unknown prefix operator %d",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos,
             node->op_id);
@@ -705,9 +715,9 @@ llvmir_compiler_t::emit_postfix(compiler_ctx_t* ctx, unary_expr_node_ptr_t node)
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
+llvmir_compiler_t::emit_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t  node)
 {
-	InitDloc(ctx, node);
+	init_dloc(ctx, node);
 
     value_ptr_t val(new value_t());
     value_ptr_t operand_val = emit_expression(ctx, node->operand);
@@ -725,7 +735,7 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
     }
     case expr_min:
     {
-        Value* neg = ctx->llvm_ir->CreateNeg(val->ir_value);
+        Value* neg = ctx->builder()->CreateNeg(val->ir_value);
 	
         val->ir_value = neg;
 		val->is_lvalue = false;
@@ -754,7 +764,7 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
     }
     default:
         throw aloe_exception_t("%s:%zu:%zu: (internal error): unknown prefix operator %d",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos,
             node->op_id);
@@ -765,7 +775,7 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_t* ctx, unary_expr_node_ptr_t  node)
 
 }
 
-value_ptr_t llvmir_compiler_t::emit_comma(compiler_ctx_t* ctx, comma_expr_node_ptr_t node)
+value_ptr_t llvmir_compiler_t::emit_comma(compiler_ctx_ptr_t ctx, comma_expr_node_ptr_t node)
 {
     value_ptr_t val(new value_t());
     value_ptr_t last;
@@ -775,10 +785,10 @@ value_ptr_t llvmir_compiler_t::emit_comma(compiler_ctx_t* ctx, comma_expr_node_p
     // return rvalue of last
     if (last) {
         llvm::DebugLoc dloc = llvm::DILocation::get(
-            *ctx->llvm_ctx,
+            *ctx->ctx(),
             node->line,
             node->pos,
-            ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram()
+            ctx->curr_fun()->getSubprogram()
         );
         // if lvalue convert to rvalue
         last->ir_value = emit_r_value(ctx, last);
@@ -790,7 +800,7 @@ value_ptr_t llvmir_compiler_t::emit_comma(compiler_ctx_t* ctx, comma_expr_node_p
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node)
+llvmir_compiler_t::emit_raw_assign(compiler_ctx_ptr_t ctx, value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node)
 {
     value_ptr_t val(new value_t());
 
@@ -800,15 +810,15 @@ llvmir_compiler_t::emit_raw_assign(compiler_ctx_t* ctx, value_ptr_t lhs, value_p
     val->ir_value  = emit_r_value(ctx, rhs);
     val->is_lvalue = false;
 
-    ctx->llvm_ir->CreateStore(val->ir_value, lhs->ir_value);
+    ctx->builder()->CreateStore(val->ir_value, lhs->ir_value);
    
 	return val;
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_expr_assign(compiler_ctx_t* ctx, assign_expr_node_ptr_t node)
+llvmir_compiler_t::emit_expr_assign(compiler_ctx_ptr_t ctx, assign_expr_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 
     value_ptr_t op1 = emit_expression(ctx, node->operand1);
     value_ptr_t op2 = emit_expression(ctx, node->operand2);
@@ -817,22 +827,22 @@ llvmir_compiler_t::emit_expr_assign(compiler_ctx_t* ctx, assign_expr_node_ptr_t 
 }
 
 Value* 
-llvmir_compiler_t::emit_r_value(compiler_ctx_t* ctx, value_ptr_t val)
+llvmir_compiler_t::emit_r_value(compiler_ctx_ptr_t ctx, value_ptr_t val)
 {
     if (!val->is_lvalue)
         return val->ir_value;
 
     // load from address
-    auto inst = ctx->llvm_ir->CreateLoad(val->lval_type, val->ir_value);
+    auto inst = ctx->builder()->CreateLoad(val->lval_type, val->ir_value);
    
     return  inst;
 }
 
 
 value_ptr_t
-llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr_t node)
+llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_ptr_t ctx, funcall_expr_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 
     value_ptr_t val(new value_t());
 	value_ptr_t fun_val = emit_expression(ctx, node->fun_expr);
@@ -846,7 +856,7 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
         args.push_back(emit_r_value(ctx, arg_val));
     }
 
-    auto inst = ctx->llvm_ir->CreateCall(
+    auto inst = ctx->builder()->CreateCall(
         ir_sc<Function>(fun_val->ir_value)->getFunctionType(), emit_r_value(ctx, fun_val), args);
     
     val->ir_value = inst;
@@ -855,17 +865,17 @@ llvmir_compiler_t::emit_expr_fun_call(compiler_ctx_t* ctx, funcall_expr_node_ptr
 }
 
 value_ptr_t
-llvmir_compiler_t::emit_expr_literal(compiler_ctx_t* ctx, literal_expr_node_ptr_t node)
+llvmir_compiler_t::emit_expr_literal(compiler_ctx_ptr_t ctx, literal_expr_node_ptr_t node)
 {
-    InitDloc(ctx, node);
+    init_dloc(ctx, node);
 
 	return emit_literal(ctx, node->literal);
 }
 
 value_ptr_t
-llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
+llvmir_compiler_t::emit_literal(compiler_ctx_ptr_t ctx, literal_node_ptr_t node)
 {
-	InitDloc(ctx, node);
+	init_dloc(ctx, node);
 
     value_ptr_t val(new value_t());
     
@@ -884,7 +894,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     {
         Type * ir_type  = emit_type(ctx, node->type);
         string s = std::get<string>(node->value);
-        val->ir_value   = ctx->llvm_ir->CreateGlobalString(s,"",0,ctx->llvm_module);
+        val->ir_value   = ctx->builder()->CreateGlobalString(s,"",0,ctx->module());
         val->is_lvalue  = false;
         
         break;
@@ -899,7 +909,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
     case LIT_POINTER_VOID:
     default:
     {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): unsupported literal type %d", ctx->ast->source_id.c_str(), node->line, node->pos, node->line);
+        throw aloe_exception_t("%s:%zu:%zu: (internal error): unsupported literal type %d", ctx->ast()->source_id.c_str(), node->line, node->pos, node->line);
     }
     }
 
@@ -907,13 +917,13 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t* ctx, literal_node_ptr_t node)
         
 }
 
-void llvmir_compiler_t::check_assign_val_type_equality(compiler_ctx_t* ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
+void llvmir_compiler_t::check_assign_val_type_equality(compiler_ctx_ptr_t ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
 {
     check_lvalue(ctx, v1, node);
     if (v1->lval_type != v2->ir_value->getType())
     {
         throw aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform assignment on incompatible types",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos);
     }
@@ -921,31 +931,31 @@ void llvmir_compiler_t::check_assign_val_type_equality(compiler_ctx_t* ctx, valu
 }
 
 void 
-llvmir_compiler_t::check_val_type_equality(compiler_ctx_t *ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
+llvmir_compiler_t::check_val_type_equality(compiler_ctx_ptr_t ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
 {
 	if (v2->ir_value->getType() != v1->ir_value->getType())
     {
         throw aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible types",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos);
     }
 }
 
 void
-llvmir_compiler_t::check_lvalue(compiler_ctx_t* ctx, value_ptr_t v, node_ptr_t node)
+llvmir_compiler_t::check_lvalue(compiler_ctx_ptr_t ctx, value_ptr_t v, node_ptr_t node)
 {
     if (!v->is_lvalue)
     {
         throw aloe_exception_t("%s:%zu:%zu: (internal error): need lvalue for the operation",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             node->line,
             node->pos);
     }
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_constant(compiler_ctx_t* ctx, variant<int, float, double, char> var, aloe_type_ptr_t type)
+llvmir_compiler_t::emit_constant(compiler_ctx_ptr_t ctx, variant<int, float, double, char> var, aloe_type_ptr_t type)
 {
     value_ptr_t val(new value_t());
 
@@ -968,7 +978,7 @@ llvmir_compiler_t::emit_constant(compiler_ctx_t* ctx, variant<int, float, double
     default:
     {
         throw aloe_exception_t("%s:%zu:%zu: (internal error): unsupported constant type %d",
-            ctx->ast->source_id.c_str(),
+            ctx->ast()->source_id.c_str(),
             0,
             0,
             type);
@@ -977,20 +987,20 @@ llvmir_compiler_t::emit_constant(compiler_ctx_t* ctx, variant<int, float, double
 	return val;
 }
 
-llvm::DebugLoc llvmir_compiler_t::InitDloc(compiler_ctx_t* ctx, node_ptr_t node)
+llvm::DebugLoc llvmir_compiler_t::init_dloc(compiler_ctx_ptr_t ctx, node_ptr_t node)
 {
-    Metadata * scope = ctx->fun_desc_stack.empty() ? 
-        ctx->llvm_cu : 
-        ir_sc<DIScope>(ir_sc<Function>(ctx->fun_desc_stack.top()->ir_value)->getSubprogram());
+    Metadata * scope = ctx->curr_fun() == nullptr? 
+        ctx->llvm_cu() : 
+        ir_sc<DIScope>(ctx->curr_fun()->getSubprogram());
 
     llvm::DebugLoc dloc = llvm::DILocation::get(
-        *ctx->llvm_ctx,
+        *ctx->ctx(),
         node->line,
         node->pos,
         scope
     );
     
-    ctx->llvm_ir->SetCurrentDebugLocation(dloc);
+    ctx->builder()->SetCurrentDebugLocation(dloc);
 
     return dloc;
 }

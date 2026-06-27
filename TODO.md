@@ -10,4 +10,5 @@
 - [X] check types in when emitting code for expressions (e.g. in emit_expr_binary_op, check if the types of the operands are compatible with the operator)
 - [X] revision value again
 - [ ] review di types 
+- [ ] introduce modifiers for llvm compiler
 
