@@ -231,8 +231,8 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_ptr_t ctx, Function* fun, fu
 
         if (arg_node->id)
         {
-            auto var_name = arg_node->id->name;
-            ir_arg->setName(var_name);
+            //auto var_name = arg_node->id->name;
+            //ir_arg->setName(var_name);
 
             auto arg_dvar = ctx->di_builder()->createParameterVariable(
                 get_scope(ctx),
@@ -413,12 +413,13 @@ llvmir_compiler_t::emit_var(compiler_ctx_ptr_t ctx, var_node_ptr_t node)
 
     Type *ir_var_type  = emit_type(ctx, node->type_node);
     out->lval_type = ir_var_type;
+    out->is_lvalue = true;
 
 	auto init_val = node->initializer ? emit_expression(ctx, node->initializer) : emit_default(ctx, node->type);
 
     if (!ctx->curr_fun())
     {
-        out->ir_value = new GlobalVariable(
+        auto g_var = new GlobalVariable(
             *ctx->module(),
             ir_var_type,
             false,
@@ -427,14 +428,40 @@ llvmir_compiler_t::emit_var(compiler_ctx_ptr_t ctx, var_node_ptr_t node)
 			node->id->name
             );
 
-        out->is_lvalue = true;
-		
+        auto* di_var = ctx->di_builder()->createGlobalVariableExpression(
+            ctx->di_file(),
+            node->id->name,                // name
+            node->id->name,                // linkage name
+            ctx->di_file(),               
+            node->line,
+            di_cache->get_dit_type(node->type),     
+            true                
+        );
+
+        g_var->addDebugInfo(di_var);
+        out->ir_value = g_var;
+        
     }
     else
     {
         auto alloca_inst = ctx->builder()->CreateAlloca(ir_var_type, nullptr, node->id->name);
         out->ir_value  = alloca_inst;
-		out->is_lvalue = true;
+
+        auto di_var = ctx->di_builder()->createAutoVariable(
+                get_scope(ctx),        
+                node->id->name,        
+                ctx->di_file(),
+                node->line,           
+				di_cache->get_dit_type(node->type)
+            );
+
+        ctx->di_builder()->insertDeclare(
+            alloca_inst,
+            di_var,
+            ctx->di_builder()->createExpression(),
+            llvm::DILocation::get(*ctx->ctx(), node->line, node->pos, get_scope(ctx)),
+            ctx->builder()->GetInsertBlock());
+
 	
         ctx->builder()->CreateStore(emit_r_value(ctx, init_val), out->ir_value);
         

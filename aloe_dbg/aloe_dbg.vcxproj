@@ -160,7 +160,7 @@ $(TargetDir)\aloe.exe -c  %(FullPath)  -o $(ProjectDir)\gengen\a.ll</Command>
     <CustomBuild Include="gengen\a.ll">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo Compiling %(FullPath)
-"C:\Program Files (x86)\LLVM\bin\llc" -filetype=obj %(FullPath)  -o  $(IntDir)%(Filename).obj</Command>
+"C:\Program Files (x86)\LLVM\bin\llc" -filetype=obj %(FullPath)  -O0 -o  $(IntDir)%(Filename).obj</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename).obj</Outputs>
     </CustomBuild>
   </ItemGroup>

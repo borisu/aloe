@@ -1,4 +1,7 @@
+var x:int = 1;
+
 fun root:(var b:int) -> int
 {
+	var a:int = 555;
 	return b++;	
 }
