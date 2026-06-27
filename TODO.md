@@ -3,12 +3,12 @@
 - [ ] add support for pointers (^ and  @)
 - [X] add expression initialization for variables (e.g. int x = 5 + 3)
 - [ ] casting infrastructure
-- [ ] emit_expr_fun_call must not return nullptr	
+- [X] emit_expr_fun_call must not return nullptr	
 - [X] unify exception in base
 - [X] place ast in base
 - [X] add debugging information for variables (global and local)
 - [X] check types in when emitting code for expressions (e.g. in emit_expr_binary_op, check if the types of the operands are compatible with the operator)
 - [X] revision value again
 - [ ] review di types 
-- [ ] introduce modifiers for llvm compiler
+- [X] introduce modifiers for llvm compiler
 
