@@ -223,15 +223,36 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_ptr_t ctx, Function* fun, fu
         Argument* ir_arg = fun->getArg(i);
 
         auto arg_node = node->type_node->fun_params_node->vars_v[i].second;
-        if (arg_node->id)
-        {
-            auto var_name = arg_node->id->name;
-            ir_arg->setName(var_name);
-        }
+        
 
         // temporary storage for better debuggability and mutability of parameters
         auto* arg_slot = ctx->builder()->CreateAlloca(ir_arg->getType());
         ctx->builder()->CreateStore(ir_arg, arg_slot);
+
+        if (arg_node->id)
+        {
+            auto var_name = arg_node->id->name;
+            ir_arg->setName(var_name);
+
+            auto arg_dvar = ctx->di_builder()->createParameterVariable(
+                get_scope(ctx),
+                arg_node->id->name,
+                i + 1,
+                ctx->di_file(),
+                node->line,
+                di_cache->get_dit_type(arg_node->type),
+                true
+            );
+
+            ctx->di_builder()->insertDeclare(
+                arg_slot,
+                arg_dvar,
+                ctx->di_builder()->createExpression(),
+                llvm::DILocation::get(*ctx->ctx(), node->line, node->pos, get_scope(ctx)),
+                ir_block
+            );
+        }
+
 
         value_ptr_t arg_val(new value_t());
         arg_val->ir_value = arg_slot;
@@ -987,17 +1008,24 @@ llvmir_compiler_t::emit_constant(compiler_ctx_ptr_t ctx, variant<int, float, dou
 	return val;
 }
 
-llvm::DebugLoc llvmir_compiler_t::init_dloc(compiler_ctx_ptr_t ctx, node_ptr_t node)
+llvm::DIScope*
+llvmir_compiler_t::get_scope(compiler_ctx_ptr_t ctx)
 {
-    Metadata * scope = ctx->curr_fun() == nullptr? 
-        ctx->llvm_cu() : 
+    DIScope* scope = ctx->curr_fun() == nullptr ?
+        ctx->llvm_cu() :
         ir_sc<DIScope>(ctx->curr_fun()->getSubprogram());
 
+    return scope;
+}
+
+llvm::DebugLoc llvmir_compiler_t::init_dloc(compiler_ctx_ptr_t ctx, node_ptr_t node)
+{
+  
     llvm::DebugLoc dloc = llvm::DILocation::get(
         *ctx->ctx(),
         node->line,
         node->pos,
-        scope
+		get_scope(ctx)
     );
     
     ctx->builder()->SetCurrentDebugLocation(dloc);

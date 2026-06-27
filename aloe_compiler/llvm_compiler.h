@@ -94,7 +94,7 @@ namespace aloe
 
 		virtual llvm::DebugLoc init_dloc(compiler_ctx_ptr_t ctx, node_ptr_t node);
 
-		// virtual void init_dvar(compiler_ctx_ptr_t ctx, value_ptr_t val, node_ptr_t node);
+		virtual DIScope* get_scope(compiler_ctx_ptr_t ctx);
 
 
 	private:

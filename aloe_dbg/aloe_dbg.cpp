@@ -3,12 +3,12 @@
 
 #include <iostream>
 
-extern "C" int64_t root();
+extern "C" int64_t root(int64_t b);
 
 int main()
 {
-    int x  = root();
-    
+    int64_t x  = root(5);
+
     std::cout << "Hello World! (" << x << ")\n";
 }
 
