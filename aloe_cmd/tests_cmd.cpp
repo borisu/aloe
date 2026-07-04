@@ -231,20 +231,53 @@ tests_cmd_t::test_mutable_parameters()
     TEST_PARSE_STRING(R"( fun foo:(var a:int) -> void { ++a;})", true);
 }
 
+void 
+tests_cmd_t::test_pointers()
+{
+    TEST_PARSE_STRING(R"( 
+        fun foo:() -> void 
+        {
+            var a:^int   = 0:^int
+            var b:^^int  = 0:^^int  
+            var c:^^^int = 0:^^^int
+        })",
+        true);
+
+    TEST_PARSE_STRING(R"( 
+        fun foo:() -> void 
+        {
+            var a:^int   = ^0
+        })",
+        false);
+
+    TEST_PARSE_STRING(R"( 
+        fun foo:() -> void 
+        {
+            var a:^int   = 0:^int
+            var b:^^int  = ^a
+        })",
+        true);
+}
+
 
 bool
 tests_cmd_t::run_tests()
 {
     success = true;
 
-    if (false)
+    if (true)
     {
+		compile = false;
 		validate = false;
         dump_ir = true;
 
-        TEST_PARSE_STRING(R"(
-            var a:int = 10;
-        fun bar :(var a:int)-> void { })", true);
+        TEST_PARSE_STRING(R"( 
+        fun foo:() -> void 
+        {
+            var a:^int
+            var b:^^int  = ^a
+        })",
+            true);
 
         return true;
     }
@@ -262,6 +295,7 @@ tests_cmd_t::run_tests()
     test_postfix();
     test_prefix();
     test_mutable_parameters();
+    test_pointers();
    
     
     return success;

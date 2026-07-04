@@ -46,7 +46,9 @@ namespace aloe
 
 		virtual exec_block_node_ptr_t walk_execution_block(environment_ptr_t env, aloeParser::ExecutionBlockContext* ctx);
 
-        virtual void check_type_equality(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr1, expr_node_ptr_t expr2, const char* op_str);
+        virtual void check_expr_type_equality(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr1, expr_node_ptr_t expr2, const char* op_str);
+
+		virtual void check_type_equality(environment_ptr_t env, node_ptr_t node, aloe_type_ptr_t type1, aloe_type_ptr_t  type2);
 
 		virtual void check_binary_arithmetic(environment_ptr_t env, aloeParser::ExpressionContext* ctx, binary_expr_node_ptr_t  expr_node, const char* op_str);
 

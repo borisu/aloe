@@ -1,5 +1,6 @@
 - [X] support forward declaration if definition is encountered all previous ast_defs should be redirected to the node.
 - [X] strong type check for expressions in parser
+- [ ] unify lvalue default value between parser and compiler
 - [ ] add support for pointers (^ and  @)
 - [X] add expression initialization for variables (e.g. int x = 5 + 3)
 - [ ] casting infrastructure
