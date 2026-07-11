@@ -232,7 +232,7 @@ tests_cmd_t::test_mutable_parameters()
 }
 
 void 
-tests_cmd_t::test_pointers()
+tests_cmd_t::test_pointers_cast()
 {
     TEST_PARSE_STRING(R"( 
         fun foo:() -> void 
@@ -259,25 +259,39 @@ tests_cmd_t::test_pointers()
         true);
 }
 
+void 
+tests_cmd_t::test_pointers()
+{
+    TEST_PARSE_STRING(R"( 
+        fun foo:() -> void 
+        {
+            var a:^int
+            var b:^^int  = ^a
+        })",
+        true);
+
+    
+}
+
 
 bool
 tests_cmd_t::run_tests()
 {
     success = true;
 
-    if (true)
+    if (false)
     {
-		compile = false;
-		validate = false;
+		compile = true;
+		validate = true;
         dump_ir = true;
+
 
         TEST_PARSE_STRING(R"( 
         fun foo:() -> void 
         {
-            var a:^int
-            var b:^^int  = ^a
+            var a:^int   = 0 : ^int
         })",
-            true);
+            false);
 
         return true;
     }

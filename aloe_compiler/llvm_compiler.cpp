@@ -682,7 +682,7 @@ llvmir_compiler_t::emit_expression(compiler_ctx_ptr_t ctx, expr_node_ptr_t node)
     // comma - evaluate args, return last
     case expr_comma:
     {
-		val = emit_comma(ctx, PCAST(comma_expr_node_t, node));
+		val = emit_expr_comma(ctx, PCAST(comma_expr_node_t, node));
         break;
     }
 	case expr_preplusplus:
@@ -690,16 +690,20 @@ llvmir_compiler_t::emit_expression(compiler_ctx_ptr_t ctx, expr_node_ptr_t node)
     case expr_plus:
     case expr_min:
     {
-        val = emit_prefix(ctx, PCAST(unary_expr_node_t, node));
+        val = emit_expr_prefix(ctx, PCAST(unary_expr_node_t, node));
         break;
 	}
     case expr_sfxplusplus:
     case expr_sfxminmin:
     {
-         val = emit_postfix(ctx, PCAST(unary_expr_node_t, node));
+         val = emit_expr_postfix(ctx, PCAST(unary_expr_node_t, node));
          break;
 	}
-    
+    case expr_addressof:
+    {
+        val = emit_expr_addressof(ctx, PCAST(addressof_expr_node_t, node));
+        break;
+    }
     default:
 
         throw aloe_exception_t("%s:%zu:%zu: (internal error): invalid operation %d",
@@ -716,7 +720,23 @@ llvmir_compiler_t::emit_expression(compiler_ctx_ptr_t ctx, expr_node_ptr_t node)
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node)
+llvmir_compiler_t::emit_expr_addressof(compiler_ctx_ptr_t ctx, addressof_expr_node_ptr_t node)
+{
+	init_dloc(ctx, node);
+    value_ptr_t val(new value_t());
+
+    value_ptr_t operand_val = emit_expression(ctx, node->operand);
+    check_lvalue(ctx, operand_val, node);
+
+	val = operand_val;
+	val->is_lvalue = false; 
+
+    return val;
+
+}
+
+value_ptr_t 
+llvmir_compiler_t::emit_expr_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node)
 {
     init_dloc(ctx, node);
 
@@ -763,7 +783,7 @@ llvmir_compiler_t::emit_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t no
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t  node)
+llvmir_compiler_t::emit_expr_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t  node)
 {
 	init_dloc(ctx, node);
 
@@ -823,7 +843,7 @@ llvmir_compiler_t::emit_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t  no
 
 }
 
-value_ptr_t llvmir_compiler_t::emit_comma(compiler_ctx_ptr_t ctx, comma_expr_node_ptr_t node)
+value_ptr_t llvmir_compiler_t::emit_expr_comma(compiler_ctx_ptr_t ctx, comma_expr_node_ptr_t node)
 {
     value_ptr_t val(new value_t());
     value_ptr_t last;

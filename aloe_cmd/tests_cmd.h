@@ -29,6 +29,8 @@ namespace aloe
 		void test_prefix();
 		void test_mutable_parameters();
 		void test_pointers();
+
+		void test_pointers_cast();
 		
 		
 		void run_test(const char* test_name, const char* al, bool expected);

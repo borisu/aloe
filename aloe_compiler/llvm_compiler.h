@@ -57,9 +57,18 @@ namespace aloe
 
 		virtual value_ptr_t emit_expr_literal(compiler_ctx_ptr_t ctx, literal_expr_node_ptr_t node);
 
-		virtual value_ptr_t emit_literal(compiler_ctx_ptr_t ctx, literal_node_ptr_t node);
+		virtual value_ptr_t emit_expr_comma(compiler_ctx_ptr_t ctx, comma_expr_node_ptr_t node);
 
 		virtual value_ptr_t emit_expr_assign(compiler_ctx_ptr_t ctx, assign_expr_node_ptr_t node);
+
+		virtual value_ptr_t emit_expr_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node);
+
+		virtual value_ptr_t emit_expr_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node);
+
+		virtual value_ptr_t emit_expr_addressof(compiler_ctx_ptr_t ctx, addressof_expr_node_ptr_t node);
+
+
+		virtual value_ptr_t emit_literal(compiler_ctx_ptr_t ctx, literal_node_ptr_t node);
 
 		virtual value_ptr_t emit_arithmetic_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_t node);
 
@@ -67,13 +76,6 @@ namespace aloe
 
 		virtual value_ptr_t emit_assign_arithmetic_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_t node);
 
-		virtual value_ptr_t emit_comma(compiler_ctx_ptr_t ctx, comma_expr_node_ptr_t node);
-
-		virtual value_ptr_t emit_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node);
-
-		virtual value_ptr_t emit_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node);
-
-	
 		//
 		// HELPERS
 		//
