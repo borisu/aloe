@@ -21,6 +21,8 @@ namespace aloe
 			ostream& out) = 0;
 
 		virtual void set_validate(bool validate) = 0;
+
+		virtual void set_no_debug(bool no_debug) = 0;
 	
 	};
 

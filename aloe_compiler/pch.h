@@ -30,6 +30,7 @@
 #include <llvm/Support/raw_os_ostream.h>
 #include "llvm/IR/Verifier.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/DebugInfo.h"
 
 #include <base/logger.h>
 

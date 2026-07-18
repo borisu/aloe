@@ -12,7 +12,7 @@ namespace aloe
 
 		void set_compile(bool compile);
 
-		
+		void set_no_debug(bool no_debug);
 
 	private:
 		
@@ -29,6 +29,7 @@ namespace aloe
 		void test_prefix();
 		void test_mutable_parameters();
 		void test_pointers();
+		void test_deref();
 
 		void test_pointers_cast();
 		
@@ -43,7 +44,8 @@ namespace aloe
 
 		bool compile = true;
 
-		
+		bool no_debug = false;
+
 	};
 
 }

@@ -23,6 +23,8 @@ namespace aloe
 
 		virtual void set_validate(bool validate) override;
 
+		virtual void set_no_debug(bool no_debug) override;
+
 	protected:
 
 		virtual void walk_prog(compiler_ctx_ptr_t ctx, prog_node_ptr_t node);
@@ -67,6 +69,8 @@ namespace aloe
 
 		virtual value_ptr_t emit_expr_addressof(compiler_ctx_ptr_t ctx, addressof_expr_node_ptr_t node);
 
+		virtual value_ptr_t emit_expr_deref(compiler_ctx_ptr_t ctx, deref_expr_node_ptr_t node);
+
 
 		virtual value_ptr_t emit_literal(compiler_ctx_ptr_t ctx, literal_node_ptr_t node);
 
@@ -86,9 +90,9 @@ namespace aloe
 		virtual value_ptr_t emit_raw_binary_arithmetic(compiler_ctx_ptr_t ctx, expression_op_e base_op,  value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node);
 
 		//
-		// TYPE TESTERS
+		// TYPE TESTERS --> THROW EXCEPTIONS 
 		// 
-		virtual void check_val_type_equality(compiler_ctx_ptr_t ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
+		virtual void check_ir_type_equal(compiler_ctx_ptr_t ctx, Value* v1, Value *v2, node_ptr_t node);
 
 		virtual void check_assign_val_type_equality(compiler_ctx_ptr_t ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
 
@@ -106,6 +110,10 @@ namespace aloe
 		map<node_ptr_t, value_ptr_t> id_cache;
 
 		bool validate;
+
+		bool no_debug;
+
+		node_ptr_t curr_node;
 
 	};
 

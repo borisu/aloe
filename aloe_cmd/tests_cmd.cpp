@@ -27,6 +27,11 @@ void tests_cmd_t::set_dump_ir(bool dump_ir)
 	this->dump_ir = dump_ir;
 }
 
+void tests_cmd_t::set_no_debug(bool no_debug)
+{
+	this->no_debug = no_debug;
+}
+
 void tests_cmd_t::set_compile(bool compile)
 {
 	this->compile = compile;
@@ -237,15 +242,6 @@ tests_cmd_t::test_pointers_cast()
     TEST_PARSE_STRING(R"( 
         fun foo:() -> void 
         {
-            var a:^int   = 0:^int
-            var b:^^int  = 0:^^int  
-            var c:^^^int = 0:^^^int
-        })",
-        true);
-
-    TEST_PARSE_STRING(R"( 
-        fun foo:() -> void 
-        {
             var a:^int   = ^0
         })",
         false);
@@ -254,7 +250,8 @@ tests_cmd_t::test_pointers_cast()
         fun foo:() -> void 
         {
             var a:^int   = 0:^int
-            var b:^^int  = ^a
+            var b:^^int  = 0:^^int  
+            var c:^^^int = 0:^^^int
         })",
         true);
 }
@@ -269,8 +266,22 @@ tests_cmd_t::test_pointers()
             var b:^^int  = ^a
         })",
         true);
-
     
+}
+
+void 
+tests_cmd_t::test_deref()
+{
+
+    TEST_PARSE_STRING(R"( 
+        fun foo:() -> void 
+        {
+            var a:int   = 0
+            var b:^int  = ^a
+            var c:int = @b + 1 
+        })",
+
+        true);
 }
 
 
@@ -279,19 +290,21 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-    if (false)
+    if (true)
     {
 		compile = true;
 		validate = true;
         dump_ir = true;
 
-
         TEST_PARSE_STRING(R"( 
-        fun foo:() -> void 
-        {
-            var a:^int   = 0 : ^int
-        })",
-            false);
+        fun root:() -> int {
+    var a:int   = 0
+    var b:^int  = ^a
+    var c:int = @b + 1 
+    return c
+ })",
+
+        true);
 
         return true;
     }
@@ -310,6 +323,8 @@ tests_cmd_t::run_tests()
     test_prefix();
     test_mutable_parameters();
     test_pointers();
+    test_deref();
+
    
     
     return success;

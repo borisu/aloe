@@ -7,7 +7,8 @@ namespace aloe
 	class compile_cmd_t
 	{
 		public:
-			bool compile_cmd(istream& is, ostream& os, const string &source_id);
+			bool compile_cmd(istream& is, ostream& os, const string &source_id, bool no_debug = false);
+			
 			
 	};
 

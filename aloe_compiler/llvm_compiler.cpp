@@ -22,12 +22,19 @@ aloe::create_llvm_compiler()
 llvmir_compiler_t::llvmir_compiler_t()
 {
 	validate = true;
+	no_debug = false;
 }
 
 void 
 llvmir_compiler_t::set_validate(bool validate)
 {
     this->validate = validate;
+}
+
+void
+llvmir_compiler_t::set_no_debug(bool no_debug)
+{
+	this->no_debug = no_debug;
 }
 
 bool 
@@ -71,6 +78,11 @@ llvmir_compiler_t::compile(
 		res = true;
 
         dib.finalize();
+
+        if (no_debug)
+        {
+            llvm::StripDebugInfo(module);
+        }
 
         // Print LLVM IR
         llvm::raw_os_ostream  llvmOs(out);
@@ -488,11 +500,14 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_ptr_t ctx, expression
     
     value_ptr_t val(new value_t());
 
-    check_val_type_equality(ctx, op1, op2, node);
-
+    
 
     Value* lhs = emit_r_value(ctx, op1);
     Value* rhs = emit_r_value(ctx, op2);
+
+    check_ir_type_equal(ctx, lhs, rhs, node);
+
+    
     Value* res = nullptr;
 
 
@@ -536,10 +551,12 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_
     value_ptr_t e1 = emit_expression(ctx, bn->operand1);
     value_ptr_t e2 = emit_expression(ctx, bn->operand2);
 
-    check_val_type_equality(ctx, e1, e2, node);
 
     Value* lhs = emit_r_value(ctx, e1);
     Value* rhs = emit_r_value(ctx, e2);
+
+    check_ir_type_equal(ctx, lhs, rhs, node);
+
 
     Value* cmp = nullptr;
 
@@ -704,6 +721,11 @@ llvmir_compiler_t::emit_expression(compiler_ctx_ptr_t ctx, expr_node_ptr_t node)
         val = emit_expr_addressof(ctx, PCAST(addressof_expr_node_t, node));
         break;
     }
+    case expr_deref:
+    {
+        val = emit_expr_deref(ctx, PCAST(deref_expr_node_t, node));
+        break;
+    }
     default:
 
         throw aloe_exception_t("%s:%zu:%zu: (internal error): invalid operation %d",
@@ -715,6 +737,23 @@ llvmir_compiler_t::emit_expression(compiler_ctx_ptr_t ctx, expr_node_ptr_t node)
         break;
 
     }
+
+    return val;
+}
+value_ptr_t
+llvmir_compiler_t::emit_expr_deref(compiler_ctx_ptr_t ctx, deref_expr_node_ptr_t node)
+{
+    init_dloc(ctx, node);
+    value_ptr_t val(new value_t());
+
+    value_ptr_t operand_val = emit_expression(ctx, node->operand);
+    
+
+    val->ir_value  = emit_r_value(ctx, operand_val);
+    val->is_lvalue = true;
+	val->lval_type = emit_type(ctx, node->type);
+	val->di_type   = di_cache->get_dit_type(node->type);
+
 
     return val;
 }
@@ -730,6 +769,7 @@ llvmir_compiler_t::emit_expr_addressof(compiler_ctx_ptr_t ctx, addressof_expr_no
 
 	val = operand_val;
 	val->is_lvalue = false; 
+    
 
     return val;
 
@@ -760,13 +800,13 @@ llvmir_compiler_t::emit_expr_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr
     {
         value_ptr_t const_val = emit_constant(ctx, 1, make_shared<aloe_type_t>(ALOE_TYPE_INT));
 
-        check_val_type_equality(ctx, operand_rval, const_val, node);
+        check_ir_type_equal(ctx, operand_rval->ir_value, const_val->ir_value, node);
         value_ptr_t math_val = emit_raw_binary_arithmetic(ctx, node->op_id == expr_sfxminmin ? expr_sub : expr_add, 
             operand_rval,
             const_val, 
             node);
 
-        check_val_type_equality(ctx, operand_rval, math_val, node);
+        check_ir_type_equal(ctx, operand_rval->ir_value, math_val->ir_value, node);
         value_ptr_t assign_val = emit_raw_assign(ctx, operand_val, math_val, node);
         break;
     }
@@ -820,7 +860,7 @@ llvmir_compiler_t::emit_expr_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_
         operand_rval->ir_value = emit_r_value(ctx, operand_val);
         operand_rval->is_lvalue = false;
 
-        check_val_type_equality(ctx, operand_rval, const_val, node);
+        check_ir_type_equal(ctx, operand_rval->ir_value, const_val->ir_value, node);
         value_ptr_t math_val = emit_raw_binary_arithmetic(ctx,  node->op_id == expr_preminmin ? expr_sub : expr_add, operand_rval, const_val, node);
 
         check_assign_val_type_equality(ctx, operand_val, math_val, node);
@@ -999,14 +1039,16 @@ void llvmir_compiler_t::check_assign_val_type_equality(compiler_ctx_ptr_t ctx, v
 }
 
 void 
-llvmir_compiler_t::check_val_type_equality(compiler_ctx_ptr_t ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node)
+llvmir_compiler_t::check_ir_type_equal(compiler_ctx_ptr_t ctx, Value* v1, Value *v2, node_ptr_t node)
 {
-	if (v2->ir_value->getType() != v1->ir_value->getType())
+	if (v2->getType() != v1->getType())
     {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible types",
+        throw aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible IR types : %s vs %s",
             ctx->ast()->source_id.c_str(),
             node->line,
-            node->pos);
+            node->pos,
+            type_to_str(v1->getType()).c_str(),
+            type_to_str(v2->getType()).c_str());
     }
 }
 
@@ -1076,6 +1118,7 @@ llvm::DebugLoc llvmir_compiler_t::init_dloc(compiler_ctx_ptr_t ctx, node_ptr_t n
     );
     
     ctx->builder()->SetCurrentDebugLocation(dloc);
+	curr_node = node;
 
     return dloc;
 }

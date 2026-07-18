@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
     bool verbose = false;
 	bool validate_ir = true;
 	bool dump_ir = false;
+	bool no_debug = false;
 
     auto mode = MODE_UNKNOWN;
 
@@ -71,13 +72,15 @@ int main(int argc, char* argv[])
                 exit(1);
             }
             mode = MODE_TEST;
-            break;
         }
         else if (arg == "--no-validate") {
             validate_ir = false;
         }
         else if (arg == "--dump-ir") {
             dump_ir = true;
+        }
+        else if (arg == "--no-debug") {
+            no_debug = true;
         }
         else {
             std::cerr << "Unknown option: " << arg << "\n";
@@ -119,7 +122,8 @@ int main(int argc, char* argv[])
        err_code = compile_cmd_t().compile_cmd(
              *in,
 			 *out,
-             input_file.empty () ? "<source>" : input_file) ? 0 : 1;
+             input_file.empty () ? "<source>" : input_file,
+           no_debug) ? 0 : 1;
 
         break;
     }
@@ -128,6 +132,7 @@ int main(int argc, char* argv[])
 		tests_cmd_t test_runner;
 		test_runner.set_validate(validate_ir);
         test_runner.set_dump_ir(dump_ir);
+        test_runner.set_no_debug(no_debug);
 
         err_code = tests_cmd_t().run_tests() ? 0 : 1;
         break;

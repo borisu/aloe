@@ -1446,7 +1446,7 @@ antl4_parser_t::check_assignment(environment_ptr_t env, aloeParser::ExpressionCo
 {
     check_lvalue(env, ctx, lhs, "=");
 
-    if (lhs->type != rhs->type)
+    if (*lhs->type != *rhs->type)
     {
         throw aloe_exception_t("%s:%zu:%zu: error: cannot assign expression of type '%s' to expression of type '%s'",
             env->source().c_str(),

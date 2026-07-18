@@ -1,7 +1,6 @@
-var x:int = 1;
-
-fun root:(var b:int) -> int
-{
-	var a:int = 555;
-	return b++;	
-}
+ fun root:() -> int {
+    var a:int   = 0
+    var b:^int  = ^a
+    var c:int = @b + 1 
+    return c
+ }

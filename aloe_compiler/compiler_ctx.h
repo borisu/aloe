@@ -115,8 +115,6 @@ namespace aloe
 	protected:
 
 		Function* _curr_fun;
-
-
 	};
 
 };

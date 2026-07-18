@@ -23,5 +23,6 @@
     <ClCompile Include="di_cache.cpp" />
     <ClCompile Include="intrinsics.cpp" />
     <ClCompile Include="compiler_ctx.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
 </Project>

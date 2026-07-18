@@ -14,7 +14,7 @@ using namespace std;
 
 
 bool
-compile_cmd_t::compile_cmd(istream& is, ostream& os, const string& source_id)
+compile_cmd_t::compile_cmd(istream& is, ostream& os, const string& source_id,bool no_debug )
 {
     auto p = create_antlr4_parser();
 
@@ -26,6 +26,7 @@ compile_cmd_t::compile_cmd(istream& is, ostream& os, const string& source_id)
     }
 
     auto c = create_llvm_compiler();
+	c->set_no_debug(no_debug);
     
     if (!c->compile(ast, os))
     {

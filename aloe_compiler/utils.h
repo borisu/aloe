@@ -23,5 +23,7 @@ namespace aloe
 			
 	}
 
+	std::string type_to_str(llvm::Type* Ty);
+
 }
 	
