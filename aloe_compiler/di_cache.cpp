@@ -56,7 +56,7 @@ di_cache_t::get_dit_type(aloe_type_ptr_t type)
         if (di_cache.find(*type) == di_cache.end())
         {
             di_cache[*type] = di_builder.createPointerType(
-				get_dit_type(type->ptr_pointee_type),
+				get_dit_type(type->ptr_arr_type),
                 ALOE_PTR_SIZE);
         }
 
@@ -83,6 +83,18 @@ di_cache_t::get_dit_type(aloe_type_ptr_t type)
     }
     case ALOE_TYPE_ARRAY:
     {
+        if (di_cache.find(*type) == di_cache.end())
+        {
+            DISubrange* range = di_builder.getOrCreateSubrange(0, type->arr_size);
+            DINodeArray subscripts = di_builder.getOrCreateArray(range);
+
+			di_cache[*type] = di_builder.createArrayType(
+				type->arr_size,
+				ALOE_CHAR_SIZE,
+				get_dit_type(type->ptr_arr_type),
+                subscripts);
+        }
+        break;
     }
     default:
     {

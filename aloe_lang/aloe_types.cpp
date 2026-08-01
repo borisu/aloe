@@ -31,12 +31,12 @@ aloe::operator==(const aloe_type_t& t1, const aloe_type_t& t2)
 	case ALOE_TYPE_ARRAY:
 	{
 		return 
-			*t1.arr_element_type == *t2.arr_element_type && 
+			*t1.ptr_arr_type == *t2.ptr_arr_type && 
 			t1.arr_size == t2.arr_size;
 	}
 	case ALOE_TYPE_PTR:
 	{
-		return *t1.ptr_pointee_type == *t2.ptr_pointee_type;
+		return *t1.ptr_arr_type == *t2.ptr_arr_type;
 	}	
 	case ALOE_TYPE_FUNCTION:
 	{
@@ -94,16 +94,16 @@ bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
 			return t1.arr_size < t2.arr_size;
 		}
 
-		if (*t1.arr_element_type != *t2.arr_element_type)
+		if (*t1.ptr_arr_type != *t2.ptr_arr_type)
 		{
-			return *t1.arr_element_type < *t2.arr_element_type;
+			return *t1.ptr_arr_type < *t2.ptr_arr_type;
 		}
 
 		return false;
 	}
 	case ALOE_TYPE_PTR:
 	{
-		return *t1.ptr_pointee_type < *t2.ptr_pointee_type;
+		return *t1.ptr_arr_type < *t2.ptr_arr_type;
 	}
 	case ALOE_TYPE_FUNCTION:
 	{
@@ -168,7 +168,7 @@ aloe_type_t::to_str()
 	}
 	case ALOE_TYPE_ARRAY:
 	{
-		return "array[" + (arr_size == -1 ? "" : std::to_string(arr_size)) + "] of " + arr_element_type->to_str();
+		return "array[" + (arr_size == -1 ? "" : std::to_string(arr_size)) + "] of " + ptr_arr_type->to_str();
 	}
 	default:
 		return "unknown";

@@ -29,9 +29,9 @@ namespace aloe
 
 		virtual void walk_prog(compiler_ctx_ptr_t ctx, prog_node_ptr_t node);
 
-		virtual Type* emit_type(compiler_ctx_ptr_t ctx, type_node_ptr_t node);
+		virtual Type* emit_ir_type(compiler_ctx_ptr_t ctx, type_node_ptr_t node);
 
-		virtual Type* emit_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type);
+		virtual Type* emit_ir_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type);
 
 		virtual value_ptr_t emit_fun(compiler_ctx_ptr_t ctx, fun_node_ptr_t node);
 
@@ -47,13 +47,13 @@ namespace aloe
 
 		virtual value_ptr_t emit_expr_identifier(compiler_ctx_ptr_t ctx, identifier_expr_node_ptr_t node);
 
-		virtual Value* emit_r_value(compiler_ctx_ptr_t ctx, value_ptr_t expr);
+		virtual Value* emit_rvalue(compiler_ctx_ptr_t ctx, value_ptr_t expr);
 
 	
 		//
 		// EXPRESSIONS
 		//
-		virtual value_ptr_t emit_expression(compiler_ctx_ptr_t ctx, expr_node_ptr_t node);
+		virtual value_ptr_t emit_expr_value(compiler_ctx_ptr_t ctx, expr_node_ptr_t node);
 
 		virtual value_ptr_t emit_expr_fun_call(compiler_ctx_ptr_t ctx, funcall_expr_node_ptr_t node);
 
@@ -70,6 +70,8 @@ namespace aloe
 		virtual value_ptr_t emit_expr_addressof(compiler_ctx_ptr_t ctx, addressof_expr_node_ptr_t node);
 
 		virtual value_ptr_t emit_expr_deref(compiler_ctx_ptr_t ctx, deref_expr_node_ptr_t node);
+
+		virtual value_ptr_t emit_expr_index(compiler_ctx_ptr_t ctx, index_expr_node_ptr_t node);
 
 
 		virtual value_ptr_t emit_literal(compiler_ctx_ptr_t ctx, literal_node_ptr_t node);

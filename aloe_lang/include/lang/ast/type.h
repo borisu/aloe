@@ -21,9 +21,7 @@ namespace aloe
 
 		type_node_ptr_t fun_ret_type_node;
 
-		type_node_ptr_t ptr_pointee_type_node;
-
-		type_node_ptr_t arr_element_type_node;
+		type_node_ptr_t ptr_arr_type_node;
 
 	};
 

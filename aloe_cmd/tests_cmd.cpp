@@ -53,6 +53,8 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 
         c->set_validate(validate);
 
+        c->set_no_debug(no_debug);
+
         ast_ptr_t ast;
 
         istringstream iss(al);
@@ -285,24 +287,37 @@ tests_cmd_t::test_deref()
 }
 
 
+void tests_cmd_t::test_array_index()
+{
+    TEST_PARSE_STRING(R"( 
+        fun root:() -> int {
+            var a:int[10];
+            a[5] = 1;
+            return a[6];
+        })",
+        true);
+}
+
 bool
 tests_cmd_t::run_tests()
 {
     success = true;
 
-    if (true)
+    if (false)
     {
 		compile = true;
-		validate = true;
+		validate = false;
         dump_ir = true;
+        no_debug = true;
+
+        
 
         TEST_PARSE_STRING(R"( 
         fun root:() -> int {
-    var a:int   = 0
-    var b:^int  = ^a
-    var c:int = @b + 1 
-    return c
- })",
+            var a:int[10];
+            a[5] = 1;
+            return a[6];
+        })",
 
         true);
 
@@ -324,6 +339,7 @@ tests_cmd_t::run_tests()
     test_mutable_parameters();
     test_pointers();
     test_deref();
+    test_array_index();
 
    
     

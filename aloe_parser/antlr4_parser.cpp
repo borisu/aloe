@@ -170,13 +170,14 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx)
     else if (INSTANCE_OF(aloeParser::Type_pointerContext))
     {
 		out->type = aloe_type_ptr_t(new aloe_type_t(ALOE_TYPE_PTR));
-		out->ptr_pointee_type_node = walk_type(env, e->type());
-		out->type->ptr_pointee_type = out->ptr_pointee_type_node->type;
+		out->ptr_arr_type_node = walk_type(env, e->type());
+		out->type->ptr_arr_type = out->ptr_arr_type_node->type;
     }
 	else if (INSTANCE_OF(aloeParser::Type_arrayContext))
     {
-		out->arr_element_type_node = walk_type(env, e->type());
-		out->type->arr_element_type = out->arr_element_type_node->type;
+		out->ptr_arr_type_node = walk_type(env, e->type());
+        out->type = aloe_type_ptr_t(new aloe_type_t(ALOE_TYPE_ARRAY));
+		out->type->ptr_arr_type = out->ptr_arr_type_node->type;
 		out->type->arr_size = e->DigitSequence() ? stoul(e->DigitSequence()->getText()) : -1;
     }
     else
@@ -236,7 +237,7 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
     }
     
 	out->is_defined = ctx->expect() == nullptr;
-    out->id         = walk_identifier(env, ctx->identifier(), ID_NONTYPE,false);
+    out->id         = walk_identifier(env, ctx->identifier(), ID_LNAME,false);
 
     auto prev_node      = out->id  ? env->find_id(out->id) : nullptr;
     auto prev_fun       = prev_node ? PCAST(fun_node_t, prev_node->target) : nullptr;
@@ -355,7 +356,7 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
     var_node_ptr_t out  = var_node_ptr_t(new var_node_t());
     INIT_POS(out, ctx);
 
-    out->id = walk_identifier(env, ctx->identifier(), ID_NONTYPE, false);
+    out->id = walk_identifier(env, ctx->identifier(), ID_LNAME, false);
 
     if (out->id)
     {
@@ -460,7 +461,7 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
         }
         literal_node->value = unescape(sf.substr(1, sf.size() - 2));
 		literal_node->type  = make_shared<aloe_type_t>(ALOE_TYPE_PTR);
-		literal_node->type->ptr_pointee_type = make_shared<aloe_type_t>(ALOE_TYPE_CHAR);
+		literal_node->type->ptr_arr_type = make_shared<aloe_type_t>(ALOE_TYPE_CHAR);
 		
     }
     else if (ctx->CharacterConstant())
@@ -542,7 +543,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
    if (INSTANCE_OF(aloeParser::Expr_identifierContext)) {
        NEW_EXPR_NODE(expr_node, identifier);
      
-       expr_node->id = walk_identifier(env, e->identifier(),ID_NONTYPE,true);
+       expr_node->id = walk_identifier(env, e->identifier(),ID_LNAME,true);
 	   expr_node->ast_def = env->find_id(expr_node->id);
        
        switch (expr_node->ast_def->target->node_type_id)
@@ -669,11 +670,12 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
 	   expr_node->operand1 = walk_expression(env, e->expression(0));
-       expr_node->operand2 = walk_expression(env, e->expression(0));
+       expr_node->operand2 = walk_expression(env, e->expression(1));
 
-       throw;  // TBD: array indexing is not supported yet'
-
+	   expr_node->type = expr_node->operand1->type->ptr_arr_type;
+       expr_node->is_lvalue = true;
        out = expr_node;
+
        
    }
    else if (INSTANCE_OF(aloeParser::Expr_dotContext)) {
@@ -682,7 +684,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
-       expr_node->id        = walk_identifier(env, e->identifier(), ID_NONTYPE,true);
+       expr_node->id        = walk_identifier(env, e->identifier(), ID_LNAME,true);
 
        throw;  // TBD: array indexing is not supported yet'
 
@@ -694,7 +696,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
-       expr_node->id        = walk_identifier(env, e->identifier(), ID_NONTYPE,true);
+       expr_node->id        = walk_identifier(env, e->identifier(), ID_LNAME,true);
 
        throw;  // TBD: array indexing is not supported yet'
 
@@ -803,7 +805,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
 	   check_pointer(env, ctx, expr_node->operand, "@");
 
-       expr_node->type = expr_node->operand->type->ptr_pointee_type;
+       expr_node->type = expr_node->operand->type->ptr_arr_type;
        expr_node->is_lvalue = true;
        
        out = expr_node;
@@ -820,7 +822,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        expr_node->is_lvalue = false;
        expr_node->type = make_shared<aloe_type_t>(ALOE_TYPE_PTR);
-	   expr_node->type->ptr_pointee_type = expr_node->operand->type;
+	   expr_node->type->ptr_arr_type = expr_node->operand->type;
 
        out = expr_node;
 

@@ -52,9 +52,7 @@ namespace aloe
 
 		aloe_type_e type_id;
 
-		aloe_type_ptr_t ptr_pointee_type;
-
-		aloe_type_ptr_t arr_element_type;
+		aloe_type_ptr_t ptr_arr_type;
 
 		int arr_size; // -1 for unsized arrays
 
