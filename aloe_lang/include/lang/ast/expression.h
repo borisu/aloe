@@ -72,7 +72,7 @@ namespace aloe
 
 	struct expr_node_t : public node_t
 	{
-		expr_node_t(expression_op_e op) :node_t(EXPRESSION_NODE),op_id(op), is_lvalue(true) {}
+		expr_node_t(expression_op_e op) :node_t(EXPRESSION_NODE),op_id(op), is_lvalue(false) {}
 
 		expression_op_e op_id;
 

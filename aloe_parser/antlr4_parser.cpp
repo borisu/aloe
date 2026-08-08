@@ -551,12 +551,12 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        case VAR_NODE:
        {
            expr_node->type = PCAST(var_node_t, expr_node->ast_def->target)->type_node->type    ;
+           expr_node->is_lvalue = true;
            break;
        }
        case FUNCTION_NODE:
        {
            expr_node->type = PCAST(fun_node_t, expr_node->ast_def->target)->type_node->type;
-		   expr_node->is_lvalue = false;
            break;
        }
        default:
@@ -578,8 +578,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        expr_node->literal   = walk_literal(env, e->literal());
 	   expr_node->type = expr_node->literal->type;
-       expr_node->is_lvalue = false;
-	  
+      
        out = expr_node;
        
    }
@@ -596,8 +595,9 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->type = expr_node->operand->type;
        expr_node->is_lvalue = true;
 
+       check_lvalue(env, ctx, expr_node->operand, "++");
        check_unary_arithmetic(env, ctx, expr_node, "++");
-       check_lvalue(env, ctx, expr_node, "++");
+       
 
        out = expr_node;
        
@@ -611,8 +611,9 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->type = expr_node->operand->type;
        expr_node->is_lvalue = true;
       
+       check_lvalue(env, ctx, expr_node->operand, "--");
        check_unary_arithmetic(env, ctx, expr_node, "--");
-       check_lvalue(env, ctx, expr_node, "--");
+       
 
        out = expr_node;
 
@@ -686,7 +687,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand   = walk_expression(env, e->expression());
        expr_node->id        = walk_identifier(env, e->identifier(), ID_LNAME,true);
 
-       throw;  // TBD: array indexing is not supported yet'
+	   throw;  // dot operator not implemented yet
 
        out = expr_node;
 
@@ -698,7 +699,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand   = walk_expression(env, e->expression());
        expr_node->id        = walk_identifier(env, e->identifier(), ID_LNAME,true);
 
-       throw;  // TBD: array indexing is not supported yet'
+	   throw;  // TBD: pointer dereference not implemented yet
 
        out = expr_node;
 
@@ -709,9 +710,9 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        expr_node->operand = walk_expression(env, e->expression());
        expr_node->type = expr_node->operand->type;
-       expr_node->is_lvalue = true;
        
-       check_lvalue(env, ctx, expr_node, "++");
+       
+       check_lvalue(env, ctx, expr_node->operand, "++");
        check_unary_arithmetic(env, ctx, expr_node, "++");
 
        out = expr_node;
@@ -722,11 +723,10 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
-
        expr_node->type = expr_node->operand->type;
-       expr_node->is_lvalue = true;
 
-       check_lvalue(env, ctx, expr_node, "++");
+
+       check_lvalue(env, ctx, expr_node->operand, "++");
        check_unary_arithmetic(env, ctx, expr_node, "++");
 
        out = expr_node;
@@ -737,8 +737,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
-
-	   expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand->type;
 
        check_unary_arithmetic(env, ctx, expr_node, "+");
@@ -750,7 +748,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        NEW_EXPR_NODE(expr_node, min);
        INIT_POS(expr_node, ctx);
 
-       expr_node->is_lvalue = false;
+       
        expr_node->type = expr_node->operand->type;
 
        check_unary_arithmetic(env, ctx, expr_node, "+");
@@ -763,8 +761,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
-
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand->type;
 
        check_unary_arithmetic(env, ctx, expr_node, "!");
@@ -776,8 +772,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
-
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand->type;
 
        check_unary_arithmetic(env, ctx, expr_node, "!");
@@ -792,7 +786,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->type_node = walk_type(env, e->type());
        expr_node->type = expr_node->type_node->type;
        expr_node->operand   = walk_expression(env, e->expression());
-	   
 
        out = expr_node;
 
@@ -802,25 +795,22 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
-
 	   check_pointer(env, ctx, expr_node->operand, "@");
-
        expr_node->type = expr_node->operand->type->ptr_arr_type;
+
        expr_node->is_lvalue = true;
        
        out = expr_node;
-       
 
    }
    else if (INSTANCE_OF(aloeParser::Expr_addressofContext)) {
        NEW_EXPR_NODE(expr_node, addressof);
        INIT_POS(expr_node, ctx);
-
        
        expr_node->operand = walk_expression(env, e->expression());
        check_lvalue(env, ctx, expr_node->operand, "^");
 
-       expr_node->is_lvalue = false;
+       
        expr_node->type = make_shared<aloe_type_t>(ALOE_TYPE_PTR);
 	   expr_node->type->ptr_arr_type = expr_node->operand->type;
 
@@ -833,7 +823,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        expr_node->operand = walk_expression(env, e->expression());
 	   expr_node->type = make_shared<aloe_type_t>(ALOE_TYPE_INT); // sizeof operator always returns int
-       expr_node->is_lvalue = false;
 
        out = expr_node;
 
@@ -844,7 +833,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        expr_node->type_node = walk_type(env, e->type());
 	   expr_node->type = expr_node->type_node->type;   
-       expr_node->is_lvalue = false;
 
        out = expr_node;
 
@@ -856,7 +844,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = true;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "*");
@@ -873,7 +860,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
+       
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "/");
@@ -891,7 +878,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
+       
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "%");
@@ -907,7 +894,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "+");
@@ -923,7 +909,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
        
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "-");
@@ -939,7 +924,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "<<");
@@ -956,7 +940,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, ">>");
@@ -972,7 +955,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "<");
@@ -988,7 +970,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "<=");
@@ -1004,7 +985,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, ">");
@@ -1020,7 +1000,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, ">=");
@@ -1036,7 +1015,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "==");
@@ -1053,7 +1031,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "!=");
@@ -1069,7 +1046,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "&");
@@ -1085,7 +1061,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "^");
@@ -1100,7 +1075,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "|");
@@ -1116,7 +1090,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "&&");
@@ -1133,7 +1106,6 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
        expr_node->operand2 = walk_expression(env, e->expression()[1]);
 
-       expr_node->is_lvalue = false;
        expr_node->type = expr_node->operand1->type;
 
        check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, "||");
@@ -1177,7 +1149,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
        
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
 
@@ -1194,8 +1166,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
-       
+              
        out = expr_node;
 
    }
@@ -1210,7 +1181,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
 
@@ -1226,7 +1197,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
 
@@ -1242,7 +1213,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
 
@@ -1259,7 +1230,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
 
@@ -1275,7 +1246,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
    }
@@ -1290,7 +1261,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
 
@@ -1306,7 +1277,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
    }
@@ -1322,7 +1293,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
    }
@@ -1337,7 +1308,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        check_assignment(env, ctx, expr_node->operand1, expr_node->operand2);
 
        expr_node->type = expr_node->operand1->type;
-       expr_node->is_lvalue = true;
+       
 
        out = expr_node;
 
