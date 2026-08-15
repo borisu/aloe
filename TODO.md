@@ -14,3 +14,4 @@
 - [X] introduce modifiers for llvm compiler
 - [ ] Add pointers
 - [ ] Change LNAME identifier type tospecific VAR and FUN
+- [ ] Add asserts instead of raise
