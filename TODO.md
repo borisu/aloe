@@ -3,17 +3,17 @@
 - [X] unify lvalue default value between parser and compiler
 - [X] add support for pointers (^ and  @)
 - [X] add expression initialization for variables (e.g. int x = 5 + 3)
-- [ ] introduce structs (layout)
-- [ ] casting infrastructure
 - [X] emit_expr_fun_call must not return nullptr	
 - [X] unify exception in base
 - [X] place ast in base
 - [X] add debugging information for variables (global and local)
 - [X] check types in when emitting code for expressions (e.g. in emit_expr_binary_op, check if the types of the operands are compatible with the operator)
 - [X] revision value again
-- [ ] review di types 
 - [X] introduce modifiers for llvm compiler
-- [ ] Add pointers
+- [X] Add pointers
+- [ ] introduce structs (layout)
+- [ ] casting infrastructure
 - [ ] Change LNAME identifier type tospecific VAR and FUN
-- [ ] Add asserts instead of raise
 - [ ] Implement correctly the comma operator
+- [?] review di types 
+- [?] Add asserts instead of raise
