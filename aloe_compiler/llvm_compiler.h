@@ -85,7 +85,7 @@ namespace aloe
 		//
 		// HELPERS
 		//
-		virtual value_ptr_t emit_constant(compiler_ctx_ptr_t ctx, variant<int,float, double, char> val, aloe_type_ptr_t type);
+		virtual value_ptr_t emit_constant(compiler_ctx_ptr_t ctx, variant<int,float, double, char> val, aloe_type_ptr_t type, node_ptr_t node);
 
 		virtual value_ptr_t emit_raw_assign(compiler_ctx_ptr_t ctx, value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node);
 

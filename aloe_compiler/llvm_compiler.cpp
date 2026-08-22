@@ -12,6 +12,12 @@ using namespace aloe;
 using namespace llvm;
 using namespace llvm::dwarf;
 
+#define RAISE_LOC(fmt, ...) \
+    throw aloe_exception_t("%s:%zu:%zu: error (phase II): " fmt, \
+        ctx->ast()->source_id.c_str(), \
+        node->line, \
+        node->pos,  \
+        ##__VA_ARGS__)
 
 compiler_ptr_t
 aloe::create_llvm_compiler()
@@ -164,7 +170,7 @@ llvmir_compiler_t::emit_ir_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type)
     }
     default:
     {
-        assert(false && "(internal compiler error): unknown type id");
+        assert(false && "(internal error): unknown type id");
     }
     };
 
@@ -189,12 +195,12 @@ llvmir_compiler_t::emit_fun(compiler_ctx_ptr_t ctx, fun_node_ptr_t node)
    
     DISubprogram* sp = ctx->di_builder()->createFunction(
         ctx->di_file(),         // Function scope.  
-        node->id->name,            // Function name.
-        node->id->name,            // Mangled function name.
+        node->id->name,         // Function name.
+        node->id->name,         // Mangled function name.
         ctx->di_file(),         // File where this variable is defined.
-        node->line,                // Line number.
+        node->line,             // Line number.
 		ir_sc<DISubroutineType>(di_cache->get_dit_type(node->type)), // type
-        node->line,                 // scope line
+        node->line,             // scope line
         DINode::FlagZero,
 		node->is_defined ? DISubprogram::SPFlagDefinition : DISubprogram::SPFlagZero
      );
@@ -216,11 +222,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_ptr_t ctx, fun_node_ptr_t node)
     bool is_broken = llvm::verifyFunction(*ir_fun);
     
     if (is_broken && validate) {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): generated IR for function '%s' is broken",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos,
-            node->id->name.c_str());
+		RAISE_LOC("generated IR for function '%s' is broken", node->id->name.c_str());
     }
 
     return out;
@@ -298,11 +300,9 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_ptr_t ctx, Function* fun, fu
         }
         else
         {
-            throw aloe_exception_t("%s:%zu:%zu: error: control reaches end of non-void function '%s'",
-                ctx->ast()->source_id.c_str(),
-                node->line,
-                node->pos,
-                node->id->name.c_str());
+			RAISE_LOC("function '%s' must return expression of type '%s'",
+				node->id->name.c_str(),
+				node->type->fun_ret_type->to_str().c_str());
         }
     }
 
@@ -371,11 +371,7 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_ptr_t ctx, identifier_expr_
         }
         default:
         {
-            throw aloe_exception_t("%s:%zu:%zu: (internal error): identifier '%s' points to unsupported type",
-                ctx->ast()->source_id.c_str(),
-                node->line,
-                node->pos,
-				node->id->name.c_str());
+			RAISE_LOC("identifier '%s' is of unknown type", node->id->name.c_str());
         }
     }
 
@@ -531,11 +527,7 @@ llvmir_compiler_t::emit_raw_binary_arithmetic(compiler_ctx_ptr_t ctx, expression
     case expr_xor: res = ctx->builder()->CreateXor(lhs, rhs); break;
     case expr_or: res = ctx->builder()->CreateOr(lhs, rhs); break;
     default: {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): unknown binary operator %d",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos,
-            op);
+		RAISE_LOC("unknown binary operator %d", op);
         break;
     }
     }
@@ -577,7 +569,7 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_
     case expr_noteq: cmp = ctx->builder()->CreateICmpNE(lhs, rhs); break;
     default: 
     { 
-		assert(false && "unknown comparison operator");
+		RAISE_LOC("unknown comparison operator %d", node->op_id);
     }
     }
    
@@ -611,11 +603,7 @@ llvmir_compiler_t::emit_assign_arithmetic_binary(compiler_ctx_ptr_t ctx, binary_
     case expr_xorassign: base_op = expr_xor; break;
     case expr_orassign: base_op = expr_or; break;
     default:
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): unknown binary assign operator %d",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos,
-            node->op_id);
+		RAISE_LOC("unknown binary assign operator %d", node->op_id);
         break;
     }
 
@@ -739,14 +727,10 @@ llvmir_compiler_t::emit_expr_value(compiler_ctx_ptr_t ctx, expr_node_ptr_t node)
         break;
     }
     default:
-
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): invalid operation %d",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos,
-            node->op_id);
-
+    {
+        RAISE_LOC("invalid operation %d", node->op_id);
         break;
+    }
 
     }
 
@@ -810,7 +794,7 @@ llvmir_compiler_t::emit_expr_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr
     case expr_sfxminmin:
     case expr_sfxplusplus:
     {
-        value_ptr_t const_val = emit_constant(ctx, 1, make_shared<aloe_type_t>(ALOE_TYPE_INT));
+        value_ptr_t const_val = emit_constant(ctx, 1, make_shared<aloe_type_t>(ALOE_TYPE_INT), node);
 
         check_ir_type_equal(ctx, operand_rval->ir_value, const_val->ir_value, node);
         value_ptr_t math_val = emit_raw_binary_arithmetic(ctx, node->op_id == expr_sfxminmin ? expr_sub : expr_add, 
@@ -823,11 +807,7 @@ llvmir_compiler_t::emit_expr_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr
         break;
     }
     default:
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): unknown prefix operator %d",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos,
-            node->op_id);
+        RAISE_LOC("unknown postfix operator %d", node->op_id);
         break;
     }
 
@@ -866,7 +846,7 @@ llvmir_compiler_t::emit_expr_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_
     case expr_preminmin:
     {
 		check_lvalue(ctx, operand_val, node);
-		value_ptr_t const_val = emit_constant(ctx, 1 , make_shared<aloe_type_t>(ALOE_TYPE_INT));
+		value_ptr_t const_val = emit_constant(ctx, 1 , make_shared<aloe_type_t>(ALOE_TYPE_INT), node);
 
         value_ptr_t operand_rval(new value_t());
         operand_rval->ir_value = emit_rvalue(ctx, operand_val);
@@ -883,11 +863,7 @@ llvmir_compiler_t::emit_expr_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_
         break;
     }
     default:
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): unknown prefix operator %d",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos,
-            node->op_id);
+        RAISE_LOC("unknown prefix operator %d", node->op_id);
         break;
     }
 
@@ -1055,7 +1031,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_ptr_t ctx, literal_node_ptr_t node)
     case LIT_POINTER_VOID:
     default:
     {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): unsupported literal type %d", ctx->ast()->source_id.c_str(), node->line, node->pos, node->line);
+		RAISE_LOC("unsupported literal type %d", node->lit_type_id);
     }
     }
 
@@ -1068,10 +1044,10 @@ void llvmir_compiler_t::check_assign_val_type_equality(compiler_ctx_ptr_t ctx, v
     check_lvalue(ctx, v1, node);
     if (v1->lval_type != v2->ir_value->getType())
     {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform assignment on incompatible types",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos);
+		RAISE_LOC("attempt to perform assignment on incompatible types : %s vs %s",
+			type_to_str(v1->lval_type).c_str(),
+			type_to_str(v2->ir_value->getType()).c_str());
+
     }
 
 }
@@ -1081,12 +1057,9 @@ llvmir_compiler_t::check_ir_type_equal(compiler_ctx_ptr_t ctx, Value* v1, Value 
 {
 	if (v2->getType() != v1->getType())
     {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): attempt to perform operation on incompatible IR types : %s vs %s",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos,
-            type_to_str(v1->getType()).c_str(),
-            type_to_str(v2->getType()).c_str());
+		RAISE_LOC("attempt to perform operation on incompatible LLVM types : %s vs %s",
+			type_to_str(v1->getType()).c_str(),
+			type_to_str(v2->getType()).c_str());
     }
 }
 
@@ -1095,15 +1068,12 @@ llvmir_compiler_t::check_lvalue(compiler_ctx_ptr_t ctx, value_ptr_t v, node_ptr_
 {
     if (!v->is_lvalue)
     {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): need lvalue for the operation",
-            ctx->ast()->source_id.c_str(),
-            node->line,
-            node->pos);
+		RAISE_LOC("attempt to perform operation on non-lvalue expression");
     }
 }
 
 value_ptr_t 
-llvmir_compiler_t::emit_constant(compiler_ctx_ptr_t ctx, variant<int, float, double, char> var, aloe_type_ptr_t type)
+llvmir_compiler_t::emit_constant(compiler_ctx_ptr_t ctx, variant<int, float, double, char> var, aloe_type_ptr_t type, node_ptr_t node)
 {
     value_ptr_t val(new value_t());
 
@@ -1125,11 +1095,7 @@ llvmir_compiler_t::emit_constant(compiler_ctx_ptr_t ctx, variant<int, float, dou
     }
     default:
     {
-        throw aloe_exception_t("%s:%zu:%zu: (internal error): unsupported constant type %d",
-            ctx->ast()->source_id.c_str(),
-            0,
-            0,
-            type);
+		RAISE_LOC("unsupported constant type %d", type->type_id);
     }
 	}
 	return val;
