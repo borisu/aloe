@@ -31,6 +31,7 @@ namespace aloe
 		void test_pointers();
 		void test_deref();
 		void test_array_index();
+		void test_layout_type();
 
 		void test_pointers_cast();
 		

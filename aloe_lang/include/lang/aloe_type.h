@@ -18,7 +18,8 @@ namespace aloe
 		ALOE_TYPE_DOUBLE,
 		ALOE_TYPE_PTR,
 		ALOE_TYPE_FUNCTION,
-		ALOE_TYPE_ARRAY
+		ALOE_TYPE_ARRAY,
+		ALOE_TYPE_LAYOUT
 	};
 
 	inline bool is_arithmetic(aloe_type_e cat)
@@ -28,8 +29,6 @@ namespace aloe
 		case ALOE_TYPE_CHAR:
 		case ALOE_TYPE_INT:
 		case ALOE_TYPE_DOUBLE:
-		case ALOE_TYPE_PTR:
-		case ALOE_TYPE_ARRAY:
 			return true;
 		default:
 			return false;
@@ -43,7 +42,19 @@ namespace aloe
 
 	typedef vector<aloe_type_ptr_t>
 	aloe_type_vector_t;
-	
+
+	struct member_t
+	{
+		string name;
+		aloe_type_ptr_t type;
+	};
+
+	typedef
+	shared_ptr<member_t> member_ptr_t;
+
+	typedef vector<member_ptr_t>
+	member_vector_t;
+
 	struct aloe_type_t
 	{
 		aloe_type_t(aloe_type_e cat_id) : type_id(cat_id), arr_size(-1)
@@ -60,6 +71,8 @@ namespace aloe
 
 		aloe_type_vector_t fun_param_types;
 
+		member_vector_t members;
+
 		virtual ~aloe_type_t() {};
 
 		string to_str();
@@ -70,7 +83,7 @@ namespace aloe
 
 	bool operator!=(const aloe_type_t& t1, const aloe_type_t& t2);
 
-	bool operator < (const aloe_type_t & t1, const aloe_type_t & t2);
+	bool operator<(const aloe_type_t & t1, const aloe_type_t & t2);
 
 
 	

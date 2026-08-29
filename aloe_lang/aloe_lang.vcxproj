@@ -159,6 +159,7 @@
     <ClInclude Include="include\lang\ast\expression.h" />
     <ClInclude Include="include\lang\ast\fun.h" />
     <ClInclude Include="include\lang\ast\identifier.h" />
+    <ClInclude Include="include\lang\ast\layout.h" />
     <ClInclude Include="include\lang\ast\literal.h" />
     <ClInclude Include="include\lang\ast\marker.h" />
     <ClInclude Include="include\lang\ast\node.h" />
