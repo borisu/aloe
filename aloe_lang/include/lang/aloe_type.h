@@ -71,7 +71,9 @@ namespace aloe
 
 		aloe_type_vector_t fun_param_types;
 
-		member_vector_t members;
+		member_vector_t lot_members;
+
+		aloe_type_ptr_t lot_gt;
 
 		virtual ~aloe_type_t() {};
 

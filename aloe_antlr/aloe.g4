@@ -20,12 +20,12 @@ declarationStatementList
 declarationStatement
     : varDeclaration
     | funDeclaration 
-    | layoutType
+    | layoutDeclaration
     ;
 
 executionStatement
     : varDeclaration
-    | layoutType
+    | layoutDeclaration
     | funDeclaration 
     | returnStatement
     | expression
@@ -58,7 +58,7 @@ type
     | void                          #type_void
     | funType                       #type_fun
     | type '[' DigitSequence? ']'   #type_array
-    | layoutType                    #type_layout  
+    | layoutDeclaration             #type_layout  
     | identifier                    #type_identifier
     | '^' type                      #type_pointer
     | '(' type ')'                  #type_grouped
@@ -82,12 +82,16 @@ varList
 /* Layout Type */
 /***************/
 
-layoutType
-    : 'layout' identifier? inheritanceChain? '{' layoutMemberList '}'  
+layoutDeclaration
+    : 'layout' identifier? gtChain? '{' layoutMemberList '}'  
     ;
 
-inheritanceChain
-    : ('>' (identifier | layoutType))+
+gtChain
+    : (gtMember)+
+    ;
+
+gtMember
+    : '>' (identifier | layoutDeclaration)
     ;
 
 layoutMemberList
@@ -210,8 +214,7 @@ expression
     // -------- Precedence 15                               
     | '(' argumentExpressionList ')'                      #expr_comma
     ;
-
- 
+     
 argumentExpressionList
     : (expression (',' expression)*)?
     ;

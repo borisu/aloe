@@ -34,6 +34,12 @@ namespace aloe
 
 		virtual fun_node_ptr_t walk_fun_declaration(environment_ptr_t env,  aloeParser::FunDeclarationContext* ctx);
 
+		virtual layout_node_ptr_t walk_layout_declaration(environment_ptr_t env, aloeParser::LayoutDeclarationContext* ctx);
+
+		virtual gt_chain_node_ptr_t walk_gt_chain_node(environment_ptr_t env, aloeParser::GtChainContext* ctx);
+
+		virtual gt_chain_member_ptr_t walk_gt_chain_member(environment_ptr_t env, aloeParser::GtMemberContext* ctx);
+
 		virtual expr_node_ptr_t walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx);
 
 		virtual return_node_ptr_t  walk_return(environment_ptr_t env, aloeParser::ReturnStatementContext* ctx);

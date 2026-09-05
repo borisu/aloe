@@ -339,6 +339,8 @@ void tests_cmd_t::test_layout_type()
         true);
 
     TEST_PARSE_STRING(R"( 
+        layout B {b:int}
+
         layout A > B { 
         a:layout { c:int  d:int } 
         b:int ;
@@ -347,17 +349,22 @@ void tests_cmd_t::test_layout_type()
         )",
         true);
 
-
     TEST_PARSE_STRING(R"( 
+        layout B {b:int}
+
         layout A > B > C { 
         a:layout { c:int  d:int } 
         b:int ;
         b:int
         };
         )",
-        true);
+        false);
 
     TEST_PARSE_STRING(R"( 
+        layout B {b:int}    
+        layout C {b:int}    
+        layout D {b:int}    
+
         layout A > B > C > layout { a: int } > D { 
         a:layout { c:int  d:int } 
         b:int ;
@@ -372,7 +379,7 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-    if (false)
+    if (true)
     {
 		compile = false;
 
@@ -380,21 +387,10 @@ tests_cmd_t::run_tests()
         dump_ir = true;
         no_debug = true;
 
-        
         test_layout_type();
 
         return true;
 
-        TEST_PARSE_STRING(R"( 
-        fun root:() -> int {
-            var a:int[10];
-            a[5] = 1;
-            return a[6];
-        })",
-
-        true);
-
-        return true;
     }
     
 

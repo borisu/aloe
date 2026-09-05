@@ -120,14 +120,24 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
     {
         try
         {
+			node_ptr_t stmt_node;
             if (stmt->varDeclaration())
             {
-                prog->decl_statements.push_back(walk_var(env, stmt->varDeclaration()));
+				stmt_node = walk_var(env, stmt->varDeclaration());
             }
             else if (stmt->funDeclaration())
             {
-                prog->decl_statements.push_back(walk_fun_declaration(env, stmt->funDeclaration()));
+				stmt_node = walk_fun_declaration(env, stmt->funDeclaration());
             }
+			else if (stmt->layoutDeclaration())
+			{
+                stmt_node = walk_layout_declaration(env, stmt->layoutDeclaration());
+			}
+			else
+			{
+				RAISE_LOC("unknown declaration statement '%s'", stmt->getText().c_str());
+			}
+			prog->decl_statements.push_back(prog);
             
         }
         catch (aloe_exception_t &e)
@@ -216,6 +226,72 @@ antl4_parser_t::walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext*
 }
 
 
+layout_node_ptr_t 
+antl4_parser_t::walk_layout_declaration(environment_ptr_t env, aloeParser::LayoutDeclarationContext* ctx)
+{
+    layout_node_ptr_t out = layout_node_ptr_t(new layout_node_t());
+    INIT_POS(out, ctx);
+
+    if (ctx->identifier())
+        out->id = walk_identifier(env, ctx->identifier(), ID_TYPE, false);
+
+	if (ctx->gtChain())
+        out->gt = walk_gt_chain_node(env, ctx->gtChain());
+
+    if (out->id)
+        env->register_id(out->id, out);
+    
+    return out;
+}
+
+gt_chain_node_ptr_t 
+antl4_parser_t::walk_gt_chain_node(environment_ptr_t env, aloeParser::GtChainContext* ctx)
+{
+	gt_chain_node_ptr_t out = gt_chain_node_ptr_t(new gt_chain_node_t());
+	INIT_POS(out, ctx);
+
+	for (auto& member : ctx->gtMember())
+	{
+		out->members.push_back(walk_gt_chain_member(env, member));
+	}
+
+	return out;
+
+}
+
+gt_chain_member_ptr_t
+antl4_parser_t::walk_gt_chain_member(environment_ptr_t env, aloeParser::GtMemberContext* ctx)
+{
+    gt_chain_member_ptr_t out = gt_chain_member_ptr_t(new gt_chain_member_t());
+    INIT_POS(out, ctx);
+
+    if (ctx->identifier())
+    {
+        auto id = walk_identifier(env, ctx->identifier(), ID_TYPE, true);
+
+        auto b = env->find_id(id);
+
+        if (!b && !b->target)
+            RAISE_LOC("layout member '%s' was not defined", id->name.c_str());
+
+        out->id = id;
+        out->layout = PCAST(layout_node_t, b->target);
+        
+    }
+    else if (ctx->layoutDeclaration())
+    {
+        auto layout_node = walk_layout_declaration(env, ctx->layoutDeclaration());
+
+        out->layout = layout_node;
+    }
+    else
+    {
+        RAISE_LOC("unknown gt chain member '%s'", ctx->getText().c_str());
+    }
+
+    return out;
+}
+
 fun_node_ptr_t
 antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDeclarationContext* ctx)
 {
@@ -224,7 +300,7 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
 
     if (ctx->expect() && ctx->executionBlock())
     {
-		RAISE_LOC("function was declared as 'expect' but has body");
+		RAISE_LOC("function was declared as 'expect'-ed, but has a body.");
     }
 
     if (!ctx->expect() && !ctx->executionBlock())
@@ -403,7 +479,7 @@ antl4_parser_t::walk_identifier(environment_ptr_t env, aloeParser::IdentifierCon
     auto prev_node = env->find_id(id_node);
     if (!prev_node && must_exist)
     {
-		RAISE_LOC("identifier '%s' is not defined", id_node->name.c_str());
+		RAISE_LOC("identifier '%s' was not defined", id_node->name.c_str());
     }
         
     return id_node;

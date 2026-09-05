@@ -8,6 +8,7 @@
 #include "identifier.h"
 #include "bridge.h"
 #include "type.h"
+#include "layout.h"
 
 
 using namespace std;
