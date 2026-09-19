@@ -32,11 +32,13 @@ namespace aloe
 		void test_deref();
 		void test_array_index();
 		void test_layout_type();
-
+		void test_anonymous_layout_type();
+		void test_duplicate_layout_decalrations();
 		void test_pointers_cast();
 		
-		
 		void run_test(const char* test_name, const char* al, bool expected);
+
+		void run_parser();
 		
 		bool success;
 

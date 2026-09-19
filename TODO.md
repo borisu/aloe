@@ -16,4 +16,4 @@
 - [ ] Change LNAME identifier type tospecific VAR and FUN
 - [ ] Implement correctly the comma operator
 - [?] review di types 
-- [?] Add asserts instead of raise
+- [?] Add asserts instead of raise - e.g. raise must include condition

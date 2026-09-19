@@ -23,6 +23,18 @@ namespace aloe
 	typedef shared_ptr<layout_member_node_t> 
 	layout_member_ptr_t;
 
+	struct layout_member_list_node_t : public node_t
+	{
+		layout_member_list_node_t() :node_t(LAYOUT_MEMBER_LIST_NODE) {}
+
+		map<string, layout_member_ptr_t> members_m;
+
+		vector<layout_member_ptr_t> members_v;
+	};
+
+	typedef shared_ptr<layout_member_list_node_t> 
+	layout_member_list_ptr_t;
+
 	struct layout_node_t;
 
 	typedef shared_ptr<layout_node_t>
@@ -47,7 +59,6 @@ namespace aloe
 		gt_chain_node_t() :node_t(LAYOUT_GT_CHAIN_NODE){}
 
 		list<gt_chain_member_ptr_t> members;
-		
 	};
 
 	typedef shared_ptr<gt_chain_node_t> 
@@ -59,7 +70,9 @@ namespace aloe
 
 		identifier_node_ptr_t id;
 
-		gt_chain_node_ptr_t gt;
+		gt_chain_node_ptr_t gt_chain;
+
+		layout_member_list_ptr_t member_list;
 
 		aloe_type_ptr_t type;
 		

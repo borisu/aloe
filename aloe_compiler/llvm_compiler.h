@@ -111,6 +111,8 @@ namespace aloe
 
 		map<node_ptr_t, value_ptr_t> id_cache;
 
+		map<node_ptr_t, Type*> type_cache; // for types that are not internalized by LLVM (e.g. struct types)
+
 		bool validate;
 
 		bool no_debug;

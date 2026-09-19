@@ -80,7 +80,12 @@ llvmir_compiler_t::compile(
 	bool res = false;
     try
     {
-        walk_prog(ast_ctx, ast->prog);
+        if (ast->root->node_type_id != PROG_NODE)
+        {
+            throw aloe_exception_t("internal error: expected program node");
+        }
+
+        walk_prog(ast_ctx, PCAST(prog_node_t, ast->root));
 		res = true;
 
         dib.finalize();
@@ -108,7 +113,6 @@ llvmir_compiler_t::emit_ir_type(compiler_ctx_ptr_t ctx, type_node_ptr_t node)
     init_dloc(ctx, node);
     return emit_ir_type(ctx, node->type);
 }
-
 
 Type*
 llvmir_compiler_t::emit_ir_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type)
@@ -149,7 +153,7 @@ llvmir_compiler_t::emit_ir_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type)
     }
 	case ALOE_TYPE_ARRAY:
 	{
-		Type* arr_type = emit_ir_type(ctx, type->ptr_arr_type);
+		Type* arr_type = emit_ir_type(ctx, type->arr_type);
 		out = ArrayType::get(arr_type, type->arr_size);
 		break;
 	}
@@ -168,6 +172,17 @@ llvmir_compiler_t::emit_ir_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type)
         break;
 
     }
+	case ALOE_TYPE_LAYOUT:
+	{
+		std::vector<Type*>  irt_members;
+		for (auto m : type->lot_members)
+		{
+			Type* mt = emit_ir_type(ctx, m->type);
+			irt_members.push_back(mt);
+		};
+		out = StructType::create(*ctx->ctx(), irt_members,"layout");
+		break;
+	}
     default:
     {
         assert(false && "(internal error): unknown type id");
@@ -934,7 +949,7 @@ llvmir_compiler_t::emit_expr_index(compiler_ctx_ptr_t ctx, index_expr_node_ptr_t
     
     // get element pointer
     Value* gep_val = ctx->builder()->CreateGEP(
-		emit_ir_type(ctx, array_val->aloe_type->ptr_arr_type),
+		emit_ir_type(ctx, array_val->aloe_type->arr_type),
         array_val->ir_value,
         emit_rvalue(ctx, index_val)
     );

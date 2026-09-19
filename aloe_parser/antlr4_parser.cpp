@@ -36,7 +36,7 @@ antl4_parser_t::antl4_parser_t()
 }
 
 bool
-antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast, const string& source_id)
+antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast, const string& source_id, node_type_e root_grammar)
 {
     bool success = true;
 
@@ -60,8 +60,23 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_ptr_t& ast, const string&
 		environment_ptr_t env_mod(new environment_modifier_t(scp_mod));
 
         environment_ptr_t env = env_mod;
-        
-        ast->prog = walk_prog(env, parser.prog());
+
+
+        switch (root_grammar)
+        {
+        case PROG_NODE:
+        {
+            ast->root = walk_prog(env, parser.prog());
+            break;
+        }
+        case TYPE_NODE:
+        {
+            ast->root = walk_type(env, parser.type());
+            break;
+        }
+        default:
+            throw aloe_exception_t("unknown root grammar type %d", root_grammar);
+        }
 
         if (syntax_error_occurred)
         {
@@ -186,15 +201,20 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx)
     else if (INSTANCE_OF(aloeParser::Type_pointerContext))
     {
 		out->type = aloe_type_ptr_t(new aloe_type_t(ALOE_TYPE_PTR));
-		out->ptr_arr_type_node = walk_type(env, e->type());
-		out->type->ptr_arr_type = out->ptr_arr_type_node->type;
+		out->ptr_type_node = walk_type(env, e->type());
+		out->type->ptr_type = out->ptr_type_node->type;
     }
 	else if (INSTANCE_OF(aloeParser::Type_arrayContext))
     {
-		out->ptr_arr_type_node = walk_type(env, e->type());
+		out->arr_type_node = walk_type(env, e->type());
         out->type = aloe_type_ptr_t(new aloe_type_t(ALOE_TYPE_ARRAY));
-		out->type->ptr_arr_type = out->ptr_arr_type_node->type;
+		out->type->arr_type = out->arr_type_node->type;
 		out->type->arr_size = e->DigitSequence() ? stoul(e->DigitSequence()->getText()) : -1;
+    }
+    else if (INSTANCE_OF(aloeParser::Type_layoutContext))
+    {
+		auto layout_node = walk_layout_declaration(env, e->layoutDeclaration());
+		out->type = layout_node->type;
     }
     else
     {
@@ -204,26 +224,7 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx)
     return out;
 }
 
-type_node_ptr_t 
-antl4_parser_t::walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx)
-{
-    type_node_ptr_t out(new type_node_t());
-    INIT_POS(out, ctx);
 
-    out->type = aloe_type_ptr_t(new aloe_type_t(ALOE_TYPE_FUNCTION));
-
-    out->fun_ret_type_node = walk_type(env, ctx->type());
-    out->type->fun_ret_type = out->fun_ret_type_node->type;
-
-	environment_ptr_t new_env(new scope_modifier_t(CTX_FUN_ARGS, env));
-    out->fun_params_node = walk_var_list(new_env, ctx->varList());
-    for (auto& var : out->fun_params_node->vars_v)
-    {
-        out->type->fun_param_types.push_back(var.second->type);
-    }
-
-    return out;
-}
 
 
 layout_node_ptr_t 
@@ -232,15 +233,55 @@ antl4_parser_t::walk_layout_declaration(environment_ptr_t env, aloeParser::Layou
     layout_node_ptr_t out = layout_node_ptr_t(new layout_node_t());
     INIT_POS(out, ctx);
 
-    if (ctx->identifier())
-        out->id = walk_identifier(env, ctx->identifier(), ID_TYPE, false);
+    out->type = aloe_type_ptr_t(new aloe_type_t(ALOE_TYPE_LAYOUT));
 
-	if (ctx->gtChain())
-        out->gt = walk_gt_chain_node(env, ctx->gtChain());
+    if (ctx->identifier())
+    {
+        out->id = walk_identifier(env, ctx->identifier(), ID_TYPE, false);
+		out->type->lot_name = out->id->name;
+    }
+
+    if (ctx->gtChain())
+    {
+        out->gt_chain = walk_gt_chain_node(env, ctx->gtChain());
+    }
+
+	if (ctx->layoutMemberList())
+	{
+		out->member_list = walk_layout_member_list(env, ctx->layoutMemberList());
+	}
 
     if (out->id)
+    {
+        auto prev_node = env->find_id(out->id, true);
+        if (prev_node)
+        {
+            RAISE_LOC("layout %s was already defined", out->id->name.c_str());
+        }
+
         env->register_id(out->id, out);
-    
+
+        out->type->lot_name = out->id->name;
+
+    };
+
+	
+
+    return out;
+}
+
+layout_member_ptr_t 
+antl4_parser_t::walk_layout_member(environment_ptr_t env, aloeParser::LayoutMemberContext* ctx)
+{
+	layout_member_ptr_t out = layout_member_ptr_t(new layout_member_node_t());
+    INIT_POS(out, ctx);
+
+    if (ctx->identifier()) {
+        out->name = ctx->identifier()->getText();
+    }
+	out->type_node = walk_type(env, ctx->type());
+	out->type = out->type_node->type;
+
     return out;
 }
 
@@ -256,7 +297,6 @@ antl4_parser_t::walk_gt_chain_node(environment_ptr_t env, aloeParser::GtChainCon
 	}
 
 	return out;
-
 }
 
 gt_chain_member_ptr_t
@@ -291,6 +331,52 @@ antl4_parser_t::walk_gt_chain_member(environment_ptr_t env, aloeParser::GtMember
 
     return out;
 }
+
+layout_member_list_ptr_t
+antl4_parser_t::walk_layout_member_list(environment_ptr_t env, aloeParser::LayoutMemberListContext* ctx)
+{
+    layout_member_list_ptr_t out(new layout_member_list_node_t());
+    INIT_POS(out, ctx);
+
+    for (auto& member : ctx->layoutMember())
+    {
+        auto m = walk_layout_member(env, member);
+        out->members_v.push_back(m);
+        if (!m->name.empty())
+        {
+			if (out->members_m.find(m->name) != out->members_m.end())
+			{
+				RAISE_LOC("layout member '%s' was already defined", m->name.c_str());
+			}
+            out->members_m[m->name] = m;
+        }
+	
+    }
+    return out;
+}
+
+
+type_node_ptr_t
+antl4_parser_t::walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx)
+{
+    type_node_ptr_t out(new type_node_t());
+    INIT_POS(out, ctx);
+
+    out->type = aloe_type_ptr_t(new aloe_type_t(ALOE_TYPE_FUNCTION));
+
+    out->fun_ret_type_node = walk_type(env, ctx->type());
+    out->type->fun_ret_type = out->fun_ret_type_node->type;
+
+    environment_ptr_t new_env(new scope_modifier_t(CTX_FUN_ARGS, env));
+    out->fun_params_node = walk_var_list(new_env, ctx->varList());
+    for (auto& var : out->fun_params_node->vars_v)
+    {
+        out->type->fun_param_types.push_back(var.second->type);
+    }
+
+    return out;
+}
+
 
 fun_node_ptr_t
 antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDeclarationContext* ctx)
@@ -451,7 +537,7 @@ antl4_parser_t::walk_var(environment_ptr_t env, aloeParser::VarDeclarationContex
         }
 
         out->initializer = walk_expression(env, ctx->expression());
-		check_type_equality(env, ctx, out->initializer->type, out->type_node->type);
+		check_type_equality(env, ctx, out->initializer->type, out->type);
 
         
     }
@@ -507,8 +593,9 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
             sf += s->getText();
         }
         literal_node->value = unescape(sf.substr(1, sf.size() - 2));
-		literal_node->type  = make_shared<aloe_type_t>(ALOE_TYPE_PTR);
-		literal_node->type->ptr_arr_type = make_shared<aloe_type_t>(ALOE_TYPE_CHAR);
+		literal_node->type  = make_shared<aloe_type_t>(ALOE_TYPE_ARRAY);
+		literal_node->type->arr_type = make_shared<aloe_type_t>(ALOE_TYPE_CHAR);
+		literal_node->type->arr_size = (int)std::get<string>(literal_node->value).size() + 1; // +1 for null terminator
 		
     }
     else if (ctx->CharacterConstant())
@@ -696,7 +783,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   expr_node->operand1 = walk_expression(env, e->expression(0));
        expr_node->operand2 = walk_expression(env, e->expression(1));
 
-	   expr_node->type = expr_node->operand1->type->ptr_arr_type;
+	   expr_node->type = expr_node->operand1->type->arr_type;
        expr_node->is_lvalue = true;
        out = expr_node;
 
@@ -819,7 +906,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        expr_node->operand = walk_expression(env, e->expression());
 	   check_is_pointer(env, ctx, expr_node->operand, "@");
-       expr_node->type = expr_node->operand->type->ptr_arr_type;
+       expr_node->type = expr_node->operand->type->ptr_type;
 
        expr_node->is_lvalue = true;
        
@@ -835,7 +922,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        
        expr_node->type = make_shared<aloe_type_t>(ALOE_TYPE_PTR);
-	   expr_node->type->ptr_arr_type = expr_node->operand->type;
+	   expr_node->type->ptr_type = expr_node->operand->type;
 
        out = expr_node;
 

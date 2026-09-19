@@ -95,11 +95,11 @@ gtMember
     ;
 
 layoutMemberList
-    : layoutMember (';'? layoutMember)*
+    : layoutMember (';' | layoutMember)*
     ;
 
 layoutMember
-    : identifier ':' type
+    : identifier? ':' type
     ;
 
 /********************/
@@ -212,7 +212,7 @@ expression
     | expression 'xor='  expression                        #expr_xorassign
     | expression '|='  expression                          #expr_orassign
     // -------- Precedence 15                               
-    | '(' argumentExpressionList ')'                      #expr_comma
+    | '(' argumentExpressionList ')'                       #expr_comma
     ;
      
 argumentExpressionList

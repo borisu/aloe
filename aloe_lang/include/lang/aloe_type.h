@@ -55,6 +55,22 @@ namespace aloe
 	typedef vector<member_ptr_t>
 	member_vector_t;
 
+	struct gt_member_t;
+
+	typedef shared_ptr<gt_member_t>
+	gt_member_ptr_t;
+
+	struct gt_member_t
+	{
+		string name;
+
+		aloe_type_ptr_t type;
+
+		bool is_virtual;
+
+		gt_member_ptr_t next;
+	};
+
 	struct aloe_type_t
 	{
 		aloe_type_t(aloe_type_e cat_id) : type_id(cat_id), arr_size(-1)
@@ -63,17 +79,21 @@ namespace aloe
 
 		aloe_type_e type_id;
 
-		aloe_type_ptr_t ptr_arr_type;
+		aloe_type_ptr_t arr_type;
+
+		aloe_type_ptr_t ptr_type;
 
 		int arr_size; // -1 for unsized arrays
 
 		aloe_type_ptr_t fun_ret_type;
 
 		aloe_type_vector_t fun_param_types;
-
+		
+		string lot_name; 
+		
 		member_vector_t lot_members;
 
-		aloe_type_ptr_t lot_gt;
+		gt_member_ptr_t lot_gt;
 
 		virtual ~aloe_type_t() {};
 
@@ -81,11 +101,17 @@ namespace aloe
 	};
 
 	
-	bool operator==(const aloe_type_t& t1, const aloe_type_t& t2);
+	bool operator==(const aloe_type_t& t1, const aloe_type_t& t2)  ;
 
-	bool operator!=(const aloe_type_t& t1, const aloe_type_t& t2);
+	bool operator!=(const aloe_type_t& t1, const aloe_type_t& t2)  ;
 
-	bool operator<(const aloe_type_t & t1, const aloe_type_t & t2);
+	bool operator<(const aloe_type_t & t1, const aloe_type_t & t2)  ;
+	
+	bool operator<(const gt_member_t& m1, const gt_member_t& m2) ;
+
+	bool operator==(const gt_member_t& m1, const gt_member_t& m2)  ;
+
+	bool operator!=(const gt_member_t& m1, const gt_member_t& m2);
 
 
 	

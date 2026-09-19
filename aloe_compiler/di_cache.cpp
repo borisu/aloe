@@ -56,7 +56,7 @@ di_cache_t::get_dit_type(aloe_type_ptr_t type)
         if (di_cache.find(*type) == di_cache.end())
         {
             di_cache[*type] = di_builder.createPointerType(
-				get_dit_type(type->ptr_arr_type),
+				get_dit_type(type->ptr_type),
                 ALOE_PTR_SIZE);
         }
 
@@ -91,7 +91,7 @@ di_cache_t::get_dit_type(aloe_type_ptr_t type)
 			di_cache[*type] = di_builder.createArrayType(
 				type->arr_size,
 				ALOE_CHAR_SIZE,
-				get_dit_type(type->ptr_arr_type),
+				get_dit_type(type->arr_type),
                 subscripts);
         }
         break;

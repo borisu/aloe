@@ -320,31 +320,24 @@ void tests_cmd_t::test_layout_type()
         )",
         true);
 
+    
     TEST_PARSE_STRING(R"( 
         layout A { 
-        a:int 
+        a:layout { 
+          c:int 
+          d:int 
+        } 
         b:int ;
-        b:int
-        };
-        )",
-        true);
-
-    TEST_PARSE_STRING(R"( 
-        layout A { 
-        a:layout { c:int  d:int } 
-        b:int ;
-        b:int
         };
         )",
         true);
 
     TEST_PARSE_STRING(R"( 
         layout B {b:int}
-
         layout A > B { 
         a:layout { c:int  d:int } 
         b:int ;
-        b:int
+   
         };
         )",
         true);
@@ -355,10 +348,40 @@ void tests_cmd_t::test_layout_type()
         layout A > B > C { 
         a:layout { c:int  d:int } 
         b:int ;
-        b:int
         };
         )",
         false);
+
+}
+
+void tests_cmd_t::test_anonymous_layout_type()
+{
+
+    TEST_PARSE_STRING(R"( 
+        var a : layout { a:int  b:int };
+        )",
+        true);
+
+    TEST_PARSE_STRING(R"( 
+        var a : layout { :int  :int };
+        )",
+        true);
+}
+
+void 
+tests_cmd_t::test_duplicate_layout_decalrations()
+{
+    TEST_PARSE_STRING(R"( 
+        var a : layout A { a:int  b:int };
+        var b : layout A { a:int  b:int };
+        )",
+        false);
+
+    TEST_PARSE_STRING(R"( 
+        var a : layout { a :int  a:int };
+        )",
+        false);
+
 
     TEST_PARSE_STRING(R"( 
         layout B {b:int}    
@@ -371,7 +394,21 @@ void tests_cmd_t::test_layout_type()
         b:int
         };
         )",
-        true);
+        false);
+}
+
+void
+tests_cmd_t::run_parser()
+{
+
+    auto p = create_antlr4_parser();
+
+    ast_ptr_t ast;
+
+    istringstream iss("int");
+
+    bool res = p->parse_from_stream(iss, ast, "<string>", TYPE_NODE);
+
 }
 
 bool
@@ -381,13 +418,20 @@ tests_cmd_t::run_tests()
 
     if (true)
     {
+        run_parser();
+		return true;
+    }
+
+    if (false)
+    {
 		compile = false;
 
 		validate = false;
         dump_ir = true;
         no_debug = true;
 
-        test_layout_type();
+
+        TEST_PARSE_STRING(R"(var a:^char   = "ok")", true);
 
         return true;
 
@@ -409,6 +453,11 @@ tests_cmd_t::run_tests()
     test_pointers();
     test_deref();
     test_array_index();
+    test_layout_type();
+    test_anonymous_layout_type();
+    test_pointers_cast();
+    test_duplicate_layout_decalrations();
+    
 
    
     

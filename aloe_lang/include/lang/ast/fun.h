@@ -18,7 +18,6 @@ namespace aloe
 
 	typedef shared_ptr<exec_block_node_t> 
 	exec_block_node_ptr_t;
-
 	
 	struct fun_node_t : public node_t
 	{
@@ -38,7 +37,8 @@ namespace aloe
 		bool is_defined;
 	};
 
-	typedef shared_ptr<fun_node_t> fun_node_ptr_t;
+	typedef shared_ptr<fun_node_t> 
+	fun_node_ptr_t;
 
 	struct return_node_t : public node_t
 	{

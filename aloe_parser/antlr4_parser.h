@@ -14,7 +14,7 @@ namespace aloe
 
 		antl4_parser_t();
 
-		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast, const string &source_id) override;
+		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast, const string &source_id, node_type_e root_grammar = PROG_NODE) override;
 
 		virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol,
 			size_t line, size_t charPositionInLine, const std::string& msg,
@@ -39,6 +39,10 @@ namespace aloe
 		virtual gt_chain_node_ptr_t walk_gt_chain_node(environment_ptr_t env, aloeParser::GtChainContext* ctx);
 
 		virtual gt_chain_member_ptr_t walk_gt_chain_member(environment_ptr_t env, aloeParser::GtMemberContext* ctx);
+
+		virtual  layout_member_list_ptr_t walk_layout_member_list(environment_ptr_t env, aloeParser::LayoutMemberListContext* ctx);
+
+		virtual layout_member_ptr_t walk_layout_member(environment_ptr_t env, aloeParser::LayoutMemberContext* ctx);
 
 		virtual expr_node_ptr_t walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx);
 

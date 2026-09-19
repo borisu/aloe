@@ -19,7 +19,7 @@ namespace aloe
 	{
 		ast_t() : node_t(AST_ROOT_NODE) {}
 
-		prog_node_ptr_t prog;
+		node_ptr_t root;
 
 		string source_id;
 

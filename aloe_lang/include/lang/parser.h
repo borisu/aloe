@@ -9,7 +9,7 @@ namespace aloe
 	{
 	public:
 
-		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast, const string& source_id) = 0;
+		virtual bool parse_from_stream(istream& is, ast_ptr_t& ast, const string& source_id, node_type_e root_grammmar = PROG_NODE) = 0;
 		
 	};
 

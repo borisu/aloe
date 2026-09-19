@@ -10,7 +10,7 @@ namespace aloe
 
 	struct var_list_node_t;
 	typedef shared_ptr<var_list_node_t>	var_list_node_ptr_t;
-	
+
 	struct type_node_t : public node_t
 	{
 		type_node_t() :node_t(TYPE_NODE) {}
@@ -21,7 +21,11 @@ namespace aloe
 
 		type_node_ptr_t fun_ret_type_node;
 
-		type_node_ptr_t ptr_arr_type_node;
+		type_node_ptr_t arr_type_node;
+
+		type_node_ptr_t ptr_type_node;
+
+		type_node_ptr_t layout_type_node;
 
 	};
 
