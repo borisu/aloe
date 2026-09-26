@@ -22,9 +22,9 @@ namespace aloe
 	{
 	public:
 		
-		virtual void register_id(identifier_node_ptr_t id, node_ptr_t node) = 0;
+		virtual bridge_ptr_t register_id(string id, namespace_e ns, node_ptr_t node) = 0;
 
-		virtual bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope = false) = 0;
+		virtual bridge_ptr_t find_id(string id, namespace_e ns, bool local_scope = false) = 0;
 
 		virtual scope_e curr_scope() = 0;
 
@@ -40,9 +40,9 @@ namespace aloe
 
 		base_modifier_t(environment_ptr_t env = nullptr);
 
-		void register_id(identifier_node_ptr_t id, node_ptr_t node) override;
+		bridge_ptr_t register_id(string id, namespace_e ns, node_ptr_t node) override;
 
-		bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope) override;
+		bridge_ptr_t find_id(string id, namespace_e ns, bool local_scope) override;
 
 		scope_e curr_scope() override;
 
@@ -62,21 +62,16 @@ namespace aloe
 
 		environment_modifier_t(environment_ptr_t env = nullptr);
 
-		void register_id(identifier_node_ptr_t id, node_ptr_t node) override;
+		bridge_ptr_t register_id(string id, namespace_e ns, node_ptr_t node) override;
 
-		bridge_ptr_t find_id(identifier_node_ptr_t id, bool local_scope) override;
+		bridge_ptr_t find_id(string id, namespace_e ns, bool local_scope) override;
 		
 	protected:
 
-		struct id_ptr_map_cmp
-		{
-			bool operator()(const identifier_node_ptr_t& a, const identifier_node_ptr_t& b) const
-			{
-				return (*a < *b);
-			}
-		};
+		typedef std::pair<string, namespace_e> id_key_t;
 
-		typedef map<identifier_node_ptr_t, bridge_ptr_t, id_ptr_map_cmp>
+		typedef map<id_key_t, bridge_ptr_t>
+
 		bridge_map_t;
 
 		bridge_map_t  bridge_map;

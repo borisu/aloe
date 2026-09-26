@@ -8,6 +8,8 @@ namespace aloe
 			target(target) {}
 
 		node_ptr_t target;
+
+		virtual ~bridge_t() {}
 	};
 
 	typedef shared_ptr<bridge_t> 

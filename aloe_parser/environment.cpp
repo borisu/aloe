@@ -8,19 +8,19 @@ base_modifier_t::base_modifier_t(environment_ptr_t env):prev(env)
 
 }
 
-void
-base_modifier_t::register_id(identifier_node_ptr_t id, node_ptr_t node)
+bridge_ptr_t
+base_modifier_t::register_id(string id, namespace_e ns, node_ptr_t node)
 {
-    prev->register_id(id, node);
+    return prev->register_id(id, ns, node);
 }
 
 bridge_ptr_t
-base_modifier_t::find_id(identifier_node_ptr_t id, bool local_scope = false)
+base_modifier_t::find_id(string id, namespace_e ns, bool local_scope)
 {
 	if (prev == nullptr)
 		return nullptr;
 
-    return prev->find_id(id, local_scope);
+    return prev->find_id(id, ns, local_scope);
 }
 
 scope_e
@@ -56,27 +56,30 @@ environment_modifier_t::environment_modifier_t(environment_ptr_t env) :base_modi
 	
 };
 
-void
-environment_modifier_t::register_id(identifier_node_ptr_t id, node_ptr_t node)
+bridge_ptr_t
+environment_modifier_t::register_id(string id, namespace_e ns, node_ptr_t node)
 {
-	if (bridge_map.count(id) == 0)
+	auto key = std::make_pair(id, ns);
+	if (bridge_map.count(key) == 0)
     {
-        bridge_map[id] = bridge_ptr_t(new bridge_t(node));
+        bridge_map[key] = bridge_ptr_t(new bridge_t(node));
     }
     else
     {
-		bridge_map[id]->target->ignore = true; // mark previous definition as ignored, so that it won't be compiled
-		bridge_map[id]->target = node;
+		bridge_map[key]->target->ignore = true; // mark previous definition as ignored, so that it won't be compiled
+		bridge_map[key]->target = node;
     }
+
+	return bridge_map[key];
 }
 
 bridge_ptr_t
-environment_modifier_t::find_id(identifier_node_ptr_t id, bool local_scope)
+environment_modifier_t::find_id(string id, namespace_e ns, bool local_scope)
 {
-    
-    if (bridge_map.count(id) > 0)
+    auto key = std::make_pair(id, ns);
+    if (bridge_map.count(key) > 0)
     {
-        return bridge_map[id];
+        return bridge_map[key];
     }
 
     if (local_scope)
@@ -85,7 +88,7 @@ environment_modifier_t::find_id(identifier_node_ptr_t id, bool local_scope)
 	if (prev == nullptr)
 		return nullptr;
     
-    return prev->find_id(id, false);
+    return prev->find_id(id, ns, false);
 
 }
 

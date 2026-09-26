@@ -405,7 +405,7 @@ tests_cmd_t::run_parser()
 
     ast_ptr_t ast;
 
-    istringstream iss("int");
+    istringstream iss(R"(layout A {  a:int ; b:A})");
 
     bool res = p->parse_from_stream(iss, ast, "<string>", TYPE_NODE);
 
@@ -416,9 +416,9 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-    if (false)
+    if (true)
     {
-        test_fun_expect1();
+        run_parser();
 		return true;
     }
 
@@ -431,9 +431,9 @@ tests_cmd_t::run_tests()
         no_debug = true;
 
         TEST_PARSE_STRING(R"(
-        expect fun foo:()-> void; 
-        fun foo:()-> int { }
-    )", false);
+            fun foo:()-> void { }
+            expect fun foo:()-> void; 
+    )", true);
 
         return true;
 
