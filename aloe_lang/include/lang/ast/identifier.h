@@ -11,7 +11,7 @@ namespace aloe
 	enum identifier_type_e
 	{
 		ID_UNKNOWN,
-		ID_LNAME,
+		ID_OBJ,
 		ID_TYPE,
 		ID_MODULE
 	};

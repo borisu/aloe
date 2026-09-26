@@ -27,7 +27,7 @@ scope_e
 base_modifier_t::curr_scope()
 {
 	if (prev == nullptr)
-		return CTX_UNKNOWN;
+		return SCOPE_UNKNOWN;
 
     return prev->curr_scope();
 }

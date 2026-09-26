@@ -175,9 +175,9 @@ void tests_cmd_t::test_return_type_mismatch()
 void 
 tests_cmd_t::test_defaults()
 {
-    TEST_PARSE_STRING(R"(var a:void     =   0)", false);
+    TEST_PARSE_STRING(R"(var a:void    =   0)", false);
     TEST_PARSE_STRING(R"(var a:int     =   0)", true);
-    TEST_PARSE_STRING(R"(var a:^char   = "ok")", true);
+    TEST_PARSE_STRING(R"(var a:char[3] = "ok")", true);
     TEST_PARSE_STRING(R"(var a:char    = 'o')", true);
     TEST_PARSE_STRING(R"(var a:char    = 123)", false);
 }
@@ -416,9 +416,9 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-    if (true)
+    if (false)
     {
-        run_parser();
+        test_fun_expect1();
 		return true;
     }
 
@@ -430,8 +430,10 @@ tests_cmd_t::run_tests()
         dump_ir = true;
         no_debug = true;
 
-
-        TEST_PARSE_STRING(R"(var a:^char   = "ok")", true);
+        TEST_PARSE_STRING(R"(
+        expect fun foo:()-> void; 
+        fun foo:()-> int { }
+    )", false);
 
         return true;
 

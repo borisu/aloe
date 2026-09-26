@@ -10,15 +10,6 @@ using namespace std;
 
 namespace aloe
 {
-	struct exec_block_node_t : public node_t
-	{
-		exec_block_node_t() : node_t(EXECUTION_BLOCK_NODE) {}
-		vector<node_ptr_t> exec_statements;
-	};
-
-	typedef shared_ptr<exec_block_node_t> 
-	exec_block_node_ptr_t;
-	
 	struct fun_node_t : public node_t
 	{
 		fun_node_t() :node_t(FUNCTION_NODE),
@@ -30,7 +21,7 @@ namespace aloe
 
 		aloe_type_ptr_t			type;
 		
-		exec_block_node_ptr_t	exec_block;
+		vector<node_ptr_t>		statements;
 
 		marker_node_ptr_t		end_of_fun;
 	

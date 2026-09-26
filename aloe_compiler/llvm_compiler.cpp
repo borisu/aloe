@@ -300,9 +300,28 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_ptr_t ctx, Function* fun, fu
     }
 
     // emit fucntion statements
-    for (auto& statement : node->exec_block->exec_statements)
+    for (auto& statement : node->statements)
     {
-        emit_exec_statement(ctx, statement);
+        switch (node->node_type_id)
+        {
+        case EXPRESSION_NODE:
+        {
+            emit_expr_value(ctx, PCAST(expr_node_t, statement));
+            break;
+        }
+        case VAR_NODE:
+        {
+            emit_var(ctx, PCAST(var_node_t, statement));
+            break;
+        }
+        case RETURN_NODE:
+        {
+            emit_return(ctx, PCAST(return_node_t, statement));
+            break;
+        }
+        default:
+            break;
+        }
     }
 
     // emit terminator if not present
@@ -348,7 +367,7 @@ llvmir_compiler_t::walk_prog(compiler_ctx_ptr_t ctx, prog_node_ptr_t node)
 {
     init_dloc(ctx, node);
 
-    for (auto& decl : node->decl_statements)
+    for (auto& decl : node->statements)
     {
         switch (decl->node_type_id)
         {
@@ -370,17 +389,17 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_ptr_t ctx, identifier_expr_
 
 	value_ptr_t out(new value_t());
 
-	switch (node->ast_def->target->node_type_id)
+	switch (node->bn->target->node_type_id)
     {
         case FUNCTION_NODE:
         {
-            out = PCAST(value_t, id_cache[node->ast_def->target]);
+            out = PCAST(value_t, id_cache[node->bn->target]);
 
             break;
         }
         case VAR_NODE:
         {
-            out = PCAST(value_t, id_cache[node->ast_def->target]);
+            out = PCAST(value_t, id_cache[node->bn->target]);
 
             break;
         }
@@ -393,32 +412,6 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_ptr_t ctx, identifier_expr_
     return out;
 }
 
-void 
-llvmir_compiler_t::emit_exec_statement(compiler_ctx_ptr_t ctx, node_ptr_t node)
-{
-    init_dloc(ctx, node);
-
-    switch (node->node_type_id)
-    {
-        case EXPRESSION_NODE:
-        {
-			emit_expr_value(ctx, PCAST(expr_node_t,node));
-            break;
-		}
-        case VAR_NODE:
-        {
-            emit_var(ctx, PCAST(var_node_t, node));
-            break;
-        }
-        case RETURN_NODE:
-        {
-            emit_return(ctx, PCAST(return_node_t,node));
-            break;
-        }
-    default:
-        break;
-    }
-}
 
 value_ptr_t 
 llvmir_compiler_t::emit_default(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type)

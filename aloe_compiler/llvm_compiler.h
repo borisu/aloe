@@ -37,8 +37,6 @@ namespace aloe
 
 		virtual void emit_fun_definition(compiler_ctx_ptr_t ctx, Function *fun, fun_node_ptr_t node);
 
-		virtual void emit_exec_statement(compiler_ctx_ptr_t ctx, node_ptr_t node);
-
 		virtual void emit_return(compiler_ctx_ptr_t ctx, return_node_ptr_t node);
 
 		virtual void emit_var(compiler_ctx_ptr_t ctx, var_node_ptr_t node);

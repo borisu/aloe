@@ -6,29 +6,18 @@ options
 }
 
 prog
-    : (moduleStatement)? declarationStatementList EOF
+    : (moduleStatement)? (topLevelStatement ';'?)* EOF
     ;
 
 moduleStatement
     : 'module' identifier (';')?
     ;
 
-declarationStatementList
-    : (declarationStatement ';'?)*
-    ;
-
-declarationStatement
+topLevelStatement
     : varDeclaration
     | funDeclaration 
     | layoutDeclaration
-    ;
-
-executionStatement
-    : varDeclaration
-    | layoutDeclaration
-    | funDeclaration 
-    | returnStatement
-    | expression
+    | expectation
     ;
 
 /********************/
@@ -103,23 +92,39 @@ layoutMember
     ;
 
 /********************/
+/*   Expectations   */
+/********************/
+expectation
+    : 'expect' (expectFun|expectLayout)
+    ;
+
+expectFun
+    : 'fun' identifier ':' funType
+    ;
+
+expectLayout
+    : 'layout' identifier 
+    ;
+
+/********************/
 /* Fun Decalaration */
 /********************/
 
-funDeclaration  
-    : (expect)? 'fun' identifier? ':' funType (executionBlock)?
+funLevelStatement
+    : varDeclaration
+    | layoutDeclaration
+    | funDeclaration 
+    | returnStatement
+    | expectation
+    | expression
     ;
 
-executionBlock
-    : '{' (executionStatement ';'? )* '}'
+funDeclaration  
+    : 'fun' identifier? ':' funType '{' (funLevelStatement ';'? )* '}'
     ;
 
 funType
     :  '(' varList ')' '->' type
-    ;
-
-expect 
-    : 'expect'
     ;
 
 returnStatement

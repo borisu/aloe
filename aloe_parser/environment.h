@@ -11,11 +11,11 @@ namespace aloe
 
 	enum scope_e
 	{
-		CTX_UNKNOWN,
-		CTX_GLOBAL,
-		CTX_FUNCTION,
-		CTX_FUN_ARGS,
-		CTX_EXEC_BLOCK,
+		SCOPE_UNKNOWN,
+		SCOPE_GLOBAL,
+		SCOPE_FUNCTION,
+		SCOPE_FUN_ARGS,
+		SCOPE_EXEC_BLOCK,
 	};
 
 	class environment_t 

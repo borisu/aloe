@@ -34,6 +34,12 @@ namespace aloe
 
 		virtual fun_node_ptr_t walk_fun_declaration(environment_ptr_t env,  aloeParser::FunDeclarationContext* ctx);
 
+		virtual void walk_expectation(environment_ptr_t env, aloeParser::ExpectationContext* ctx);
+
+		virtual void walk_fun_expectation(environment_ptr_t env, aloeParser::ExpectFunContext* ctx);
+
+		virtual void walk_layout_expectation(environment_ptr_t env, aloeParser::ExpectLayoutContext* ctx);
+
 		virtual layout_node_ptr_t walk_layout_declaration(environment_ptr_t env, aloeParser::LayoutDeclarationContext* ctx);
 
 		virtual gt_chain_node_ptr_t walk_gt_chain_node(environment_ptr_t env, aloeParser::GtChainContext* ctx);
@@ -53,8 +59,6 @@ namespace aloe
 		virtual identifier_node_ptr_t  walk_identifier(environment_ptr_t env, aloeParser::IdentifierContext* ctx, identifier_type_e expected_type, bool must_exist);
 
 		virtual arglist_node_ptr_t walk_arg_list(environment_ptr_t env, aloeParser::ArgumentExpressionListContext* ctx);
-
-		virtual exec_block_node_ptr_t walk_execution_block(environment_ptr_t env, aloeParser::ExecutionBlockContext* ctx);
 
         virtual void check_expr_type_equality(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr1, expr_node_ptr_t expr2, const char* op_str);
 
