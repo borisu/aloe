@@ -15,16 +15,14 @@ namespace aloe
 		fun_node_t() :node_t(FUNCTION_NODE),
 			is_defined(false) {}
 
-		identifier_node_ptr_t	id;
+		identifier_node_ptr_t	idt;
 
-		type_node_ptr_t 		type_node;
-
-		aloe_type_ptr_t			type;
-		
 		vector<node_ptr_t>		statements;
 
 		marker_node_ptr_t		end_of_fun;
-	
+
+		type_node_ptr_t		type;
+
 		bool is_defined;
 	};
 

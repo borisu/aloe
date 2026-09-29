@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "environment.h"
+#include "lang/aloe_exception.h"
+
 
 using namespace aloe;
 
@@ -8,20 +10,35 @@ base_modifier_t::base_modifier_t(environment_ptr_t env):prev(env)
 
 }
 
-bridge_ptr_t
-base_modifier_t::register_id(string id, namespace_e ns, node_ptr_t node)
+void
+base_modifier_t::register_type(identifier_node_ptr_t id, type_node_ptr_t node)
 {
-    return prev->register_id(id, ns, node);
+    prev->register_type(id, node);
 }
 
-bridge_ptr_t
-base_modifier_t::find_id(string id, namespace_e ns, bool local_scope)
+type_node_ptr_t
+base_modifier_t::find_type(identifier_node_ptr_t id, bool local_scope)
 {
 	if (prev == nullptr)
 		return nullptr;
 
-    return prev->find_id(id, ns, local_scope);
+    return prev->find_type(id, local_scope);
 }
+
+void 
+base_modifier_t::register_object(identifier_node_ptr_t id, node_ptr_t node)
+{
+	prev->register_object(id, node);
+}
+
+node_proxy_ptr_t 
+base_modifier_t::find_object(identifier_node_ptr_t id, bool local_scope) 
+{
+	if (prev == nullptr)
+		return nullptr;
+
+	return prev->find_object(id, local_scope);
+}   
 
 scope_e
 base_modifier_t::curr_scope()
@@ -56,30 +73,34 @@ environment_modifier_t::environment_modifier_t(environment_ptr_t env) :base_modi
 	
 };
 
-bridge_ptr_t
-environment_modifier_t::register_id(string id, namespace_e ns, node_ptr_t node)
+void
+environment_modifier_t::register_type(identifier_node_ptr_t id, type_node_ptr_t node)
 {
-	auto key = std::make_pair(id, ns);
-	if (bridge_map.count(key) == 0)
+	
+	if (type_map.count(id->name) != 0)
     {
-        bridge_map[key] = bridge_ptr_t(new bridge_t(node));
+        auto prev = type_map[id->name];
+		*prev->atype = *node->atype; // copy the type information to the existing type object
+        prev->ignore = true;
+		prev = node;
+        
     }
     else
     {
-		bridge_map[key]->target->ignore = true; // mark previous definition as ignored, so that it won't be compiled
-		bridge_map[key]->target = node;
+		// the first pointer stored will serve as placeholder for the type information, 
+        // so that when the type is redefined, the existing pointer will be updated with 
+		// the new type information. This way, anyone holding a pointer to the type will 
+        // see the updated information.
+        type_map[id->name] = node; 
     }
-
-	return bridge_map[key];
 }
 
-bridge_ptr_t
-environment_modifier_t::find_id(string id, namespace_e ns, bool local_scope)
+type_node_ptr_t 
+environment_modifier_t::find_type(identifier_node_ptr_t id, bool local_scope)
 {
-    auto key = std::make_pair(id, ns);
-    if (bridge_map.count(key) > 0)
+    if (type_map.count(id->name) > 0)
     {
-        return bridge_map[key];
+        return type_map[id->name];
     }
 
     if (local_scope)
@@ -88,9 +109,42 @@ environment_modifier_t::find_id(string id, namespace_e ns, bool local_scope)
 	if (prev == nullptr)
 		return nullptr;
     
-    return prev->find_id(id, ns, false);
+    return prev->find_type(id, false);
 
 }
+
+void
+environment_modifier_t::register_object(identifier_node_ptr_t id, node_ptr_t node)
+{
+    if (proxy_map.count(id->name) != 0)
+    {
+        auto proxy = proxy_map[id->name];
+		proxy->target->ignore = true;
+		proxy->target = node;
+    }
+    else
+    {
+        proxy_map[id->name] = make_shared<node_proxy_t>(node);
+    }
+}
+
+node_proxy_ptr_t
+environment_modifier_t::find_object(identifier_node_ptr_t id, bool local_scope)
+{
+    if (proxy_map.count(id->name) > 0)
+    {
+        return proxy_map[id->name];
+    }
+
+    if (local_scope)
+        return nullptr;
+
+    if (prev == nullptr)
+        return nullptr;
+
+    return prev->find_object(id, false);
+}
+
 
 scope_modifier_t::scope_modifier_t(scope_e scope, environment_ptr_t env) : 
     base_modifier_t(env), 
@@ -109,8 +163,8 @@ fun_modifier_t::fun_modifier_t(fun_node_ptr_t fun, environment_ptr_t env) :
     base_modifier_t(env),
     fun(fun)
 {
-}
 
+}
 
 fun_node_ptr_t 
 fun_modifier_t::curr_fun()
@@ -118,11 +172,11 @@ fun_modifier_t::curr_fun()
 	return fun;
 }
 
-
-
 source_modifier_t::source_modifier_t(string source) :
     source_name(source)
-{};
+{
+
+};
 
 const string& 
 source_modifier_t::source() 

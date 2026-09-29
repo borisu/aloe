@@ -31,7 +31,7 @@ namespace aloe
 
 		literal_type_e lit_type_id;
 
-		aloe_type_ptr_t type;
+		aloe_type_ptr_t atype;
 
 		variant<string, int, char> value;
 

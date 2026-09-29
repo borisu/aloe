@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <cassert> 
+#include <map>
 #include "base/defs.h"
 
 using namespace std;
@@ -22,9 +23,9 @@ namespace aloe
 		ALOE_TYPE_LAYOUT
 	};
 
-	inline bool is_arithmetic(aloe_type_e cat)
+	inline bool is_arithmetic(aloe_type_e t)
 	{
-		switch (cat)
+		switch (t)
 		{
 		case ALOE_TYPE_CHAR:
 		case ALOE_TYPE_INT:
@@ -39,80 +40,143 @@ namespace aloe
 
 	typedef
 	shared_ptr<aloe_type_t> aloe_type_ptr_t;
-
-	typedef vector<aloe_type_ptr_t>
-	aloe_type_vector_t;
-
-	struct member_t
+	
+	struct var_t
 	{
 		string name;
-		aloe_type_ptr_t type;
+
+		aloe_type_ptr_t atype;
 	};
 
 	typedef
-	shared_ptr<member_t> member_ptr_t;
+	shared_ptr<var_t> var_ptr_t;
 
-	typedef vector<member_ptr_t>
-	member_vector_t;
+	typedef vector<var_ptr_t>
+	var_vec_t;
 
-	struct gt_member_t;
+	typedef map<string, var_ptr_t>
+	var_map_t;
 
-	typedef shared_ptr<gt_member_t>
-	gt_member_ptr_t;
+	struct var_set_t
+	{
+		var_vec_t v;
+		var_map_t m;
+	};
 
-	struct gt_member_t
+	typedef shared_ptr<var_set_t>
+	var_set_ptr_t;
+
+	struct gt_t;
+
+	typedef shared_ptr<gt_t>
+	gt_ptr_t;
+
+	struct gt_t
+	{
+		aloe_type_ptr_t atype;
+	};
+
+	typedef vector<gt_ptr_t>
+	gt_vec_t;
+
+	typedef map<aloe_type_t, gt_ptr_t>
+	gt_map_t;
+
+	struct gt_set_t
+	{
+		gt_vec_t v;
+		gt_map_t m;
+	};
+
+	typedef shared_ptr<gt_set_t>
+	gt_set_ptr_t;
+
+	struct layout_info_t
 	{
 		string name;
 
-		aloe_type_ptr_t type;
+		int id;
 
-		bool is_virtual;
+		gt_set_ptr_t gt_chain;
 
-		gt_member_ptr_t next;
+		bool is_incomplete;
+
+		var_set_ptr_t fields;
+		
 	};
 
-	struct aloe_type_t
+	typedef shared_ptr<layout_info_t>	
+	layout_info_ptr_t;
+
+	struct array_info_t
 	{
-		aloe_type_t(aloe_type_e cat_id) : type_id(cat_id), arr_size(-1)
+		array_info_t():size(-1)
 		{
+
+		}
+
+		aloe_type_ptr_t elem_type;
+
+		int size; // -1 for unsized arrays
+	};
+
+	typedef shared_ptr<array_info_t>
+	array_info_ptr_t;
+
+	struct ptr_info_t
+	{
+		aloe_type_ptr_t pointee_type;
+	};
+
+	typedef shared_ptr<ptr_info_t>
+	ptr_info_ptr_t;
+
+	struct fun_info_t
+	{
+
+		aloe_type_ptr_t ret_type;
+
+		var_set_ptr_t params;
+
+	};
+
+	typedef shared_ptr<fun_info_t>
+	fun_info_ptr_t;
+
+	// the object of the aloe_type_t is overwritten when the type is redefined, 
+	// so we don't want to allow inheritance to avoid slicing issues
+	struct aloe_type_t final 
+	{
+		aloe_type_t(aloe_type_e cat_id) : type_id(cat_id)
+		{
+
 		}
 
 		aloe_type_e type_id;
 
-		aloe_type_ptr_t arr_type;
+		layout_info_ptr_t lay;
 
-		aloe_type_ptr_t ptr_type;
+		array_info_ptr_t arr;
 
-		int arr_size; // -1 for unsized arrays
+		ptr_info_ptr_t ptr;
 
-		aloe_type_ptr_t fun_ret_type;
-
-		aloe_type_vector_t fun_param_types;
-		
-		string lot_name; 
-		
-		member_vector_t lot_members;
-
-		gt_member_ptr_t lot_gt;
-
+		fun_info_ptr_t fun;
+	
 		virtual ~aloe_type_t() {};
 
 		string to_str();
 	};
 
-	
-	bool operator==(const aloe_type_t& t1, const aloe_type_t& t2)  ;
+	bool operator==(const aloe_type_t& t1, const aloe_type_t& t2);
 
-	bool operator!=(const aloe_type_t& t1, const aloe_type_t& t2)  ;
+	bool operator!=(const aloe_type_t& t1, const aloe_type_t& t2);
 
-	bool operator<(const aloe_type_t & t1, const aloe_type_t & t2)  ;
-	
-	bool operator<(const gt_member_t& m1, const gt_member_t& m2) ;
+	bool operator<(const aloe_type_t& t1, const aloe_type_t& t2);
 
-	bool operator==(const gt_member_t& m1, const gt_member_t& m2)  ;
+	bool operator == (const var_t& v1, const var_t& v2);
 
-	bool operator!=(const gt_member_t& m1, const gt_member_t& m2);
+	bool operator != (const var_t& v1, const var_t& v2);
 
-
+	bool operator < (const var_t & v1, const var_t & v2);
 	
 }

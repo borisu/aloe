@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "lang/aloe_type.h"
 
 using namespace std;
 
@@ -32,7 +33,7 @@ namespace aloe
 
 	struct node_t
 	{
-		node_t(node_type_e ir_type) : node_type_id(ir_type), line(-1), pos(-1), ignore (false) {}
+		node_t(node_type_e node_type) : node_type_id(node_type), line(-1), pos(-1), ignore (false) {}
 
 		node_type_e node_type_id;
 
@@ -44,4 +45,13 @@ namespace aloe
 
 		virtual ~node_t() {}
 	};
+
+	struct node_proxy_t
+	{
+		node_proxy_t(node_ptr_t target) : target(target) {}
+		node_ptr_t target;
+	};
+
+	typedef shared_ptr<node_proxy_t> 
+	node_proxy_ptr_t;
 }

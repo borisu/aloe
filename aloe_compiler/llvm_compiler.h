@@ -31,7 +31,7 @@ namespace aloe
 
 		virtual Type* emit_ir_type(compiler_ctx_ptr_t ctx, type_node_ptr_t node);
 
-		virtual Type* emit_ir_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type);
+		virtual Type* emit_ir_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t atype);
 
 		virtual value_ptr_t emit_fun(compiler_ctx_ptr_t ctx, fun_node_ptr_t node);
 
@@ -41,7 +41,7 @@ namespace aloe
 
 		virtual void emit_var(compiler_ctx_ptr_t ctx, var_node_ptr_t node);
 
-		virtual value_ptr_t emit_default(compiler_ctx_ptr_t ctx, aloe_type_ptr_t type);
+		virtual value_ptr_t emit_default(compiler_ctx_ptr_t ctx, aloe_type_ptr_t atype);
 
 		virtual value_ptr_t emit_expr_identifier(compiler_ctx_ptr_t ctx, identifier_expr_node_ptr_t node);
 
@@ -83,7 +83,7 @@ namespace aloe
 		//
 		// HELPERS
 		//
-		virtual value_ptr_t emit_constant(compiler_ctx_ptr_t ctx, variant<int,float, double, char> val, aloe_type_ptr_t type, node_ptr_t node);
+		virtual value_ptr_t emit_constant(compiler_ctx_ptr_t ctx, variant<int,float, double, char> val, aloe_type_ptr_t atype, node_ptr_t node);
 
 		virtual value_ptr_t emit_raw_assign(compiler_ctx_ptr_t ctx, value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node);
 

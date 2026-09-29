@@ -16,7 +16,7 @@ using namespace std;
 bool
 compile_cmd_t::compile_cmd(istream& is, ostream& os, const string& source_id,bool no_debug )
 {
-    auto p = create_antlr4_parser();
+    /*auto p = create_antlr4_parser();
 
     ast_ptr_t ast;
 
@@ -31,7 +31,7 @@ compile_cmd_t::compile_cmd(istream& is, ostream& os, const string& source_id,boo
     if (!c->compile(ast, os))
     {
         return false;
-    }
+    }*/
     
     return true;
 

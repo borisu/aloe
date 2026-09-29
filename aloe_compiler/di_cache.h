@@ -14,7 +14,7 @@ namespace aloe
 
 		di_cache_t(DIBuilder& dib);
 
-		DIType* get_dit_type(aloe_type_ptr_t type);
+		DIType* get_dit_type(aloe_type_ptr_t atype);
 
 	private:
 

@@ -22,9 +22,13 @@ namespace aloe
 	{
 	public:
 		
-		virtual bridge_ptr_t register_id(string id, namespace_e ns, node_ptr_t node) = 0;
+		virtual void register_type(identifier_node_ptr_t id, type_node_ptr_t node) = 0;
+		
+		virtual type_node_ptr_t find_type(identifier_node_ptr_t id, bool local_scope = false) = 0;
 
-		virtual bridge_ptr_t find_id(string id, namespace_e ns, bool local_scope = false) = 0;
+		virtual void register_object(identifier_node_ptr_t id, node_ptr_t node) = 0;
+
+		virtual node_proxy_ptr_t find_object(identifier_node_ptr_t id, bool local_scope = false) = 0;
 
 		virtual scope_e curr_scope() = 0;
 
@@ -40,9 +44,13 @@ namespace aloe
 
 		base_modifier_t(environment_ptr_t env = nullptr);
 
-		bridge_ptr_t register_id(string id, namespace_e ns, node_ptr_t node) override;
+		virtual void register_type(identifier_node_ptr_t id, type_node_ptr_t node) override;
 
-		bridge_ptr_t find_id(string id, namespace_e ns, bool local_scope) override;
+		virtual type_node_ptr_t find_type(identifier_node_ptr_t id, bool local_scope) override;
+
+		virtual void register_object(identifier_node_ptr_t id, node_ptr_t node) override;
+
+		virtual node_proxy_ptr_t find_object(identifier_node_ptr_t id, bool local_scope = false) override;
 
 		scope_e curr_scope() override;
 
@@ -62,19 +70,25 @@ namespace aloe
 
 		environment_modifier_t(environment_ptr_t env = nullptr);
 
-		bridge_ptr_t register_id(string id, namespace_e ns, node_ptr_t node) override;
+		virtual void register_type(identifier_node_ptr_t id, type_node_ptr_t node) override;
 
-		bridge_ptr_t find_id(string id, namespace_e ns, bool local_scope) override;
+		virtual type_node_ptr_t find_type(identifier_node_ptr_t id, bool local_scope) override;
+
+		virtual void register_object(identifier_node_ptr_t id, node_ptr_t node) override;
+
+		virtual node_proxy_ptr_t find_object(identifier_node_ptr_t id, bool local_scope) override;
 		
 	protected:
+	
+		typedef map<string, type_node_ptr_t>
+		type_map_t;
 
-		typedef std::pair<string, namespace_e> id_key_t;
+		type_map_t  type_map;
 
-		typedef map<id_key_t, bridge_ptr_t>
+		typedef map<string, node_proxy_ptr_t>
+		proxy_map_t;
 
-		bridge_map_t;
-
-		bridge_map_t  bridge_map;
+		proxy_map_t proxy_map;
 	};
 
 	class scope_modifier_t : public virtual base_modifier_t

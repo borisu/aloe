@@ -5,7 +5,6 @@
 #include "node.h"
 #include "literal.h"
 #include "identifier.h"
-#include "bridge.h"
 #include "type.h"
 
 using namespace std;
@@ -76,7 +75,7 @@ namespace aloe
 
 		expression_op_e op_id;
 
-		aloe_type_ptr_t type;
+		aloe_type_ptr_t atype;
 
 		bool is_lvalue;
 	};
@@ -103,7 +102,8 @@ namespace aloe
 
 		identifier_node_ptr_t id;
 
-		bridge_ptr_t bn;
+		node_proxy_ptr_t ref;
+
 	};
 	
 	struct unary_expr_node_t : public expr_node_t
@@ -154,15 +154,6 @@ namespace aloe
 	typedef 
 	shared_ptr<binary_expr_node_t> binary_expr_node_ptr_t;
 
-	struct identifier_expression_node_t : public expr_node_t
-	{
-		identifier_expression_node_t() :expr_node_t(expr_identifier) {}
-
-		expr_node_ptr_t operand;
-
-		identifier_node_ptr_t id;
-	};
-
 	struct ternary_expr_node_t : public expr_node_t
 	{
 		ternary_expr_node_t() :expr_node_t(expr_ternary) {}
@@ -181,6 +172,24 @@ namespace aloe
 		arglist_node_ptr_t arg_list;
 	};
 
+	struct dot_expr_node_t : public expr_node_t
+	{
+		dot_expr_node_t(): expr_node_t(expr_dot) {}
+
+		expr_node_ptr_t operand;
+
+		identifier_node_ptr_t id;
+	};
+
+	struct arrow_expr_node_t : public expr_node_t
+	{
+		arrow_expr_node_t() : expr_node_t(expr_arrow) {}
+
+		expr_node_ptr_t operand;
+
+		identifier_node_ptr_t id;
+	};
+
 #define DEFINE_UNARY_EXPR_NODE_TYPE(NAME) struct NAME##_expr_node_t : public unary_expr_node_t { NAME##_expr_node_t() : unary_expr_node_t(expr_##NAME) {} }
 
 	DEFINE_UNARY_EXPR_NODE_TYPE(sfxplusplus);
@@ -194,10 +203,6 @@ namespace aloe
 	DEFINE_UNARY_EXPR_NODE_TYPE(sizeofexpr);
 	DEFINE_UNARY_EXPR_NODE_TYPE(deref);
 	DEFINE_UNARY_EXPR_NODE_TYPE(addressof);
-	
-#define DEFINE_IDENTIFIER_EXPR_NODE_TYPE(NAME) struct NAME##_expr_node_t : public identifier_expression_node_t { NAME##_expr_node_t () : identifier_expression_node_t() { op_id = expr_##NAME; } }
-	DEFINE_IDENTIFIER_EXPR_NODE_TYPE(dot);
-	DEFINE_IDENTIFIER_EXPR_NODE_TYPE(arrow);
 
 #define DEFINE_BINARY_EXPR_NODE_TYPE(NAME) struct NAME##_expr_node_t : public binary_expr_node_t { NAME##_expr_node_t() : binary_expr_node_t(expr_##NAME) {} }
 	DEFINE_BINARY_EXPR_NODE_TYPE(index);

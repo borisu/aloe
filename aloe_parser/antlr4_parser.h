@@ -28,7 +28,7 @@ namespace aloe
 
 		virtual type_node_ptr_t walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx);
 
-		virtual var_list_node_ptr_t walk_var_list(environment_ptr_t env, aloeParser::VarListContext* ctx);
+		virtual var_set_ptr_t walk_var_list(environment_ptr_t env, aloeParser::VarListContext* ctx);
 
 		virtual var_node_ptr_t walk_var(environment_ptr_t env, aloeParser::VarDeclarationContext* ctx);
 
@@ -40,15 +40,15 @@ namespace aloe
 
 		virtual void walk_layout_expectation(environment_ptr_t env, aloeParser::ExpectLayoutContext* ctx);
 
-		virtual layout_node_ptr_t walk_layout_declaration(environment_ptr_t env, aloeParser::LayoutDeclarationContext* ctx);
+		virtual type_node_ptr_t walk_layout_declaration(environment_ptr_t env, aloeParser::LayoutDeclarationContext* ctx);
 
-		virtual gt_chain_node_ptr_t walk_gt_chain_node(environment_ptr_t env, aloeParser::GtChainContext* ctx);
+		virtual gt_set_ptr_t walk_gt_chain_node(environment_ptr_t env, aloeParser::GtChainContext* ctx);
 
-		virtual gt_chain_member_ptr_t walk_gt_chain_member(environment_ptr_t env, aloeParser::GtMemberContext* ctx);
+		virtual gt_ptr_t walk_gt_chain_member(environment_ptr_t env, aloeParser::GtMemberContext* ctx);
 
-		virtual  layout_member_list_ptr_t walk_layout_member_list(environment_ptr_t env, aloeParser::LayoutMemberListContext* ctx);
+		virtual var_set_ptr_t walk_layout_member_list(environment_ptr_t env, aloeParser::LayoutMemberListContext* ctx);
 
-		virtual layout_member_ptr_t walk_layout_member(environment_ptr_t env, aloeParser::LayoutMemberContext* ctx);
+		virtual var_ptr_t walk_layout_member(environment_ptr_t env, aloeParser::LayoutMemberContext* ctx);
 
 		virtual expr_node_ptr_t walk_expression(environment_ptr_t env, aloeParser::ExpressionContext* ctx);
 

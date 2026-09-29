@@ -17,35 +17,12 @@ namespace aloe
 
 		identifier_node_ptr_t	id;
 
-		type_node_ptr_t			type_node;
-
-		aloe_type_ptr_t			type;
+		aloe_type_ptr_t			atype;
 
 		expr_node_ptr_t			initializer;
 	};
 
 	typedef shared_ptr<var_node_t> 
 	var_node_ptr_t;
-
-	typedef map<identifier_node_ptr_t, var_node_ptr_t> 
-	var_map_t;
-
-	typedef pair<identifier_node_ptr_t, var_node_ptr_t> 
-	var_id_t;
-
-	typedef vector<var_id_t> 
-	var_vec_t;
-
-	struct var_list_node_t : public node_t
-	{
-		var_list_node_t() :node_t(VAR_LIST_NODE) {};
-
-		var_map_t vars_m;
-
-		var_vec_t vars_v;
-	};
-
-	typedef shared_ptr<var_list_node_t>
-	var_list_node_ptr_t;
 
 }

@@ -144,9 +144,6 @@
     <ProjectReference Include="..\aloe_base\aloe_base.vcxproj">
       <Project>{f725e333-0ca3-4f55-8b28-c44c0348ec4e}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\aloe_compiler\aloe_compiler.vcxproj">
-      <Project>{6bbf1cea-d45d-48e9-9015-7df6be6689a9}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\aloe_lang\aloe_lang.vcxproj">
       <Project>{54218a71-74b2-42f5-9381-8d7c93deccb6}</Project>
     </ProjectReference>

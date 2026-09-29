@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
         std::cerr << "Please set mode of operation";
         break;
     }
-    case MODE_COMPILE:
+   /* case MODE_COMPILE:
     {
         std::ifstream ifs;
         std::istream* in;
@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
            no_debug) ? 0 : 1;
 
         break;
-    }
+    }*/
     case MODE_TEST:
     {
 		tests_cmd_t test_runner;
