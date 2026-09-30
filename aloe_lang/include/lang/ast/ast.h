@@ -7,6 +7,7 @@
 #include "literal.h"
 #include "identifier.h"
 #include "type.h"
+#include "layout.h"
 
 
 using namespace std;

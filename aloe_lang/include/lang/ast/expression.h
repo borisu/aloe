@@ -75,7 +75,7 @@ namespace aloe
 
 		expression_op_e op_id;
 
-		aloe_type_ptr_t atype;
+		aloe_type_ptr_t type;
 
 		bool is_lvalue;
 	};
@@ -131,14 +131,14 @@ namespace aloe
 
 		expr_node_ptr_t operand;
 
-		type_node_ptr_t type_node;
+		aloe_type_ptr_t type;
 	};
 
 	struct sizeoftype_expr_node_t : public expr_node_t
 	{
 		sizeoftype_expr_node_t() :expr_node_t(expr_sizeoftype) {}
 
-		type_node_ptr_t type_node;
+		aloe_type_ptr_t type;
 
 	};
 

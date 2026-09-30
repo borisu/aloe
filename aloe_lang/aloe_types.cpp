@@ -19,7 +19,7 @@ aloe::operator != (const aloe_type_t& t1, const aloe_type_t& t2)
 bool
 aloe::operator == (const var_t& v1, const var_t& v2)
 {
-	return v1.name == v2.name && *v1.atype == *v2.atype;
+	return v1.name == v2.name && *v1.type == *v2.type;
 }
 
 bool 
@@ -35,7 +35,7 @@ aloe::operator < (const var_t& v1, const var_t& v2)
 	{
 		return v1.name < v2.name;
 	}
-	return *v1.atype < *v2.atype;
+	return *v1.type < *v2.type;
 }
 
 bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
@@ -142,7 +142,7 @@ aloe_type_t::to_str()
 			{
 				result += ", ";
 			}
-			result += fun->params->v[i]->name + ": " + fun->params->v[i]->atype->to_str();
+			result += fun->params->v[i]->name + ": " + fun->params->v[i]->type->to_str();
 		}
 		result += ") -> ";
 		result += fun->ret_type->to_str();
@@ -162,7 +162,7 @@ aloe_type_t::to_str()
 		string s = "layout " + lay->name + "{";
 		for (auto& m : lay->fields->v)
 		{
-			s += m->name + ":" + m->atype->to_str() + "; ";
+			s += m->name + ":" + m->type->to_str() + "; ";
 		}
 		s += "}";
 		return s;

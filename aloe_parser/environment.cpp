@@ -11,12 +11,12 @@ base_modifier_t::base_modifier_t(environment_ptr_t env):prev(env)
 }
 
 void
-base_modifier_t::register_type(identifier_node_ptr_t id, type_node_ptr_t node)
+base_modifier_t::register_type(identifier_node_ptr_t id, aloe_type_ptr_t node)
 {
     prev->register_type(id, node);
 }
 
-type_node_ptr_t
+aloe_type_ptr_t
 base_modifier_t::find_type(identifier_node_ptr_t id, bool local_scope)
 {
 	if (prev == nullptr)
@@ -74,14 +74,13 @@ environment_modifier_t::environment_modifier_t(environment_ptr_t env) :base_modi
 };
 
 void
-environment_modifier_t::register_type(identifier_node_ptr_t id, type_node_ptr_t node)
+environment_modifier_t::register_type(identifier_node_ptr_t id, aloe_type_ptr_t node)
 {
 	
 	if (type_map.count(id->name) != 0)
     {
         auto prev = type_map[id->name];
-		*prev->atype = *node->atype; // copy the type information to the existing type object
-        prev->ignore = true;
+		*prev = *node; // copy the type information to the existing type object
 		prev = node;
         
     }
@@ -95,7 +94,7 @@ environment_modifier_t::register_type(identifier_node_ptr_t id, type_node_ptr_t 
     }
 }
 
-type_node_ptr_t 
+aloe_type_ptr_t 
 environment_modifier_t::find_type(identifier_node_ptr_t id, bool local_scope)
 {
     if (type_map.count(id->name) > 0)

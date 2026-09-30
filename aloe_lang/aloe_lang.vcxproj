@@ -158,6 +158,7 @@
     <ClInclude Include="include\lang\ast\expression.h" />
     <ClInclude Include="include\lang\ast\fun.h" />
     <ClInclude Include="include\lang\ast\identifier.h" />
+    <ClInclude Include="include\lang\ast\layout.h" />
     <ClInclude Include="include\lang\ast\literal.h" />
     <ClInclude Include="include\lang\ast\marker.h" />
     <ClInclude Include="include\lang\ast\node.h" />
@@ -166,6 +167,7 @@
     <ClInclude Include="include\lang\ast\var.h" />
     <ClInclude Include="include\lang\compiler.h" />
     <ClInclude Include="include\lang\aloe_exception.h" />
+    <ClInclude Include="include\lang\context.h" />
     <ClInclude Include="include\lang\intrinsics.h" />
     <ClInclude Include="include\lang\parser.h" />
     <ClInclude Include="pch.h" />

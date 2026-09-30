@@ -5,6 +5,7 @@
 #include <cassert> 
 #include <map>
 #include "base/defs.h"
+#include "lang/context.h"
 
 using namespace std;
 
@@ -41,11 +42,11 @@ namespace aloe
 	typedef
 	shared_ptr<aloe_type_t> aloe_type_ptr_t;
 	
-	struct var_t
+	struct var_t : public context_t
 	{
 		string name;
 
-		aloe_type_ptr_t atype;
+		aloe_type_ptr_t type;
 	};
 
 	typedef
@@ -57,7 +58,7 @@ namespace aloe
 	typedef map<string, var_ptr_t>
 	var_map_t;
 
-	struct var_set_t
+	struct var_set_t : public context_t
 	{
 		var_vec_t v;
 		var_map_t m;
@@ -73,7 +74,7 @@ namespace aloe
 
 	struct gt_t
 	{
-		aloe_type_ptr_t atype;
+		aloe_type_ptr_t type;
 	};
 
 	typedef vector<gt_ptr_t>
@@ -82,7 +83,7 @@ namespace aloe
 	typedef map<aloe_type_t, gt_ptr_t>
 	gt_map_t;
 
-	struct gt_set_t
+	struct gt_set_t : public context_t
 	{
 		gt_vec_t v;
 		gt_map_t m;
@@ -99,9 +100,9 @@ namespace aloe
 
 		gt_set_ptr_t gt_chain;
 
-		bool is_incomplete;
-
 		var_set_ptr_t fields;
+
+		bool is_incomplete;
 		
 	};
 
@@ -145,7 +146,7 @@ namespace aloe
 
 	// the object of the aloe_type_t is overwritten when the type is redefined, 
 	// so we don't want to allow inheritance to avoid slicing issues
-	struct aloe_type_t final 
+	struct aloe_type_t final :public context_t
 	{
 		aloe_type_t(aloe_type_e cat_id) : type_id(cat_id)
 		{
