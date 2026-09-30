@@ -10,7 +10,7 @@ namespace aloe
 	{
 		type_node_t() :node_t(TYPE_NODE){}
 
-		aloe_type_ptr_t type;
+		type_proxy_ptr_t type;
 	};
 
 	struct type_node_t;

@@ -24,9 +24,9 @@ namespace aloe
 
 		virtual prog_node_ptr_t walk_prog(environment_ptr_t env,  aloeParser::ProgContext* ctx);
 
-		virtual aloe_type_ptr_t walk_type(environment_ptr_t env,  aloeParser::TypeContext* ctx);
+		virtual type_proxy_ptr_t walk_type(environment_ptr_t env,  aloeParser::TypeContext* ctx);
 
-		virtual aloe_type_ptr_t walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx);
+		virtual type_proxy_ptr_t walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx);
 
 		virtual var_set_ptr_t walk_var_list(environment_ptr_t env, aloeParser::VarListContext* ctx);
 
@@ -62,7 +62,7 @@ namespace aloe
 
         virtual void check_expr_type_equality(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr1, expr_node_ptr_t expr2, const char* op_str);
 
-		virtual void check_type_equality(environment_ptr_t env, antlr4::ParserRuleContext* ctx, aloe_type_ptr_t type1, aloe_type_ptr_t  type2);
+		virtual void check_type_equality(environment_ptr_t env, antlr4::ParserRuleContext* ctx, type_proxy_ptr_t type1, type_proxy_ptr_t  type2);
 
 		virtual void check_binary_arithmetic(environment_ptr_t env, aloeParser::ExpressionContext* ctx, binary_expr_node_ptr_t  expr_node, const char* op_str);
 

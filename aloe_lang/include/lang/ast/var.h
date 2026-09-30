@@ -17,7 +17,7 @@ namespace aloe
 
 		identifier_node_ptr_t	id;
 
-		aloe_type_ptr_t			type;
+		type_proxy_ptr_t		type;
 
 		expr_node_ptr_t			initializer;
 	};

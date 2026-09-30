@@ -21,7 +21,7 @@ namespace aloe
 
 		marker_node_ptr_t		end_of_fun;
 
-		aloe_type_ptr_t		    type;
+		type_proxy_ptr_t		    type;
 
 		bool is_defined;
 	};

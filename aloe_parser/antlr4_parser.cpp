@@ -184,27 +184,29 @@ antl4_parser_t::walk_prog(environment_ptr_t env, aloeParser::ProgContext* ctx)
     return out;
 }
 
-aloe_type_ptr_t
+type_proxy_ptr_t
 antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx)
 {
-    aloe_type_ptr_t out;
-	INIT_POS(out, ctx);
+    aloe_type_ptr_t type;
+	INIT_POS(type, ctx);
+
+    type_proxy_ptr_t out;
 
     if (INSTANCE_OF(aloeParser::Type_intContext)) 
     {
-		out = _new(aloe_type,ALOE_TYPE_INT);
+		type = _new(aloe_type,ALOE_TYPE_INT);
     }
     else if (INSTANCE_OF(aloeParser::Type_charContext))
     {
-		out = _new(aloe_type,ALOE_TYPE_CHAR);
+		type = _new(aloe_type,ALOE_TYPE_CHAR);
     }
     else if (INSTANCE_OF(aloeParser::Type_doubleContext))
     {
-        out = _new(aloe_type, ALOE_TYPE_DOUBLE);
+        type = _new(aloe_type, ALOE_TYPE_DOUBLE);
     }
     else if (INSTANCE_OF(aloeParser::Type_voidContext))
     {
-        out = _new(aloe_type, ALOE_TYPE_VOID);
+        type = _new(aloe_type, ALOE_TYPE_VOID);
 	}
     else if (INSTANCE_OF(aloeParser::Type_funContext))
     {
@@ -216,14 +218,14 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx)
     }
     else if (INSTANCE_OF(aloeParser::Type_pointerContext))
     {
-        out = _new(aloe_type, ALOE_TYPE_PTR);
-		out->ptr->pointee_type  = walk_type(env, e->atype());
+        type = _new(aloe_type, ALOE_TYPE_PTR);
+		type->ptr->pointee_type  = walk_type(env, e->atype());
     }
 	else if (INSTANCE_OF(aloeParser::Type_arrayContext))
     {
-        out = _new(aloe_type, ALOE_TYPE_ARRAY);
-        out->arr->elem_type  = walk_type(env, e->atype());
-		out->arr->size      = e->DigitSequence() ? stoul(e->DigitSequence()->getText()) : -1;
+        type = _new(aloe_type, ALOE_TYPE_ARRAY);
+        type->arr->elem_type  = walk_type(env, e->atype());
+		type->arr->size      = e->DigitSequence() ? stoul(e->DigitSequence()->getText()) : -1;
     }
     else if (INSTANCE_OF(aloeParser::Type_layoutContext))
     {
@@ -233,13 +235,18 @@ antl4_parser_t::walk_type( environment_ptr_t env, aloeParser::TypeContext* ctx)
     {
         auto id_node = walk_identifier(env, e->identifier());
 		out = env->find_type(id_node);
-        ASSERT_LOC(out, "undefined identifier '%s'", id_node->name.c_str());
+        ASSERT_LOC(type, "undefined identifier '%s'", id_node->name.c_str());
     }
     else
     {
         RAISE_LOC("unknown type '%s'", ctx->getText().c_str());
     }
-  
+
+    if (!out)
+    {
+        out = _new(type_proxy, type);
+    }
+     
     return out;
 }
 
@@ -275,7 +282,7 @@ antl4_parser_t::walk_fun_expectation(environment_ptr_t env, aloeParser::ExpectFu
 	{
         ASSERT_LOC(prev->target->node_type_id == out->node_type_id, "identifier %s was already defined as a different kind at (%d,%d)", out->idt->name.c_str(), prev->target->line,prev->target->pos);
         auto prev_fun  = PCAST(fun_node_t, prev->target);
-        ASSERT_LOC(*prev_fun->type == *out->type, "identifier %s was already defined with a different type at (%d,%d)", out->idt->name.c_str(), prev->target->line, prev->target->pos);
+        ASSERT_LOC(*prev_fun->type->target == *out->type->target, "identifier %s was already defined with a different type at (%d,%d)", out->idt->name.c_str(), prev->target->line, prev->target->pos);
 	}
     else
     {
@@ -288,21 +295,21 @@ antl4_parser_t::walk_fun_expectation(environment_ptr_t env, aloeParser::ExpectFu
 void 
 antl4_parser_t::walk_layout_expectation(environment_ptr_t env, aloeParser::ExpectLayoutContext* ctx)
 {
-    auto out = _new(aloe_type, ALOE_TYPE_LAYOUT);
-    INIT_POS(out, ctx);
+    auto type = _new(aloe_type, ALOE_TYPE_LAYOUT);
+    INIT_POS(type, ctx);
 
 	auto id = walk_identifier(env, ctx->identifier());
-    out->lay->name =id->name;
-	out->lay->is_incomplete = true;
+    type->lay->name =id->name;
+	type->lay->is_incomplete = true;
 
     auto prev = env->find_type(id, true);
     if (prev)
     {
-        ASSERT_LOC(*prev == *out, "identifier %s was already defined with different type at (%d,%d)", id->name.c_str(), prev->line, prev->pos);
+        ASSERT_LOC(*prev->target == *type, "identifier %s was already defined with different type at (%d,%d)", id->name.c_str(), prev->target->line, prev->target->pos);
     }
     else
     {
-        env->register_type(id, out);
+        env->register_type(id, type);
     }
 }
 
@@ -312,33 +319,33 @@ antl4_parser_t::walk_layout_declaration(environment_ptr_t env, aloeParser::Layou
     auto out = _new(layout_node);
     INIT_POS(out, ctx);
 
-    out->type = _new(aloe_type, ALOE_TYPE_LAYOUT);
+    auto type = _new(aloe_type, ALOE_TYPE_LAYOUT);
 
     if (ctx->identifier())
     {
 		auto id = walk_identifier(env, ctx->identifier());
-        out->type->lay->name = id->name;
+        type->lay->name = id->name;
        
         auto prev = env->find_type(id, true);
         if (prev)
         {
-            if (!prev->lay->is_incomplete)
+            if (!prev->target->lay->is_incomplete)
             {
-                RAISE_LOC("layout %s was already defined", out->type->lay->name.c_str());
+                RAISE_LOC("layout %s was already defined", out->type->target->lay->name.c_str());
             }
         }
 
-        env->register_type(id, out->type);
+        out->type =  env->register_type(id, out->type->target);
     }
 
     if (ctx->gtChain())
     {
-        out->type->lay->gt_chain = walk_gt_chain_node(env, ctx->gtChain());
+        out->type->target->lay->gt_chain = walk_gt_chain_node(env, ctx->gtChain());
     }
 
 	if (ctx->layoutMemberList())
 	{
-		out->type->lay->fields = walk_layout_member_list(env, ctx->layoutMemberList());
+		out->type->target->lay->fields = walk_layout_member_list(env, ctx->layoutMemberList());
 	}
 
     return out;
@@ -394,9 +401,9 @@ antl4_parser_t::walk_gt_chain_node(environment_ptr_t env, aloeParser::GtChainCon
 	{
         auto gt = walk_gt_chain_member(env, member);
 
-        ASSERT(out->m.count(*gt->type) == 0, "same type appears twice in gt chain");
+        ASSERT(out->m.count(*gt->type->target) == 0, "same type appears twice in gt chain");
         
-        out->m[*gt->type] = gt;
+        out->m[*gt->type->target] = gt;
         out->v.push_back(gt);
 	}
 
@@ -429,16 +436,18 @@ antl4_parser_t::walk_gt_chain_member(environment_ptr_t env, aloeParser::GtMember
     return out;
 }
 
-aloe_type_ptr_t
+type_proxy_ptr_t
 antl4_parser_t::walk_fun_type(environment_ptr_t env, aloeParser::FunTypeContext* ctx)
 {
-    auto out = _new(aloe_type, ALOE_TYPE_FUNCTION);
-    INIT_POS(out, ctx);
+    auto type = _new(aloe_type, ALOE_TYPE_FUNCTION);
+    INIT_POS(type, ctx);
 
-    out->fun->ret_type  = walk_type(env, ctx->atype());
+    auto out = _new(type_proxy, type);
+
+    type->fun->ret_type  = walk_type(env, ctx->atype());
 
     environment_ptr_t new_env(new scope_modifier_t(SCOPE_FUN_ARGS, env));
-    out->fun->params = walk_var_list(new_env, ctx->varList());
+    type->fun->params = walk_var_list(new_env, ctx->varList());
     
     
     return out;
@@ -478,7 +487,7 @@ antl4_parser_t::walk_fun_declaration( environment_ptr_t env, aloeParser::FunDecl
 	// check that function is not defined with different type
     if (prev)
     {
-        if (*prev_fun->type != *out->type)
+        if (*prev_fun->type->target != *out->type->target)
         {
 			RAISE_LOC("function %s was already declared with different type at (%d:%d)", out->idt->name.c_str(), prev_fun->line, prev_fun->pos);
         }
@@ -617,7 +626,7 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
     {
         out->lit_type_id = LIT_INT;
         out->value = std::stoi(ctx->DigitSequence()->getText());
-		out->type  = make_shared<aloe_type_t>(ALOE_TYPE_INT);
+		out->type  = _new( type_proxy,_new (aloe_type, ALOE_TYPE_INT));
     }
     else if (ctx->StringLiteral().size() > 0)
     {
@@ -628,17 +637,18 @@ antl4_parser_t::walk_literal(environment_ptr_t env, aloeParser::LiteralContext* 
             sf += s->getText();
         }
         out->value = unescape(sf.substr(1, sf.size() - 2));
-		out->type  = make_shared<aloe_type_t>(ALOE_TYPE_ARRAY);
-		out->type->arr->elem_type = make_shared<aloe_type_t>(ALOE_TYPE_CHAR);
-		out->type->arr->size = (int)std::get<string>(out->value).size() + 1; // +1 for null terminator
+        out->type = _new(type_proxy, _new(aloe_type, ALOE_TYPE_ARRAY));
+    	out->type->target->arr->elem_type = _new(type_proxy, _new(aloe_type, ALOE_TYPE_CHAR));  
+
+		out->type->target->arr->size = (int)std::get<string>(out->value).size() + 1; // +1 for null terminator
 		
     }
     else if (ctx->CharacterConstant())
     {
 		out->lit_type_id = LIT_CHAR;
         out->value = unescape(ctx->CharacterConstant()->getText())[0];
-        out->type  = make_shared<aloe_type_t>(ALOE_TYPE_CHAR);
-		
+        out->type = _new(type_proxy, _new(aloe_type, ALOE_TYPE_CHAR));
+   	
     }
     else
     {
@@ -677,18 +687,18 @@ antl4_parser_t::walk_return(environment_ptr_t env, aloeParser::ReturnStatementCo
     {
         out->return_expr = walk_expression(env, ctx->expression());
 
-        if (*out->return_expr->type != *env->curr_fun()->type->fun->ret_type)
+        if (*out->return_expr->type->target != *env->curr_fun()->type->target->fun->ret_type->target)
         {
 			RAISE_LOC("return expression type '%s' does not match function return type '%s'",
-				out->return_expr->type->fun->ret_type->to_str().c_str(),
-				env->curr_fun()->type->fun->ret_type->to_str().c_str());
+				out->return_expr->type->target->fun->ret_type->target->to_str().c_str(),
+				env->curr_fun()->type->target->fun->ret_type->target->to_str().c_str());
         }
     } 
-    else if (env->curr_fun()->type->fun->ret_type->type_id != ALOE_TYPE_VOID) 
+    else if (env->curr_fun()->type->target->fun->ret_type->target->type_id != ALOE_TYPE_VOID) 
     {
 		RAISE_LOC("function '%s' must return expression of type '%s'",
 			env->curr_fun()->idt->name.c_str(),
-			env->curr_fun()->type->fun->ret_type->to_str().c_str());
+			env->curr_fun()->type->target->fun->ret_type->target->to_str().c_str());
     }
 
 	return out;
@@ -768,8 +778,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
       
        check_is_lvalue(env, ctx, expr_node->operand, "--");
        check_unary_arithmetic(env, ctx, expr_node, "--");
-       
-
+   
        out = expr_node;
 
    }
@@ -778,33 +787,33 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
 	   expr_node->fun_expr = walk_expression(env, e->expression());
-       if (expr_node->fun_expr->type->type_id != ALOE_TYPE_FUNCTION)
+       if (expr_node->fun_expr->type->target->type_id != ALOE_TYPE_FUNCTION)
        {
            RAISE_LOC("expression '%s' is not of a function type", ctx->getText().c_str());
        }
 
        auto fun_node_type = expr_node->fun_expr->type;
 
-	   expr_node->type = fun_node_type->fun->ret_type;
+	   expr_node->type = fun_node_type->target->fun->ret_type;
 	   expr_node->arg_list = walk_arg_list(env, e->argumentExpressionList());
 
-       if (expr_node->arg_list->args.size() != fun_node_type->fun->params->v.size())
+       if (expr_node->arg_list->args.size() != fun_node_type->target->fun->params->v.size())
        {
            RAISE_LOC("function call expects %zu arguments but %zu were provided",
-               fun_node_type->fun->params->v.size(),
-               fun_node_type->fun->params->v.size());
+               fun_node_type->target->fun->params->v.size(),
+               fun_node_type->target->fun->params->v.size());
        }
        
        for (int i=0; i < expr_node->arg_list->args.size(); i++)
        {
 		   auto arg     = expr_node->arg_list->args[i];
-		   auto param   = fun_node_type->fun->params->v[i];
-		   if (*arg->type != *param->type)
+		   auto param   = fun_node_type->target->fun->params->v[i];
+		   if (*arg->type->target != *param->type->target)
            {
 			   RAISE_LOC("function call expects argument %d of type '%s' but argument of type '%s' was provided",
 				   i + 1,
 				   param->name.c_str(),
-				   arg->type->to_str().c_str());
+				   arg->type->target->to_str().c_str());
            }
        }
 
@@ -818,7 +827,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 	   expr_node->operand1 = walk_expression(env, e->expression(0));
        expr_node->operand2 = walk_expression(env, e->expression(1));
 
-	   expr_node->type = expr_node->operand1->type->arr->elem_type;
+	   expr_node->type = expr_node->operand1->type->target->arr->elem_type;
        expr_node->is_lvalue = true;
        out = expr_node;
 
@@ -940,7 +949,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 
        expr_node->operand = walk_expression(env, e->expression());
 	   check_is_pointer(env, ctx, expr_node->operand, "@");
-       expr_node->type = expr_node->operand->type->ptr->pointee_type;
+       expr_node->type = expr_node->operand->type->target->ptr->pointee_type;
 
        expr_node->is_lvalue = true;
        
@@ -955,8 +964,8 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        check_is_lvalue(env, ctx, expr_node->operand, "^");
 
        
-       expr_node->type = make_shared<aloe_type_t>(ALOE_TYPE_PTR);
-	   expr_node->type->ptr->pointee_type = expr_node->operand->type;
+       expr_node->type = _new(type_proxy,_new (aloe_type,ALOE_TYPE_PTR));
+	   expr_node->type->target->ptr->pointee_type->target = expr_node->operand->type->target;
 
        out = expr_node;
 
@@ -966,7 +975,7 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
-	   expr_node->type = make_shared<aloe_type_t>(ALOE_TYPE_INT); // sizeof operator always returns int
+	   expr_node->type = _new(type_proxy, _new(aloe_type, ALOE_TYPE_INT)); // sizeof operator always returns int
 
        out = expr_node;
 
@@ -1268,11 +1277,11 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
        expr_node->type = expr_node->true_expr->type;
 
        check_expr_type_equality(env, ctx, expr_node->true_expr, expr_node->false_expr, "?");
-       if (!is_arithmetic(expr_node->condition->type->type_id))
+       if (!is_arithmetic(expr_node->condition->type->target->type_id))
        {
            RAISE_LOC("operator '%s' cannot be applied to conditional expressions of type '%s'", 
                "?", 
-               expr_node->condition->type->to_str().c_str());
+               expr_node->condition->type->target->to_str().c_str());
        }
 
        out = expr_node;
@@ -1478,35 +1487,35 @@ antl4_parser_t::walk_expression(environment_ptr_t env, aloeParser::ExpressionCon
 }
 
 void
-antl4_parser_t::check_type_equality(environment_ptr_t env, antlr4::ParserRuleContext* ctx, aloe_type_ptr_t type1, aloe_type_ptr_t  type2)
+antl4_parser_t::check_type_equality(environment_ptr_t env, antlr4::ParserRuleContext* ctx, type_proxy_ptr_t type1, type_proxy_ptr_t  type2)
 {
-    if (*type1 != *type2)
+    if (*type1->target != *type2->target)
     {
-        RAISE_LOC("type mismatch: '%s' and '%s'", type1->to_str().c_str(), type2->to_str().c_str());
+        RAISE_LOC("type mismatch: '%s' and '%s'", type1->target->to_str().c_str(), type2->target->to_str().c_str());
     };
 }
 
 void 
 antl4_parser_t::check_expr_type_equality(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr1, expr_node_ptr_t expr2, const char* op_str)
 {
-    if (*expr1->type != *expr2->type)
+    if (*expr1->type->target != *expr2->type->target)
     {
         RAISE_LOC("operator '%s' cannot be applied to expressions of different types '%s' and '%s'",
             op_str,
-            expr1->type->to_str().c_str(),
-            expr2->type->to_str().c_str());
+            expr1->type->target->to_str().c_str(),
+            expr2->type->target->to_str().c_str());
     };
 }
 
 void 
 antl4_parser_t::check_binary_arithmetic(environment_ptr_t env, aloeParser::ExpressionContext* ctx, binary_expr_node_ptr_t  expr_node, const char* op_str)
 {
-    if (!is_arithmetic(expr_node->operand1->type->type_id) || !is_arithmetic(expr_node->operand2->type->type_id))
+    if (!is_arithmetic(expr_node->operand1->type->target->type_id) || !is_arithmetic(expr_node->operand2->type->target->type_id))
     {
 		RAISE_LOC("operator '%s' cannot be applied to expressions of type '%s' and '%s'",
 			op_str,
-			expr_node->operand1->type->to_str().c_str(),
-			expr_node->operand2->type->to_str().c_str());
+			expr_node->operand1->type->target->to_str().c_str(),
+			expr_node->operand2->type->target->to_str().c_str());
     }
 
 	check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, op_str);
@@ -1516,11 +1525,11 @@ void
 antl4_parser_t::check_unary_arithmetic(environment_ptr_t env, aloeParser::ExpressionContext* ctx, unary_expr_node_ptr_t  expr_node, const char* op_str)
 {
 
-    if (!is_arithmetic(expr_node->operand->type->type_id))
+    if (!is_arithmetic(expr_node->operand->type->target->type_id))
     {
 		RAISE_LOC("operator '%s' cannot be applied to expression of type '%s'",
 			op_str,
-			expr_node->operand->type->to_str().c_str());
+			expr_node->operand->type->target->to_str().c_str());
     }
     
 }
@@ -1532,7 +1541,7 @@ antl4_parser_t::check_is_lvalue(environment_ptr_t env, aloeParser::ExpressionCon
     {
 		RAISE_LOC("operator '%s' cannot be applied to rvalue expression of type '%s'",
 			op_str,
-			expr_node->type->to_str().c_str());
+			expr_node->type->target->to_str().c_str());
     }
 }
 
@@ -1541,22 +1550,22 @@ antl4_parser_t::check_assignment(environment_ptr_t env, aloeParser::ExpressionCo
 {
     check_is_lvalue(env, ctx, lhs, "=");
 
-    if (*lhs->type != *rhs->type)
+    if (*lhs->type->target != *rhs->type->target)
     {
 		RAISE_LOC("operator '=' cannot be applied to expressions of type '%s' and '%s'",
-			lhs->type->to_str().c_str(),
-			rhs->type->to_str().c_str());
+			lhs->type->target->to_str().c_str(),
+			rhs->type->target->to_str().c_str());
     }
 }
 
 void 
 antl4_parser_t::check_is_pointer(environment_ptr_t env, aloeParser::ExpressionContext* ctx, expr_node_ptr_t expr_node, const char* op_str)
 {
-	if (expr_node->type->type_id != ALOE_TYPE_PTR)
+	if (expr_node->type->target->type_id != ALOE_TYPE_PTR)
 	{
 		RAISE_LOC("operator '%s' cannot be applied to expression of non-pointer type '%s'",
 			op_str,
-			expr_node->type->to_str().c_str());
+			expr_node->type->target->to_str().c_str());
 	}
 }
 

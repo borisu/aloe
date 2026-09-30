@@ -13,7 +13,7 @@ namespace aloe
 	{
 		layout_node_t() :node_t(LAYOUT_NODE) {}
 
-		aloe_type_ptr_t type;
+		type_proxy_ptr_t type;
 
 	};
 

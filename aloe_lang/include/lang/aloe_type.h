@@ -41,12 +41,18 @@ namespace aloe
 
 	typedef
 	shared_ptr<aloe_type_t> aloe_type_ptr_t;
+
+	typedef proxy_t<aloe_type_ptr_t>
+	type_proxy_t;
+
+	typedef
+	shared_ptr<type_proxy_t> type_proxy_ptr_t;
 	
 	struct var_t : public context_t
 	{
 		string name;
 
-		aloe_type_ptr_t type;
+		type_proxy_ptr_t type;
 	};
 
 	typedef
@@ -74,7 +80,7 @@ namespace aloe
 
 	struct gt_t
 	{
-		aloe_type_ptr_t type;
+		type_proxy_ptr_t type;
 	};
 
 	typedef vector<gt_ptr_t>
@@ -103,7 +109,6 @@ namespace aloe
 		var_set_ptr_t fields;
 
 		bool is_incomplete;
-		
 	};
 
 	typedef shared_ptr<layout_info_t>	
@@ -116,7 +121,7 @@ namespace aloe
 
 		}
 
-		aloe_type_ptr_t elem_type;
+		type_proxy_ptr_t elem_type;
 
 		int size; // -1 for unsized arrays
 	};
@@ -126,7 +131,7 @@ namespace aloe
 
 	struct ptr_info_t
 	{
-		aloe_type_ptr_t pointee_type;
+		type_proxy_ptr_t pointee_type;
 	};
 
 	typedef shared_ptr<ptr_info_t>
@@ -135,7 +140,7 @@ namespace aloe
 	struct fun_info_t
 	{
 
-		aloe_type_ptr_t ret_type;
+		type_proxy_ptr_t ret_type;
 
 		var_set_ptr_t params;
 
@@ -144,9 +149,8 @@ namespace aloe
 	typedef shared_ptr<fun_info_t>
 	fun_info_ptr_t;
 
-	// the object of the aloe_type_t is overwritten when the type is redefined, 
-	// so we don't want to allow inheritance to avoid slicing issues
-	struct aloe_type_t final :public context_t
+
+	struct aloe_type_t : public context_t
 	{
 		aloe_type_t(aloe_type_e cat_id) : type_id(cat_id)
 		{

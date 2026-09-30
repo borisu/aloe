@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "base/defs.h"
 #include "lang/context.h"
 
 using namespace std;
@@ -37,11 +38,8 @@ namespace aloe
 		virtual ~node_t() {}
 	};
 
-	struct node_proxy_t
-	{
-		node_proxy_t(node_ptr_t target) : target(target) {}
-		node_ptr_t target;
-	};
+	typedef proxy_t<node_ptr_t>
+	node_proxy_t;
 
 	typedef shared_ptr<node_proxy_t> 
 	node_proxy_ptr_t;
