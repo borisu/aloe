@@ -79,6 +79,7 @@ namespace aloe
 
 		bool is_lvalue;
 	};
+	defptr(expr_node_t);
 
 	struct arglist_node_t : public node_t
 	{
@@ -86,8 +87,7 @@ namespace aloe
 
 		vector<expr_node_t_ptr> args;
 	};
-
-	typedef shared_ptr<arglist_node_t> arglist_node_t_ptr;
+	defptr(arglist_node_t);
 
 	struct literal_expr_node_t : public expr_node_t
 	{
@@ -95,6 +95,7 @@ namespace aloe
 
 		literal_node_t_ptr literal;
 	};
+	defptr(literal_expr_node_t);
 
 	struct identifier_expr_node_t : public expr_node_t
 	{
@@ -103,8 +104,8 @@ namespace aloe
 		identifier_node_t_ptr id;
 
 		node_proxy_t_ptr ref;
-
 	};
+	defptr(identifier_expr_node_t);
 	
 	struct unary_expr_node_t : public expr_node_t
 	{
@@ -112,9 +113,7 @@ namespace aloe
 
 		expr_node_t_ptr operand;
 	};
-
-	typedef shared_ptr<unary_expr_node_t>
-		unary_expr_node_t_ptr;
+	defptr(unary_expr_node_t);
 
 	struct funcall_expr_node_t : public expr_node_t
 	{
@@ -124,6 +123,7 @@ namespace aloe
 
 		arglist_node_t_ptr arg_list;
 	};
+	defptr(funcall_expr_node_t);
 
 	struct cast_expr_node_t : public expr_node_t
 	{
@@ -133,6 +133,7 @@ namespace aloe
 
 		type_proxy_t_ptr type;
 	};
+	defptr(cast_expr_node_t);
 
 	struct sizeoftype_expr_node_t : public expr_node_t
 	{
@@ -141,6 +142,7 @@ namespace aloe
 		type_proxy_t_ptr type;
 
 	};
+	defptr(sizeoftype_expr_node_t);
 
 	struct binary_expr_node_t : public expr_node_t
 	{
@@ -150,9 +152,7 @@ namespace aloe
 
 		expr_node_t_ptr operand2;
 	};
-
-	typedef 
-	shared_ptr<binary_expr_node_t> binary_expr_node_t_ptr;
+	defptr(binary_expr_node_t);
 
 	struct ternary_expr_node_t : public expr_node_t
 	{
@@ -164,6 +164,7 @@ namespace aloe
 
 		expr_node_t_ptr false_expr;
 	};
+	defptr(ternary_expr_node_t);
 
 	struct comma_expr_node_t : public expr_node_t
 	{
@@ -171,6 +172,7 @@ namespace aloe
 
 		arglist_node_t_ptr arg_list;
 	};
+	defptr(comma_expr_node_t);
 
 	struct dot_expr_node_t : public expr_node_t
 	{
@@ -180,6 +182,7 @@ namespace aloe
 
 		identifier_node_t_ptr id;
 	};
+	defptr(dot_expr_node_t);
 
 	struct arrow_expr_node_t : public expr_node_t
 	{
@@ -189,106 +192,53 @@ namespace aloe
 
 		identifier_node_t_ptr id;
 	};
+	defptr(arrow_expr_node_t);
 
-#define DEFINE_UNARY_EXPR_NODE_TYPE(NAME) struct NAME##_expr_node_t : public unary_expr_node_t { NAME##_expr_node_t() : unary_expr_node_t(expr_##NAME) {} }
+#define DEFINE_UNARY_EXPR_NODE_TYPE(E,N) struct N:public unary_expr_node_t { N() : unary_expr_node_t(E) {} }; defptr(N)
 
-	DEFINE_UNARY_EXPR_NODE_TYPE(sfxplusplus);
-	DEFINE_UNARY_EXPR_NODE_TYPE(sfxminmin);
-	DEFINE_UNARY_EXPR_NODE_TYPE(preplusplus);
-	DEFINE_UNARY_EXPR_NODE_TYPE(preminmin);
-	DEFINE_UNARY_EXPR_NODE_TYPE(plus);
-	DEFINE_UNARY_EXPR_NODE_TYPE(min);
-	DEFINE_UNARY_EXPR_NODE_TYPE(not);
-	DEFINE_UNARY_EXPR_NODE_TYPE(bwsnot);
-	DEFINE_UNARY_EXPR_NODE_TYPE(sizeofexpr);
-	DEFINE_UNARY_EXPR_NODE_TYPE(deref);
-	DEFINE_UNARY_EXPR_NODE_TYPE(addressof);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_sfxplusplus, sfxplusplus_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_sfxminmin, sfxminmin_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_preplusplus, preplusplus_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_preminmin, preminmin_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_plus, plus_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_min, min_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_not, not_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_bwsnot, bwsnot_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_sizeofexpr, sizeofexpr_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_deref, deref_expr_node_t);
+	DEFINE_UNARY_EXPR_NODE_TYPE(expr_addressof, addressof_expr_node_t);
 
-#define DEFINE_BINARY_EXPR_NODE_TYPE(NAME) struct NAME##_expr_node_t : public binary_expr_node_t { NAME##_expr_node_t() : binary_expr_node_t(expr_##NAME) {} }
-	DEFINE_BINARY_EXPR_NODE_TYPE(index);
-	DEFINE_BINARY_EXPR_NODE_TYPE(mult);
-	DEFINE_BINARY_EXPR_NODE_TYPE(div);
-	DEFINE_BINARY_EXPR_NODE_TYPE(mod);
-	DEFINE_BINARY_EXPR_NODE_TYPE(add);
-	DEFINE_BINARY_EXPR_NODE_TYPE(sub);
-	DEFINE_BINARY_EXPR_NODE_TYPE(shiftleft);
-	DEFINE_BINARY_EXPR_NODE_TYPE(shiftright);
-	DEFINE_BINARY_EXPR_NODE_TYPE(less);
-	DEFINE_BINARY_EXPR_NODE_TYPE(lesseeq);
-	DEFINE_BINARY_EXPR_NODE_TYPE(more);
-	DEFINE_BINARY_EXPR_NODE_TYPE(moreeq);
-	DEFINE_BINARY_EXPR_NODE_TYPE(logicaleq);
-	DEFINE_BINARY_EXPR_NODE_TYPE(noteq);
-	DEFINE_BINARY_EXPR_NODE_TYPE(and);
-	DEFINE_BINARY_EXPR_NODE_TYPE(xor);
-	DEFINE_BINARY_EXPR_NODE_TYPE(or);
-	DEFINE_BINARY_EXPR_NODE_TYPE(logicaland);
-	DEFINE_BINARY_EXPR_NODE_TYPE(logicalor);
-	DEFINE_BINARY_EXPR_NODE_TYPE(assign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(addassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(subassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(multassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(divassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(modassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(shiftleftassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(shiftrightassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(andassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(xorassign);
-	DEFINE_BINARY_EXPR_NODE_TYPE(orassign);
+#define DEFINE_BINARY_EXPR_NODE_TYPE(E, N) struct N : public binary_expr_node_t { N() : binary_expr_node_t(E) {} }; defptr(N)
 
-#define DEFINE_EXPR_NODE_t_ptrYPE(NAME) typedef shared_ptr<NAME##_expr_node_t> NAME##_expr_node_t_ptr
-	DEFINE_EXPR_NODE_t_ptrYPE(sfxplusplus);
-	DEFINE_EXPR_NODE_t_ptrYPE(sfxminmin);
-	DEFINE_EXPR_NODE_t_ptrYPE(preplusplus);
-	DEFINE_EXPR_NODE_t_ptrYPE(preminmin);
-	DEFINE_EXPR_NODE_t_ptrYPE(plus);
-	DEFINE_EXPR_NODE_t_ptrYPE(min);
-	DEFINE_EXPR_NODE_t_ptrYPE(not);
-	DEFINE_EXPR_NODE_t_ptrYPE(bwsnot);
-	DEFINE_EXPR_NODE_t_ptrYPE(sizeofexpr);
-	DEFINE_EXPR_NODE_t_ptrYPE(funcall);
-	DEFINE_EXPR_NODE_t_ptrYPE(index);
-	DEFINE_EXPR_NODE_t_ptrYPE(cast);
-	DEFINE_EXPR_NODE_t_ptrYPE(deref);
-	DEFINE_EXPR_NODE_t_ptrYPE(addressof);
-	DEFINE_EXPR_NODE_t_ptrYPE(sizeoftype);
-	DEFINE_EXPR_NODE_t_ptrYPE(mult);
-	DEFINE_EXPR_NODE_t_ptrYPE(div);
-	DEFINE_EXPR_NODE_t_ptrYPE(mod);
-	DEFINE_EXPR_NODE_t_ptrYPE(add);
-	DEFINE_EXPR_NODE_t_ptrYPE(sub);
-	DEFINE_EXPR_NODE_t_ptrYPE(shiftleft);
-	DEFINE_EXPR_NODE_t_ptrYPE(shiftright);
-	DEFINE_EXPR_NODE_t_ptrYPE(less);
-	DEFINE_EXPR_NODE_t_ptrYPE(lesseeq);
-	DEFINE_EXPR_NODE_t_ptrYPE(more);
-	DEFINE_EXPR_NODE_t_ptrYPE(moreeq);
-	DEFINE_EXPR_NODE_t_ptrYPE(logicaleq);
-	DEFINE_EXPR_NODE_t_ptrYPE(noteq);
-	DEFINE_EXPR_NODE_t_ptrYPE(and);
-	DEFINE_EXPR_NODE_t_ptrYPE(xor);
-	DEFINE_EXPR_NODE_t_ptrYPE(or);
-	DEFINE_EXPR_NODE_t_ptrYPE(logicaland);
-	DEFINE_EXPR_NODE_t_ptrYPE(logicalor);
-	DEFINE_EXPR_NODE_t_ptrYPE(dot);
-	DEFINE_EXPR_NODE_t_ptrYPE(arrow);
-	DEFINE_EXPR_NODE_t_ptrYPE(identifier);
-	DEFINE_EXPR_NODE_t_ptrYPE(literal);
-	DEFINE_EXPR_NODE_t_ptrYPE(ternary);
-	DEFINE_EXPR_NODE_t_ptrYPE(assign);
-	DEFINE_EXPR_NODE_t_ptrYPE(addassign);	
-	DEFINE_EXPR_NODE_t_ptrYPE(subassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(multassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(divassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(modassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(shiftleftassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(shiftrightassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(andassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(xorassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(orassign);
-	DEFINE_EXPR_NODE_t_ptrYPE(comma);
-
-#define NEW_EXPR_NODE(VAR, NAME) NAME##_expr_node_t_ptr VAR(new NAME##_expr_node_t())
-
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_index, index_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_mult, mult_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_div, div_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_mod, mod_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_add, add_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_sub, sub_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_shiftleft, shiftleft_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_shiftright, shiftright_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_less, less_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_lesseeq, lesseeq_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_more, more_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_moreeq, moreeq_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_logicaleq, logicaleq_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_noteq, noteq_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_and, and_expr_node_t	);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_xor, xor_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_or, or_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_logicaland, logicaland_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_logicalor, logicalor_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_assign, assign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_addassign, addassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_subassign, subassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_multassign, multassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_divassign, divassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_modassign, modassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_shiftleftassign, shiftleftassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_shiftrightassign, shiftrightassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_andassign, andassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_xorassign, xorassign_expr_node_t);
+	DEFINE_BINARY_EXPR_NODE_TYPE(expr_orassign, orassign_expr_node_t);
 }
 

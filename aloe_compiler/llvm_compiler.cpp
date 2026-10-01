@@ -85,7 +85,7 @@ llvmir_compiler_t::compile(
             throw aloe_exception_t("internal error: expected program node");
         }
 
-        walk_prog(ast_ctx, PCAST(prog_node_t, ast->root));
+        walk_prog(ast_ctx, castptr(prog_node_t, ast->root));
 		res = true;
 
         dib.finalize();
@@ -306,17 +306,17 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_t_ptr ctx, Function* fun, fu
         {
         case EXPRESSION_NODE:
         {
-            emit_expr_value(ctx, PCAST(expr_node_t, statement));
+            emit_expr_value(ctx, castptr(expr_node_t, statement));
             break;
         }
         case VAR_NODE:
         {
-            emit_var(ctx, PCAST(var_node_t, statement));
+            emit_var(ctx, castptr(var_node_t, statement));
             break;
         }
         case RETURN_NODE:
         {
-            emit_return(ctx, PCAST(return_node_t, statement));
+            emit_return(ctx, castptr(return_node_t, statement));
             break;
         }
         default:
@@ -372,10 +372,10 @@ llvmir_compiler_t::walk_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node)
         switch (decl->node_type_id)
         {
         case FUNCTION_NODE:
-            emit_fun(ctx, PCAST(fun_node_t,decl));
+            emit_fun(ctx, castptr(fun_node_t,decl));
 			break;
         case VAR_NODE:
-            emit_var(ctx, PCAST(var_node_t, decl));
+            emit_var(ctx, castptr(var_node_t, decl));
             break;
         }
     }
@@ -393,13 +393,13 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t_ptr ctx, identifier_expr_
     {
         case FUNCTION_NODE:
         {
-            out = PCAST(value_t, id_cache[node->bn->target]);
+            out = castptr(value_t, id_cache[node->bn->target]);
 
             break;
         }
         case VAR_NODE:
         {
-            out = PCAST(value_t, id_cache[node->bn->target]);
+            out = castptr(value_t, id_cache[node->bn->target]);
 
             break;
         }
@@ -553,7 +553,7 @@ llvmir_compiler_t::emit_cmp_binary(compiler_ctx_t_ptr ctx, binary_expr_node_t_pt
 	init_dloc(ctx, node);
 
     value_t_ptr val(new value_t());
-    auto bn = PCAST(binary_expr_node_t, node);
+    auto bn = castptr(binary_expr_node_t, node);
 
     value_t_ptr e1 = emit_expr_value(ctx, bn->operand1);
     value_t_ptr e2 = emit_expr_value(ctx, bn->operand2);
@@ -636,22 +636,22 @@ llvmir_compiler_t::emit_expr_value(compiler_ctx_t_ptr ctx, expr_node_t_ptr node)
     {
     case expr_literal:
     {
-        val = emit_expr_literal(ctx, PCAST(literal_expr_node_t, node));
+        val = emit_expr_literal(ctx, castptr(literal_expr_node_t, node));
         break;
     }
     case expr_funcall:
     {
-        val = emit_expr_fun_call(ctx, PCAST(funcall_expr_node_t, node));
+        val = emit_expr_fun_call(ctx, castptr(funcall_expr_node_t, node));
         break;
     }
     case expr_identifier:
     {
-        val = emit_expr_identifier(ctx, PCAST(identifier_expr_node_t, node));
+        val = emit_expr_identifier(ctx, castptr(identifier_expr_node_t, node));
         break;
     }
     case expr_assign:
     {
-        val = emit_expr_assign(ctx, PCAST(assign_expr_node_t, node));
+        val = emit_expr_assign(ctx, castptr(assign_expr_node_t, node));
         break;
     }
 
@@ -667,7 +667,7 @@ llvmir_compiler_t::emit_expr_value(compiler_ctx_t_ptr ctx, expr_node_t_ptr node)
     case expr_xor:
     case expr_or:
     {
-        val = emit_arithmetic_binary(ctx, PCAST(binary_expr_node_t, node));
+        val = emit_arithmetic_binary(ctx, castptr(binary_expr_node_t, node));
         break;
     }
 
@@ -679,7 +679,7 @@ llvmir_compiler_t::emit_expr_value(compiler_ctx_t_ptr ctx, expr_node_t_ptr node)
     case expr_logicaleq:
     case expr_noteq:
     {
-        val = emit_cmp_binary(ctx, PCAST(binary_expr_node_t, node));
+        val = emit_cmp_binary(ctx, castptr(binary_expr_node_t, node));
         break;
     }
 
@@ -695,14 +695,14 @@ llvmir_compiler_t::emit_expr_value(compiler_ctx_t_ptr ctx, expr_node_t_ptr node)
     case expr_xorassign:
     case expr_orassign:
     {
-        val = emit_assign_arithmetic_binary(ctx, PCAST(binary_expr_node_t, node));
+        val = emit_assign_arithmetic_binary(ctx, castptr(binary_expr_node_t, node));
         break;
     }
 
     // comma - evaluate args, return last
     case expr_comma:
     {
-		val = emit_expr_comma(ctx, PCAST(comma_expr_node_t, node));
+		val = emit_expr_comma(ctx, castptr(comma_expr_node_t, node));
         break;
     }
 	case expr_preplusplus:
@@ -710,28 +710,28 @@ llvmir_compiler_t::emit_expr_value(compiler_ctx_t_ptr ctx, expr_node_t_ptr node)
     case expr_plus:
     case expr_min:
     {
-        val = emit_expr_prefix(ctx, PCAST(unary_expr_node_t, node));
+        val = emit_expr_prefix(ctx, castptr(unary_expr_node_t, node));
         break;
 	}
     case expr_sfxplusplus:
     case expr_sfxminmin:
     {
-         val = emit_expr_postfix(ctx, PCAST(unary_expr_node_t, node));
+         val = emit_expr_postfix(ctx, castptr(unary_expr_node_t, node));
          break;
 	}
     case expr_addressof:
     {
-        val = emit_expr_addressof(ctx, PCAST(addressof_expr_node_t, node));
+        val = emit_expr_addressof(ctx, castptr(addressof_expr_node_t, node));
         break;
     }
     case expr_deref:
     {
-        val = emit_expr_deref(ctx, PCAST(deref_expr_node_t, node));
+        val = emit_expr_deref(ctx, castptr(deref_expr_node_t, node));
         break;
     }
     case expr_index:
     {
-        val = emit_expr_index(ctx, PCAST(index_expr_node_t, node));
+        val = emit_expr_index(ctx, castptr(index_expr_node_t, node));
         break;
     }
     default:

@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "antlr4_parser.h"
 #include "antlr4_parser/parser.h"
+#include "lang/ast/expression.h"
 
 
 using namespace aloe;
@@ -16,7 +17,7 @@ using namespace antlr4;
 static int object_id = 0;
 static int anonymous_id_counter = 0;
 
-#define INSTANCE_OF(C) C* e = dynamic_cast<C*>(ctx)    
+#define E_INSTANCE_OF(C) C* e = dynamic_cast<C*>(ctx)    
 
 #define RAISE_LOC(fmt, ...) \
     throw aloe_exception_t("%s:%zu:%zu: error: " fmt, \
@@ -192,46 +193,46 @@ antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
 
     type_proxy_t_ptr out;
 
-    if (INSTANCE_OF(aloeParser::Type_intContext)) 
+    if (E_INSTANCE_OF(aloeParser::Type_intContext)) 
     {
 		type = newptr(aloe_type_t,ALOE_TYPE_INT);
     }
-    else if (INSTANCE_OF(aloeParser::Type_charContext))
+    else if (E_INSTANCE_OF(aloeParser::Type_charContext))
     {
 		type = newptr(aloe_type_t,ALOE_TYPE_CHAR);
     }
-    else if (INSTANCE_OF(aloeParser::Type_doubleContext))
+    else if (E_INSTANCE_OF(aloeParser::Type_doubleContext))
     {
         type = newptr(aloe_type_t, ALOE_TYPE_DOUBLE);
     }
-    else if (INSTANCE_OF(aloeParser::Type_voidContext))
+    else if (E_INSTANCE_OF(aloeParser::Type_voidContext))
     {
         type = newptr(aloe_type_t, ALOE_TYPE_VOID);
 	}
-    else if (INSTANCE_OF(aloeParser::Type_funContext))
+    else if (E_INSTANCE_OF(aloeParser::Type_funContext))
     {
         out = walk_fun_type(env, e->funType());
     }
-    else if (INSTANCE_OF(aloeParser::Type_groupedContext))
+    else if (E_INSTANCE_OF(aloeParser::Type_groupedContext))
     {
 		out = walk_type(env, e->atype());
     }
-    else if (INSTANCE_OF(aloeParser::Type_pointerContext))
+    else if (E_INSTANCE_OF(aloeParser::Type_pointerContext))
     {
         type = newptr(aloe_type_t, ALOE_TYPE_PTR);
 		type->ptr->pointee_type  = walk_type(env, e->atype());
     }
-	else if (INSTANCE_OF(aloeParser::Type_arrayContext))
+	else if (E_INSTANCE_OF(aloeParser::Type_arrayContext))
     {
         type = newptr(aloe_type_t, ALOE_TYPE_ARRAY);
         type->arr->elem_type  = walk_type(env, e->atype());
 		type->arr->size      = e->DigitSequence() ? stoul(e->DigitSequence()->getText()) : -1;
     }
-    else if (INSTANCE_OF(aloeParser::Type_layoutContext))
+    else if (E_INSTANCE_OF(aloeParser::Type_layoutContext))
     {
 		out = walk_layout_declaration(env, e->layoutDeclaration())->type;
     }
-    else if (INSTANCE_OF(aloeParser::Type_identifierContext))
+    else if (E_INSTANCE_OF(aloeParser::Type_identifierContext))
     {
         auto id_node = walk_identifier(env, e->identifier());
 		out = env->find_type(id_node);
@@ -281,7 +282,7 @@ antl4_parser_t::walk_fun_expectation(environment_t_ptr env, aloeParser::ExpectFu
 	if (prev)
 	{
         ASSERT_LOC(prev->target->node_type_id == out->node_type_id, "identifier %s was already defined as a different kind at (%d,%d)", out->idt->name.c_str(), prev->target->line,prev->target->pos);
-        auto prev_fun  = PCAST(fun_node_t, prev->target);
+        auto prev_fun  = castptr(fun_node_t, prev->target);
         ASSERT_LOC(*prev_fun->type->target == *out->type->target, "identifier %s was already defined with a different type at (%d,%d)", out->idt->name.c_str(), prev->target->line, prev->target->pos);
 	}
     else
@@ -468,7 +469,7 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
 
     ASSERT_LOC(prev->target->node_type_id == out->node_type_id, "identifier %s was already defined as a different kind at (%d,%d)", out->idt->name.c_str(), prev->target->line, prev->target->pos);
 
-    auto prev_fun       = prev ? PCAST(fun_node_t, prev->target) : nullptr;
+    auto prev_fun       = prev ? castptr(fun_node_t, prev->target) : nullptr;
 
     // check that function is defined twice
     if (prev && prev_fun->is_defined)
@@ -709,8 +710,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 {
    expr_node_t_ptr out;
 
-   if (INSTANCE_OF(aloeParser::Expr_identifierContext)) {
-       NEW_EXPR_NODE(expr_node, identifier);
+   if (E_INSTANCE_OF(aloeParser::Expr_identifierContext)) {
+       auto  expr_node = newptr(identifier_expr_node_t);
      
        expr_node->id = walk_identifier(env, e->identifier());
 	   expr_node->ref = env->find_object(expr_node->id);
@@ -719,13 +720,13 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        {
        case VAR_NODE:
        {
-           expr_node->type = PCAST(var_node_t, expr_node->ref->target)->type    ;
+           expr_node->type = castptr(var_node_t, expr_node->ref->target)->type    ;
            expr_node->is_lvalue = true;
            break;
        }
        case FUNCTION_NODE:
        {
-           expr_node->type = PCAST(fun_node_t, expr_node->ref->target)->type;
+           expr_node->type = castptr(fun_node_t, expr_node->ref->target)->type;
            break;
        }
        default:
@@ -737,8 +738,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
        
    }
-   else if (INSTANCE_OF(aloeParser::Expr_literalContext)) {
-       NEW_EXPR_NODE(expr_node, literal);
+   else if (E_INSTANCE_OF(aloeParser::Expr_literalContext)) {
+	   auto expr_node = newptr(literal_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->literal   = walk_literal(env, e->literal());
@@ -747,13 +748,13 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
        
    }
-   else if (INSTANCE_OF(aloeParser::Expr_bracketedContext)) {
+   else if (E_INSTANCE_OF(aloeParser::Expr_bracketedContext)) {
       
        out = walk_expression(env, e->expression());
        
    }
-   else if (INSTANCE_OF(aloeParser::Expr_sfxplusplusContext)) {
-       NEW_EXPR_NODE(expr_node, sfxplusplus);
+   else if (E_INSTANCE_OF(aloeParser::Expr_sfxplusplusContext)) {
+       auto expr_node = newptr(sfxplusplus_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
@@ -767,9 +768,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
        
    }
-   else if (INSTANCE_OF(aloeParser::Expr_sfxminminContext)) {
-
-       NEW_EXPR_NODE(expr_node, sfxminmin);
+   else if (E_INSTANCE_OF(aloeParser::Expr_sfxminminContext)) {
+       auto expr_node = newptr(sfxminmin_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
@@ -782,8 +782,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_funcallContext)) {
-       NEW_EXPR_NODE(expr_node, funcall);
+   else if (E_INSTANCE_OF(aloeParser::Expr_funcallContext)) {
+       auto expr_node = newptr(funcall_expr_node_t);
        INIT_POS(expr_node, ctx);
 
 	   expr_node->fun_expr = walk_expression(env, e->expression());
@@ -820,8 +820,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
        
    }
-   else if (INSTANCE_OF(aloeParser::Expr_indexContext)) {
-	   NEW_EXPR_NODE(expr_node, index);
+   else if (E_INSTANCE_OF(aloeParser::Expr_indexContext)) {
+	   auto expr_node = newptr(index_expr_node_t);
        INIT_POS(expr_node, ctx);
 
 	   expr_node->operand1 = walk_expression(env, e->expression(0));
@@ -833,9 +833,9 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
        
    }
-   else if (INSTANCE_OF(aloeParser::Expr_dotContext)) {
+   else if (E_INSTANCE_OF(aloeParser::Expr_dotContext)) {
 
-       NEW_EXPR_NODE(expr_node, dot);
+       auto expr_node = newptr(dot_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
@@ -846,8 +846,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_arrowContext)) {
-       NEW_EXPR_NODE(expr_node, arrow);
+   else if (E_INSTANCE_OF(aloeParser::Expr_arrowContext)) {
+       auto expr_node = newptr(arrow_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
@@ -858,8 +858,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_preplusplusContext)) {
-       NEW_EXPR_NODE(expr_node, preplusplus);
+   else if (E_INSTANCE_OF(aloeParser::Expr_preplusplusContext)) {
+       auto expr_node = newptr(preplusplus_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
@@ -872,8 +872,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_preminminContext)) {
-       NEW_EXPR_NODE(expr_node, preminmin);
+   else if (E_INSTANCE_OF(aloeParser::Expr_preminminContext)) {
+       auto expr_node = newptr(preminmin_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
@@ -886,8 +886,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_plusContext)) {
-       NEW_EXPR_NODE(expr_node, plus);
+   else if (E_INSTANCE_OF(aloeParser::Expr_plusContext)) {
+       auto expr_node = newptr(plus_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
@@ -898,8 +898,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_minContext)) {
-       NEW_EXPR_NODE(expr_node, min);
+   else if (E_INSTANCE_OF(aloeParser::Expr_minContext)) {
+       auto expr_node = newptr(min_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        
@@ -910,8 +910,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
        
    }
-   else if (INSTANCE_OF(aloeParser::Expr_notContext)) {
-       NEW_EXPR_NODE(expr_node, not);
+   else if (E_INSTANCE_OF(aloeParser::Expr_notContext)) {
+       auto expr_node = newptr(not_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
@@ -921,8 +921,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
        out = expr_node;
    }
-   else if (INSTANCE_OF(aloeParser::Expr_bwsnotContext)) {
-       NEW_EXPR_NODE(expr_node, bwsnot);
+   else if (E_INSTANCE_OF(aloeParser::Expr_bwsnotContext)) {
+       auto expr_node = newptr(bwsnot_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
@@ -933,8 +933,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_castContext)) {
-       NEW_EXPR_NODE(expr_node, cast);
+   else if (E_INSTANCE_OF(aloeParser::Expr_castContext)) {
+       auto expr_node = newptr(cast_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->type = walk_type(env, e->atype());
@@ -943,9 +943,10 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_derefContext)) {
-       NEW_EXPR_NODE(expr_node, deref);
+   else if (E_INSTANCE_OF(aloeParser::Expr_derefContext)) {
+       auto expr_node = newptr(deref_expr_node_t);
        INIT_POS(expr_node, ctx);
+       
 
        expr_node->operand = walk_expression(env, e->expression());
 	   check_is_pointer(env, ctx, expr_node->operand, "@");
@@ -956,8 +957,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_addressofContext)) {
-       NEW_EXPR_NODE(expr_node, addressof);
+   else if (E_INSTANCE_OF(aloeParser::Expr_addressofContext)) {
+       auto expr_node = newptr(addressof_expr_node_t);
        INIT_POS(expr_node, ctx);
        
        expr_node->operand = walk_expression(env, e->expression());
@@ -970,8 +971,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_sizeofexprContext)) {
-       NEW_EXPR_NODE(expr_node, sizeofexpr);
+   else if (E_INSTANCE_OF(aloeParser::Expr_sizeofexprContext)) {
+       auto expr_node = newptr(sizeofexpr_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
@@ -980,16 +981,16 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_sizeoftypeContext)) {
-       NEW_EXPR_NODE(expr_node, sizeoftype);
+   else if (E_INSTANCE_OF(aloeParser::Expr_sizeoftypeContext)) {
+       auto expr_node = newptr(sizeoftype_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->type = walk_type(env, e->atype());
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_multContext)) {
-        NEW_EXPR_NODE(expr_node, mult);
+   else if (E_INSTANCE_OF(aloeParser::Expr_multContext)) {
+        auto expr_node = newptr(mult_expr_node_t);
         INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1004,8 +1005,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_divContext)) {
-       NEW_EXPR_NODE(expr_node, div);
+   else if (E_INSTANCE_OF(aloeParser::Expr_divContext)) {
+       auto expr_node = newptr(div_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1021,8 +1022,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_modContext)) {
-       NEW_EXPR_NODE(expr_node, mod);
+   else if (E_INSTANCE_OF(aloeParser::Expr_modContext)) {
+       auto expr_node = newptr(mod_expr_node_t);
        INIT_POS(expr_node, ctx);
 
 
@@ -1038,8 +1039,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_addContext)) {
-       NEW_EXPR_NODE(expr_node, add);
+   else if (E_INSTANCE_OF(aloeParser::Expr_addContext)) {
+       auto expr_node = newptr(add_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1053,8 +1054,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_subContext)) {
-       NEW_EXPR_NODE(expr_node, sub);
+   else if (E_INSTANCE_OF(aloeParser::Expr_subContext)) {
+       auto expr_node = newptr(sub_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1068,8 +1069,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_shiftleftContext)) {
-       NEW_EXPR_NODE(expr_node, shiftleft);
+   else if (E_INSTANCE_OF(aloeParser::Expr_shiftleftContext)) {
+       auto expr_node = newptr(shiftleft_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1084,8 +1085,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_shiftrightContext)) {
-       NEW_EXPR_NODE(expr_node, shiftright);
+   else if (E_INSTANCE_OF(aloeParser::Expr_shiftrightContext)) {
+       auto expr_node = newptr(shiftright_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1099,8 +1100,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_lessContext)) {
-       NEW_EXPR_NODE(expr_node, less);
+   else if (E_INSTANCE_OF(aloeParser::Expr_lessContext)) {
+       auto expr_node = newptr(less_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1114,8 +1115,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_lesseeqContext)) {
-       NEW_EXPR_NODE(expr_node, lesseeq);
+   else if (E_INSTANCE_OF(aloeParser::Expr_lesseeqContext)) {
+       auto expr_node = newptr(lesseeq_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1129,8 +1130,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_moreContext)) {
-       NEW_EXPR_NODE(expr_node, more);
+   else if (E_INSTANCE_OF(aloeParser::Expr_moreContext)) {
+       auto expr_node = newptr(more_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1144,8 +1145,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_moreeqContext)) {
-       NEW_EXPR_NODE(expr_node, moreeq);
+   else if (E_INSTANCE_OF(aloeParser::Expr_moreeqContext)) {
+       auto expr_node = newptr(moreeq_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1159,8 +1160,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_logicaleqContext)) {
-       NEW_EXPR_NODE(expr_node, logicaleq);
+   else if (E_INSTANCE_OF(aloeParser::Expr_logicaleqContext)) {
+       auto expr_node = newptr(logicaleq_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1175,8 +1176,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_noteqContext)) {
-       NEW_EXPR_NODE(expr_node, noteq);
+   else if (E_INSTANCE_OF(aloeParser::Expr_noteqContext)) {
+       auto expr_node = newptr(noteq_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1190,8 +1191,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_andContext)) {
-       NEW_EXPR_NODE(expr_node, and);
+   else if (E_INSTANCE_OF(aloeParser::Expr_andContext)) {
+       auto expr_node = newptr(and_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1205,8 +1206,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_xorContext)) {
-       NEW_EXPR_NODE(expr_node, xor);
+   else if (E_INSTANCE_OF(aloeParser::Expr_xorContext)) {
+       auto expr_node = newptr(xor_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1219,8 +1220,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
        out = expr_node;
    }
-   else if (INSTANCE_OF(aloeParser::Expr_orContext)) {
-       NEW_EXPR_NODE(expr_node, or);
+   else if (E_INSTANCE_OF(aloeParser::Expr_orContext)) {
+       auto expr_node = newptr(or_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1234,8 +1235,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_logicalandContext)) {
-       NEW_EXPR_NODE(expr_node, logicaland);
+   else if (E_INSTANCE_OF(aloeParser::Expr_logicalandContext)) {
+       auto expr_node = newptr(logicaland_expr_node_t);
 	   INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1249,8 +1250,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_logicalorContext)) {
-       NEW_EXPR_NODE(expr_node, logicalor);
+   else if (E_INSTANCE_OF(aloeParser::Expr_logicalorContext)) {
+       auto expr_node = newptr(logicalor_expr_node_t);
        INIT_POS(expr_node, ctx);
 
 
@@ -1265,8 +1266,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_ternaryContext)) {
-       NEW_EXPR_NODE(expr_node, ternary);
+   else if (E_INSTANCE_OF(aloeParser::Expr_ternaryContext)) {
+       auto expr_node = newptr(ternary_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->condition  = walk_expression(env, e->expression()[0]);
@@ -1287,8 +1288,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_assignContext)) {
-       NEW_EXPR_NODE(expr_node, assign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_assignContext)) {
+       auto expr_node = newptr(assign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1303,8 +1304,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_addassignContext)) {
-       NEW_EXPR_NODE(expr_node, addassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_addassignContext)) {
+       auto expr_node = newptr(addassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1318,8 +1319,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_subassignContext)) {
-       NEW_EXPR_NODE(expr_node, subassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_subassignContext)) {
+       auto expr_node = newptr(subassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1334,8 +1335,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_multassignContext)) {
-       NEW_EXPR_NODE(expr_node, multassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_multassignContext)) {
+       auto expr_node = newptr(multassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1350,8 +1351,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_divassignContext)) {
-       NEW_EXPR_NODE(expr_node, divassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_divassignContext)) {
+       auto expr_node = newptr(divassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1366,8 +1367,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_modassignContext)) {
-       NEW_EXPR_NODE(expr_node, modassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_modassignContext)) {
+       auto expr_node = newptr(modassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1383,8 +1384,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_shiftleftassignContext)) {
-       NEW_EXPR_NODE(expr_node, shiftleftassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_shiftleftassignContext)) {
+       auto expr_node = newptr(shiftleftassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1398,8 +1399,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
        out = expr_node;
    }
-   else if (INSTANCE_OF(aloeParser::Expr_shiftrightassignContext)) {
-       NEW_EXPR_NODE(expr_node, shiftrightassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_shiftrightassignContext)) {
+       auto expr_node = newptr(shiftrightassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1414,8 +1415,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_andassignContext)) {
-       NEW_EXPR_NODE(expr_node, andassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_andassignContext)) {
+       auto expr_node = newptr(andassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1429,8 +1430,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
        out = expr_node;
    }
-   else if (INSTANCE_OF(aloeParser::Expr_xorassignContext)) {
-       NEW_EXPR_NODE(expr_node, xorassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_xorassignContext)) {
+       auto expr_node = newptr(xorassign_expr_node_t);
 	   INIT_POS(expr_node, ctx);
 
 
@@ -1445,8 +1446,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
        out = expr_node;
    }
-   else if (INSTANCE_OF(aloeParser::Expr_orassignContext)) {
-       NEW_EXPR_NODE(expr_node, orassign);
+   else if (E_INSTANCE_OF(aloeParser::Expr_orassignContext)) {
+       auto expr_node = newptr(orassign_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        expr_node->operand1 = walk_expression(env, e->expression()[0]);
@@ -1461,8 +1462,8 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        out = expr_node;
 
    }
-   else if (INSTANCE_OF(aloeParser::Expr_commaContext)) {
-       NEW_EXPR_NODE(expr_node, comma);
+   else if (E_INSTANCE_OF(aloeParser::Expr_commaContext)) {
+       auto expr_node = newptr(comma_expr_node_t);
        INIT_POS(expr_node, ctx);
 
        if (e->argumentExpressionList())
