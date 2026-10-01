@@ -17,7 +17,7 @@ namespace aloe
 	public:
 
 		virtual bool compile(
-			ast_ptr_t ast,
+			ast_t_ptr ast,
 			ostream& out) = 0;
 
 		virtual void set_validate(bool validate) = 0;
@@ -26,6 +26,6 @@ namespace aloe
 	
 	};
 
-	typedef shared_ptr<compiler_t> compiler_ptr_t;
+	typedef shared_ptr<compiler_t> compiler_t_ptr;
 	
 }

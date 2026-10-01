@@ -13,12 +13,12 @@ namespace aloe
 	{
 		layout_node_t() :node_t(LAYOUT_NODE) {}
 
-		type_proxy_ptr_t type;
+		type_proxy_t_ptr type;
 
 	};
 
 	typedef shared_ptr<layout_node_t>
-	layout_node_ptr_t;
+	layout_node_t_ptr;
 
 	
 

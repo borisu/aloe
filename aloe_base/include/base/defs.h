@@ -4,7 +4,9 @@
 
 #define PCAST(T, V) (std::static_pointer_cast<T>(V))
 
-#define _new(T,...)  T##_ptr_t (new T##_t(##__VA_ARGS__))
+#define newptr(T,...)  T##_ptr (new T(##__VA_ARGS__))
+
+#define defptr(T) typedef std::shared_ptr<T> T##_ptr
 
 namespace aloe
 {

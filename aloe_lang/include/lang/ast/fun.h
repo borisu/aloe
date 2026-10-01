@@ -15,29 +15,29 @@ namespace aloe
 		fun_node_t() :node_t(FUNCTION_NODE),
 			is_defined(false) {}
 
-		identifier_node_ptr_t	idt;
+		identifier_node_t_ptr	idt;
 
-		vector<node_ptr_t>		statements;
+		vector<node_t_ptr>		statements;
 
-		marker_node_ptr_t		end_of_fun;
+		marker_node_t_ptr		end_of_fun;
 
-		type_proxy_ptr_t		    type;
+		type_proxy_t_ptr		    type;
 
 		bool is_defined;
 	};
 
 	typedef shared_ptr<fun_node_t> 
-	fun_node_ptr_t;
+	fun_node_t_ptr;
 
 	struct return_node_t : public node_t
 	{
 		return_node_t() :node_t(RETURN_NODE){}
 
-		expr_node_ptr_t return_expr;
+		expr_node_t_ptr return_expr;
 	};
 
 	typedef shared_ptr<return_node_t> 
-	return_node_ptr_t;
+	return_node_t_ptr;
 
 	
 }

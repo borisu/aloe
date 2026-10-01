@@ -15,14 +15,14 @@ namespace aloe
 	{
 		var_node_t() :node_t(VAR_NODE) {};
 
-		identifier_node_ptr_t	id;
+		identifier_node_t_ptr	id;
 
-		type_proxy_ptr_t		type;
+		type_proxy_t_ptr		type;
 
-		expr_node_ptr_t			initializer;
+		expr_node_t_ptr			initializer;
 	};
 
 	typedef shared_ptr<var_node_t> 
-	var_node_ptr_t;
+	var_node_t_ptr;
 
 }

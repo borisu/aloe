@@ -55,7 +55,7 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 
         c->set_no_debug(no_debug);*/
 
-        ast_ptr_t ast;
+        ast_t_ptr ast;
 
         istringstream iss(al);
 
@@ -403,7 +403,7 @@ tests_cmd_t::run_parser()
 
     auto p = create_antlr4_parser();
 
-    ast_ptr_t ast;
+    ast_t_ptr ast;
 
     istringstream iss(R"(layout A {  a:int ; b:A})");
 

@@ -18,7 +18,7 @@ namespace aloe
 		llvmir_compiler_t();
 
 		virtual bool compile(
-			ast_ptr_t ast,
+			ast_t_ptr ast,
 			ostream& out) override;
 
 		virtual void set_validate(bool validate) override;
@@ -27,95 +27,95 @@ namespace aloe
 
 	protected:
 
-		virtual void walk_prog(compiler_ctx_ptr_t ctx, prog_node_ptr_t node);
+		virtual void walk_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node);
 
-		virtual Type* emit_ir_type(compiler_ctx_ptr_t ctx, type_node_ptr_t node);
+		virtual Type* emit_ir_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node);
 
-		virtual Type* emit_ir_type(compiler_ctx_ptr_t ctx, aloe_type_ptr_t atype);
+		virtual Type* emit_ir_type(compiler_ctx_t_ptr ctx, aloe_type_t_ptr atype);
 
-		virtual value_ptr_t emit_fun(compiler_ctx_ptr_t ctx, fun_node_ptr_t node);
+		virtual value_t_ptr emit_fun(compiler_ctx_t_ptr ctx, fun_node_t_ptr node);
 
-		virtual void emit_fun_definition(compiler_ctx_ptr_t ctx, Function *fun, fun_node_ptr_t node);
+		virtual void emit_fun_definition(compiler_ctx_t_ptr ctx, Function *fun, fun_node_t_ptr node);
 
-		virtual void emit_return(compiler_ctx_ptr_t ctx, return_node_ptr_t node);
+		virtual void emit_return(compiler_ctx_t_ptr ctx, return_node_t_ptr node);
 
-		virtual void emit_var(compiler_ctx_ptr_t ctx, var_node_ptr_t node);
+		virtual void emit_var(compiler_ctx_t_ptr ctx, var_node_t_ptr node);
 
-		virtual value_ptr_t emit_default(compiler_ctx_ptr_t ctx, aloe_type_ptr_t atype);
+		virtual value_t_ptr emit_default(compiler_ctx_t_ptr ctx, aloe_type_t_ptr atype);
 
-		virtual value_ptr_t emit_expr_identifier(compiler_ctx_ptr_t ctx, identifier_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_identifier(compiler_ctx_t_ptr ctx, identifier_expr_node_t_ptr node);
 
-		virtual Value* emit_rvalue(compiler_ctx_ptr_t ctx, value_ptr_t expr);
+		virtual Value* emit_rvalue(compiler_ctx_t_ptr ctx, value_t_ptr expr);
 
 	
 		//
 		// EXPRESSIONS
 		//
-		virtual value_ptr_t emit_expr_value(compiler_ctx_ptr_t ctx, expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_value(compiler_ctx_t_ptr ctx, expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_fun_call(compiler_ctx_ptr_t ctx, funcall_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_fun_call(compiler_ctx_t_ptr ctx, funcall_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_literal(compiler_ctx_ptr_t ctx, literal_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_literal(compiler_ctx_t_ptr ctx, literal_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_comma(compiler_ctx_ptr_t ctx, comma_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_comma(compiler_ctx_t_ptr ctx, comma_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_assign(compiler_ctx_ptr_t ctx, assign_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_assign(compiler_ctx_t_ptr ctx, assign_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_prefix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_prefix(compiler_ctx_t_ptr ctx, unary_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_postfix(compiler_ctx_ptr_t ctx, unary_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_postfix(compiler_ctx_t_ptr ctx, unary_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_addressof(compiler_ctx_ptr_t ctx, addressof_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_addressof(compiler_ctx_t_ptr ctx, addressof_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_deref(compiler_ctx_ptr_t ctx, deref_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_deref(compiler_ctx_t_ptr ctx, deref_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_expr_index(compiler_ctx_ptr_t ctx, index_expr_node_ptr_t node);
+		virtual value_t_ptr emit_expr_index(compiler_ctx_t_ptr ctx, index_expr_node_t_ptr node);
 
 
-		virtual value_ptr_t emit_literal(compiler_ctx_ptr_t ctx, literal_node_ptr_t node);
+		virtual value_t_ptr emit_literal(compiler_ctx_t_ptr ctx, literal_node_t_ptr node);
 
-		virtual value_ptr_t emit_arithmetic_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_t node);
+		virtual value_t_ptr emit_arithmetic_binary(compiler_ctx_t_ptr ctx, binary_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_cmp_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_t node);
+		virtual value_t_ptr emit_cmp_binary(compiler_ctx_t_ptr ctx, binary_expr_node_t_ptr node);
 
-		virtual value_ptr_t emit_assign_arithmetic_binary(compiler_ctx_ptr_t ctx, binary_expr_node_ptr_t node);
+		virtual value_t_ptr emit_assign_arithmetic_binary(compiler_ctx_t_ptr ctx, binary_expr_node_t_ptr node);
 
 		//
 		// HELPERS
 		//
-		virtual value_ptr_t emit_constant(compiler_ctx_ptr_t ctx, variant<int,float, double, char> val, aloe_type_ptr_t atype, node_ptr_t node);
+		virtual value_t_ptr emit_constant(compiler_ctx_t_ptr ctx, variant<int,float, double, char> val, aloe_type_t_ptr atype, node_t_ptr node);
 
-		virtual value_ptr_t emit_raw_assign(compiler_ctx_ptr_t ctx, value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node);
+		virtual value_t_ptr emit_raw_assign(compiler_ctx_t_ptr ctx, value_t_ptr lhs, value_t_ptr rhs, node_t_ptr node);
 
-		virtual value_ptr_t emit_raw_binary_arithmetic(compiler_ctx_ptr_t ctx, expression_op_e base_op,  value_ptr_t lhs, value_ptr_t rhs, node_ptr_t node);
+		virtual value_t_ptr emit_raw_binary_arithmetic(compiler_ctx_t_ptr ctx, expression_op_e base_op,  value_t_ptr lhs, value_t_ptr rhs, node_t_ptr node);
 
 		//
 		// TYPE TESTERS --> THROW EXCEPTIONS 
 		// 
-		virtual void check_ir_type_equal(compiler_ctx_ptr_t ctx, Value* v1, Value *v2, node_ptr_t node);
+		virtual void check_ir_type_equal(compiler_ctx_t_ptr ctx, Value* v1, Value *v2, node_t_ptr node);
 
-		virtual void check_assign_val_type_equality(compiler_ctx_ptr_t ctx, value_ptr_t v1, value_ptr_t v2, node_ptr_t node);
+		virtual void check_assign_val_type_equality(compiler_ctx_t_ptr ctx, value_t_ptr v1, value_t_ptr v2, node_t_ptr node);
 
-		virtual void check_lvalue(compiler_ctx_ptr_t ctx, value_ptr_t v, node_ptr_t node);
+		virtual void check_lvalue(compiler_ctx_t_ptr ctx, value_t_ptr v, node_t_ptr node);
 
-		virtual llvm::DebugLoc init_dloc(compiler_ctx_ptr_t ctx, node_ptr_t node);
+		virtual llvm::DebugLoc init_dloc(compiler_ctx_t_ptr ctx, node_t_ptr node);
 
-		virtual DIScope* get_scope(compiler_ctx_ptr_t ctx);
+		virtual DIScope* get_scope(compiler_ctx_t_ptr ctx);
 
 
 	private:
 
-		di_cache_ptr_t di_cache;
+		di_cache_t_ptr di_cache;
 
-		map<node_ptr_t, value_ptr_t> id_cache;
+		map<node_t_ptr, value_t_ptr> id_cache;
 
-		map<node_ptr_t, Type*> type_cache; // for types that are not internalized by LLVM (e.g. struct types)
+		map<node_t_ptr, Type*> type_cache; // for types that are not internalized by LLVM (e.g. struct types)
 
 		bool validate;
 
 		bool no_debug;
 
-		node_ptr_t curr_node;
+		node_t_ptr curr_node;
 
 	};
 

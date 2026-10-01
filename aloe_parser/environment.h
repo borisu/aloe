@@ -7,7 +7,7 @@ using namespace std;
 namespace aloe
 {
 	class environment_t;
-	typedef shared_ptr<environment_t> environment_ptr_t;
+	typedef shared_ptr<environment_t> environment_t_ptr;
 
 	enum scope_e
 	{
@@ -22,17 +22,17 @@ namespace aloe
 	{
 	public:
 		
-		virtual type_proxy_ptr_t register_type(identifier_node_ptr_t id, aloe_type_ptr_t node) = 0;
+		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, aloe_type_t_ptr node) = 0;
 		
-		virtual type_proxy_ptr_t find_type(identifier_node_ptr_t id, bool local_scope = false) = 0;
+		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope = false) = 0;
 
-		virtual void register_object(identifier_node_ptr_t id, node_ptr_t node) = 0;
+		virtual void register_object(identifier_node_t_ptr id, node_t_ptr node) = 0;
 
-		virtual node_proxy_ptr_t find_object(identifier_node_ptr_t id, bool local_scope = false) = 0;
+		virtual node_proxy_t_ptr find_object(identifier_node_t_ptr id, bool local_scope = false) = 0;
 
 		virtual scope_e curr_scope() = 0;
 
-		virtual fun_node_ptr_t curr_fun() = 0;
+		virtual fun_node_t_ptr curr_fun() = 0;
 
 		virtual const string& source() = 0;
 	
@@ -42,25 +42,25 @@ namespace aloe
 	{
 	public:
 
-		base_modifier_t(environment_ptr_t env = nullptr);
+		base_modifier_t(environment_t_ptr env = nullptr);
 
-		virtual type_proxy_ptr_t register_type(identifier_node_ptr_t id, aloe_type_ptr_t node) override;
+		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, aloe_type_t_ptr node) override;
 
-		virtual type_proxy_ptr_t find_type(identifier_node_ptr_t id, bool local_scope) override;
+		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope) override;
 
-		virtual void register_object(identifier_node_ptr_t id, node_ptr_t node) override;
+		virtual void register_object(identifier_node_t_ptr id, node_t_ptr node) override;
 
-		virtual node_proxy_ptr_t find_object(identifier_node_ptr_t id, bool local_scope = false) override;
+		virtual node_proxy_t_ptr find_object(identifier_node_t_ptr id, bool local_scope = false) override;
 
 		scope_e curr_scope() override;
 
-		fun_node_ptr_t curr_fun() override;
+		fun_node_t_ptr curr_fun() override;
 
 		const string& source() override;
 
 	protected:
 
-		environment_ptr_t prev;
+		environment_t_ptr prev;
 	};
 
 
@@ -68,24 +68,24 @@ namespace aloe
 	{
 	public:
 
-		environment_modifier_t(environment_ptr_t env = nullptr);
+		environment_modifier_t(environment_t_ptr env = nullptr);
 
-		virtual type_proxy_ptr_t register_type(identifier_node_ptr_t id, aloe_type_ptr_t node) override;
+		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, aloe_type_t_ptr node) override;
 
-		virtual type_proxy_ptr_t find_type(identifier_node_ptr_t id, bool local_scope) override;
+		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope) override;
 
-		virtual void register_object(identifier_node_ptr_t id, node_ptr_t node) override;
+		virtual void register_object(identifier_node_t_ptr id, node_t_ptr node) override;
 
-		virtual node_proxy_ptr_t find_object(identifier_node_ptr_t id, bool local_scope) override;
+		virtual node_proxy_t_ptr find_object(identifier_node_t_ptr id, bool local_scope) override;
 		
 	protected:
 	
-		typedef map<string, type_proxy_ptr_t>
+		typedef map<string, type_proxy_t_ptr>
 		type_map_t;
 
 		type_map_t  type_map;
 
-		typedef map<string, node_proxy_ptr_t>
+		typedef map<string, node_proxy_t_ptr>
 		proxy_map_t;
 
 		proxy_map_t obj_map;
@@ -94,7 +94,7 @@ namespace aloe
 	class scope_modifier_t : public virtual base_modifier_t
 	{
 	public:
-		scope_modifier_t(scope_e scope, environment_ptr_t env = nullptr);
+		scope_modifier_t(scope_e scope, environment_t_ptr env = nullptr);
 
 		scope_e curr_scope() override;
 		
@@ -104,12 +104,12 @@ namespace aloe
 	class fun_modifier_t : public virtual base_modifier_t
 	{
 	public:
-		fun_modifier_t(fun_node_ptr_t fun = nullptr, environment_ptr_t env = nullptr);
+		fun_modifier_t(fun_node_t_ptr fun = nullptr, environment_t_ptr env = nullptr);
 		
 		// function scope accessors
-		fun_node_ptr_t curr_fun() override;
+		fun_node_t_ptr curr_fun() override;
 
-		fun_node_ptr_t fun;
+		fun_node_t_ptr fun;
 	};
 	 
 	class source_modifier_t : public virtual base_modifier_t

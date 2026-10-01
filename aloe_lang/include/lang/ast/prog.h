@@ -10,12 +10,12 @@ namespace aloe
 	{
 		prog_node_t() :node_t(PROG_NODE) {}
 
-		identifier_node_ptr_t module_name;
+		identifier_node_t_ptr module_name;
 
-		vector<node_ptr_t> statements;
+		vector<node_t_ptr> statements;
 
 	};
 
-	typedef shared_ptr<prog_node_t> prog_node_ptr_t;
+	typedef shared_ptr<prog_node_t> prog_node_t_ptr;
 
 }

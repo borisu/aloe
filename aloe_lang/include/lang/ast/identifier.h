@@ -17,7 +17,7 @@ namespace aloe
 	};
 
 	typedef shared_ptr<identifier_node_t>
-	identifier_node_ptr_t;
+	identifier_node_t_ptr;
 
 }
 #pragma once

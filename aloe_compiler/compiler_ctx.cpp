@@ -4,7 +4,7 @@
 using namespace aloe;
 
 
-base_ctx_modifier_t::base_ctx_modifier_t(compiler_ctx_ptr_t prev)
+base_ctx_modifier_t::base_ctx_modifier_t(compiler_ctx_t_ptr prev)
 {
 	this->prev = prev;
 }
@@ -71,7 +71,7 @@ base_ctx_modifier_t::curr_fun()
 }	
 
 // ast modifier
-ast_ptr_t 
+ast_t_ptr 
 base_ctx_modifier_t::ast()
 {
 	if (prev == nullptr)
@@ -86,7 +86,7 @@ llvm_ctx_modifier_t::llvm_ctx_modifier_t(
 	DIBuilder* di_builder,
 	DIFile* di_file,
 	DICompileUnit* llvm_cu,
-	compiler_ctx_ptr_t prev)
+	compiler_ctx_t_ptr prev)
 	: base_ctx_modifier_t(prev)
 {
 	this->_ctx			= ctx;
@@ -136,14 +136,14 @@ llvm_ctx_modifier_t::llvm_cu()
 
 // ast_ctx_modifier_t implementation
 ast_ctx_modifier_t::ast_ctx_modifier_t(
-	ast_ptr_t _ast,
-	compiler_ctx_ptr_t prev)
+	ast_t_ptr _ast,
+	compiler_ctx_t_ptr prev)
 	: base_ctx_modifier_t(prev)
 {
 	this->_ast = _ast;
 }
 
-ast_ptr_t 
+ast_t_ptr 
 ast_ctx_modifier_t::ast()
 {
 	return _ast;
@@ -151,7 +151,7 @@ ast_ctx_modifier_t::ast()
 
 fun_ctx_modifier_t::fun_ctx_modifier_t(
 	Function* _curr_fun,
-	compiler_ctx_ptr_t prev)
+	compiler_ctx_t_ptr prev)
 	: base_ctx_modifier_t(prev)
 {
 	this->_curr_fun = _curr_fun;

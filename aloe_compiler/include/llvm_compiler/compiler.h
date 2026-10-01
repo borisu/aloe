@@ -3,7 +3,7 @@
 
 namespace aloe
 {
-    compiler_ptr_t create_llvm_compiler();
+    compiler_t_ptr create_llvm_compiler();
 }
 
 #pragma once

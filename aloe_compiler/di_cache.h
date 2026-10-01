@@ -14,7 +14,7 @@ namespace aloe
 
 		di_cache_t(DIBuilder& dib);
 
-		DIType* get_dit_type(aloe_type_ptr_t atype);
+		DIType* get_dit_type(aloe_type_t_ptr atype);
 
 	private:
 
@@ -25,7 +25,7 @@ namespace aloe
 	};
 
 	typedef shared_ptr<di_cache_t> 
-	di_cache_ptr_t;
+	di_cache_t_ptr;
 
 }
 

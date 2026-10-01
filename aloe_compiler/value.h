@@ -16,7 +16,7 @@ namespace aloe
 
 		bool is_lvalue;
 
-		aloe_type_ptr_t aloe_type;
+		aloe_type_t_ptr aloe_type;
 
 		Type* lval_type;
 
@@ -25,6 +25,6 @@ namespace aloe
 	};
 
 	typedef shared_ptr<value_t>
-	value_ptr_t;
+	value_t_ptr;
 
 }

@@ -40,28 +40,28 @@ namespace aloe
 	struct aloe_type_t;
 
 	typedef
-	shared_ptr<aloe_type_t> aloe_type_ptr_t;
+	shared_ptr<aloe_type_t> aloe_type_t_ptr;
 
-	typedef proxy_t<aloe_type_ptr_t>
+	typedef proxy_t<aloe_type_t_ptr>
 	type_proxy_t;
 
 	typedef
-	shared_ptr<type_proxy_t> type_proxy_ptr_t;
+	shared_ptr<type_proxy_t> type_proxy_t_ptr;
 	
 	struct var_t : public context_t
 	{
 		string name;
 
-		type_proxy_ptr_t type;
+		type_proxy_t_ptr type;
 	};
 
 	typedef
-	shared_ptr<var_t> var_ptr_t;
+	shared_ptr<var_t> var_t_ptr;
 
-	typedef vector<var_ptr_t>
+	typedef vector<var_t_ptr>
 	var_vec_t;
 
-	typedef map<string, var_ptr_t>
+	typedef map<string, var_t_ptr>
 	var_map_t;
 
 	struct var_set_t : public context_t
@@ -71,22 +71,22 @@ namespace aloe
 	};
 
 	typedef shared_ptr<var_set_t>
-	var_set_ptr_t;
+	var_set_t_ptr;
 
 	struct gt_t;
 
 	typedef shared_ptr<gt_t>
-	gt_ptr_t;
+	gt_t_ptr;
 
 	struct gt_t
 	{
-		type_proxy_ptr_t type;
+		type_proxy_t_ptr type;
 	};
 
-	typedef vector<gt_ptr_t>
+	typedef vector<gt_t_ptr>
 	gt_vec_t;
 
-	typedef map<aloe_type_t, gt_ptr_t>
+	typedef map<aloe_type_t, gt_t_ptr>
 	gt_map_t;
 
 	struct gt_set_t : public context_t
@@ -96,7 +96,7 @@ namespace aloe
 	};
 
 	typedef shared_ptr<gt_set_t>
-	gt_set_ptr_t;
+	gt_set_t_ptr;
 
 	struct layout_info_t
 	{
@@ -104,15 +104,15 @@ namespace aloe
 
 		int id;
 
-		gt_set_ptr_t gt_chain;
+		gt_set_t_ptr gt_chain;
 
-		var_set_ptr_t fields;
+		var_set_t_ptr fields;
 
 		bool is_incomplete;
 	};
 
 	typedef shared_ptr<layout_info_t>	
-	layout_info_ptr_t;
+	layout_info_t_ptr;
 
 	struct array_info_t
 	{
@@ -121,33 +121,33 @@ namespace aloe
 
 		}
 
-		type_proxy_ptr_t elem_type;
+		type_proxy_t_ptr elem_type;
 
 		int size; // -1 for unsized arrays
 	};
 
 	typedef shared_ptr<array_info_t>
-	array_info_ptr_t;
+	array_info_t_ptr;
 
 	struct ptr_info_t
 	{
-		type_proxy_ptr_t pointee_type;
+		type_proxy_t_ptr pointee_type;
 	};
 
 	typedef shared_ptr<ptr_info_t>
-	ptr_info_ptr_t;
+	ptr_info_t_ptr;
 
 	struct fun_info_t
 	{
 
-		type_proxy_ptr_t ret_type;
+		type_proxy_t_ptr ret_type;
 
-		var_set_ptr_t params;
+		var_set_t_ptr params;
 
 	};
 
 	typedef shared_ptr<fun_info_t>
-	fun_info_ptr_t;
+	fun_info_t_ptr;
 
 
 	struct aloe_type_t : public context_t
@@ -159,13 +159,13 @@ namespace aloe
 
 		aloe_type_e type_id;
 
-		layout_info_ptr_t lay;
+		layout_info_t_ptr lay;
 
-		array_info_ptr_t arr;
+		array_info_t_ptr arr;
 
-		ptr_info_ptr_t ptr;
+		ptr_info_t_ptr ptr;
 
-		fun_info_ptr_t fun;
+		fun_info_t_ptr fun;
 	
 		virtual ~aloe_type_t() {};
 

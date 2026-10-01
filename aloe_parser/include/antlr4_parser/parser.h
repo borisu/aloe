@@ -5,5 +5,5 @@ using namespace std;
 
 namespace aloe
 {
-	parser_ptr_t create_antlr4_parser();
+	parser_t_ptr create_antlr4_parser();
 }

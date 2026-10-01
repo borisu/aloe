@@ -10,10 +10,10 @@ namespace aloe
 	{
 		type_node_t() :node_t(TYPE_NODE){}
 
-		type_proxy_ptr_t type;
+		type_proxy_t_ptr type;
 	};
 
-	struct type_node_t;
-	typedef shared_ptr<type_node_t> type_node_ptr_t;
+	typedef shared_ptr<type_node_t> 
+	type_node_t_ptr;
 
 }

@@ -12,7 +12,7 @@ using namespace std;
 namespace aloe
 {
 	struct expr_node_t;
-	typedef shared_ptr<expr_node_t> expr_node_ptr_t;
+	typedef shared_ptr<expr_node_t> expr_node_t_ptr;
 
 	enum expression_op_e
 	{
@@ -75,7 +75,7 @@ namespace aloe
 
 		expression_op_e op_id;
 
-		type_proxy_ptr_t type;
+		type_proxy_t_ptr type;
 
 		bool is_lvalue;
 	};
@@ -84,25 +84,25 @@ namespace aloe
 	{
 		arglist_node_t() :node_t(ARG_LIST_NODE) {}
 
-		vector<expr_node_ptr_t> args;
+		vector<expr_node_t_ptr> args;
 	};
 
-	typedef shared_ptr<arglist_node_t> arglist_node_ptr_t;
+	typedef shared_ptr<arglist_node_t> arglist_node_t_ptr;
 
 	struct literal_expr_node_t : public expr_node_t
 	{
 		literal_expr_node_t() :expr_node_t(expr_literal) {}
 
-		literal_node_ptr_t literal;
+		literal_node_t_ptr literal;
 	};
 
 	struct identifier_expr_node_t : public expr_node_t
 	{
 		identifier_expr_node_t() :expr_node_t(expr_identifier) {}
 
-		identifier_node_ptr_t id;
+		identifier_node_t_ptr id;
 
-		node_proxy_ptr_t ref;
+		node_proxy_t_ptr ref;
 
 	};
 	
@@ -110,35 +110,35 @@ namespace aloe
 	{
 		unary_expr_node_t(expression_op_e op) :expr_node_t(op) {}
 
-		expr_node_ptr_t operand;
+		expr_node_t_ptr operand;
 	};
 
 	typedef shared_ptr<unary_expr_node_t>
-		unary_expr_node_ptr_t;
+		unary_expr_node_t_ptr;
 
 	struct funcall_expr_node_t : public expr_node_t
 	{
 		funcall_expr_node_t() :expr_node_t(expr_funcall) {}
 
-		expr_node_ptr_t fun_expr;
+		expr_node_t_ptr fun_expr;
 
-		arglist_node_ptr_t arg_list;
+		arglist_node_t_ptr arg_list;
 	};
 
 	struct cast_expr_node_t : public expr_node_t
 	{
 		cast_expr_node_t() :expr_node_t(expr_cast) {}
 
-		expr_node_ptr_t operand;
+		expr_node_t_ptr operand;
 
-		type_proxy_ptr_t type;
+		type_proxy_t_ptr type;
 	};
 
 	struct sizeoftype_expr_node_t : public expr_node_t
 	{
 		sizeoftype_expr_node_t() :expr_node_t(expr_sizeoftype) {}
 
-		type_proxy_ptr_t type;
+		type_proxy_t_ptr type;
 
 	};
 
@@ -146,48 +146,48 @@ namespace aloe
 	{
 		binary_expr_node_t(expression_op_e op) :expr_node_t(op) {}
 
-		expr_node_ptr_t operand1;
+		expr_node_t_ptr operand1;
 
-		expr_node_ptr_t operand2;
+		expr_node_t_ptr operand2;
 	};
 
 	typedef 
-	shared_ptr<binary_expr_node_t> binary_expr_node_ptr_t;
+	shared_ptr<binary_expr_node_t> binary_expr_node_t_ptr;
 
 	struct ternary_expr_node_t : public expr_node_t
 	{
 		ternary_expr_node_t() :expr_node_t(expr_ternary) {}
 
-		expr_node_ptr_t condition;
+		expr_node_t_ptr condition;
 
-		expr_node_ptr_t true_expr;
+		expr_node_t_ptr true_expr;
 
-		expr_node_ptr_t false_expr;
+		expr_node_t_ptr false_expr;
 	};
 
 	struct comma_expr_node_t : public expr_node_t
 	{
 		comma_expr_node_t() :expr_node_t(expr_comma) {}
 
-		arglist_node_ptr_t arg_list;
+		arglist_node_t_ptr arg_list;
 	};
 
 	struct dot_expr_node_t : public expr_node_t
 	{
 		dot_expr_node_t(): expr_node_t(expr_dot) {}
 
-		expr_node_ptr_t operand;
+		expr_node_t_ptr operand;
 
-		identifier_node_ptr_t id;
+		identifier_node_t_ptr id;
 	};
 
 	struct arrow_expr_node_t : public expr_node_t
 	{
 		arrow_expr_node_t() : expr_node_t(expr_arrow) {}
 
-		expr_node_ptr_t operand;
+		expr_node_t_ptr operand;
 
-		identifier_node_ptr_t id;
+		identifier_node_t_ptr id;
 	};
 
 #define DEFINE_UNARY_EXPR_NODE_TYPE(NAME) struct NAME##_expr_node_t : public unary_expr_node_t { NAME##_expr_node_t() : unary_expr_node_t(expr_##NAME) {} }
@@ -236,59 +236,59 @@ namespace aloe
 	DEFINE_BINARY_EXPR_NODE_TYPE(xorassign);
 	DEFINE_BINARY_EXPR_NODE_TYPE(orassign);
 
-#define DEFINE_EXPR_NODE_PTR_TYPE(NAME) typedef shared_ptr<NAME##_expr_node_t> NAME##_expr_node_ptr_t
-	DEFINE_EXPR_NODE_PTR_TYPE(sfxplusplus);
-	DEFINE_EXPR_NODE_PTR_TYPE(sfxminmin);
-	DEFINE_EXPR_NODE_PTR_TYPE(preplusplus);
-	DEFINE_EXPR_NODE_PTR_TYPE(preminmin);
-	DEFINE_EXPR_NODE_PTR_TYPE(plus);
-	DEFINE_EXPR_NODE_PTR_TYPE(min);
-	DEFINE_EXPR_NODE_PTR_TYPE(not);
-	DEFINE_EXPR_NODE_PTR_TYPE(bwsnot);
-	DEFINE_EXPR_NODE_PTR_TYPE(sizeofexpr);
-	DEFINE_EXPR_NODE_PTR_TYPE(funcall);
-	DEFINE_EXPR_NODE_PTR_TYPE(index);
-	DEFINE_EXPR_NODE_PTR_TYPE(cast);
-	DEFINE_EXPR_NODE_PTR_TYPE(deref);
-	DEFINE_EXPR_NODE_PTR_TYPE(addressof);
-	DEFINE_EXPR_NODE_PTR_TYPE(sizeoftype);
-	DEFINE_EXPR_NODE_PTR_TYPE(mult);
-	DEFINE_EXPR_NODE_PTR_TYPE(div);
-	DEFINE_EXPR_NODE_PTR_TYPE(mod);
-	DEFINE_EXPR_NODE_PTR_TYPE(add);
-	DEFINE_EXPR_NODE_PTR_TYPE(sub);
-	DEFINE_EXPR_NODE_PTR_TYPE(shiftleft);
-	DEFINE_EXPR_NODE_PTR_TYPE(shiftright);
-	DEFINE_EXPR_NODE_PTR_TYPE(less);
-	DEFINE_EXPR_NODE_PTR_TYPE(lesseeq);
-	DEFINE_EXPR_NODE_PTR_TYPE(more);
-	DEFINE_EXPR_NODE_PTR_TYPE(moreeq);
-	DEFINE_EXPR_NODE_PTR_TYPE(logicaleq);
-	DEFINE_EXPR_NODE_PTR_TYPE(noteq);
-	DEFINE_EXPR_NODE_PTR_TYPE(and);
-	DEFINE_EXPR_NODE_PTR_TYPE(xor);
-	DEFINE_EXPR_NODE_PTR_TYPE(or);
-	DEFINE_EXPR_NODE_PTR_TYPE(logicaland);
-	DEFINE_EXPR_NODE_PTR_TYPE(logicalor);
-	DEFINE_EXPR_NODE_PTR_TYPE(dot);
-	DEFINE_EXPR_NODE_PTR_TYPE(arrow);
-	DEFINE_EXPR_NODE_PTR_TYPE(identifier);
-	DEFINE_EXPR_NODE_PTR_TYPE(literal);
-	DEFINE_EXPR_NODE_PTR_TYPE(ternary);
-	DEFINE_EXPR_NODE_PTR_TYPE(assign);
-	DEFINE_EXPR_NODE_PTR_TYPE(addassign);	
-	DEFINE_EXPR_NODE_PTR_TYPE(subassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(multassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(divassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(modassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(shiftleftassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(shiftrightassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(andassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(xorassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(orassign);
-	DEFINE_EXPR_NODE_PTR_TYPE(comma);
+#define DEFINE_EXPR_NODE_t_ptrYPE(NAME) typedef shared_ptr<NAME##_expr_node_t> NAME##_expr_node_t_ptr
+	DEFINE_EXPR_NODE_t_ptrYPE(sfxplusplus);
+	DEFINE_EXPR_NODE_t_ptrYPE(sfxminmin);
+	DEFINE_EXPR_NODE_t_ptrYPE(preplusplus);
+	DEFINE_EXPR_NODE_t_ptrYPE(preminmin);
+	DEFINE_EXPR_NODE_t_ptrYPE(plus);
+	DEFINE_EXPR_NODE_t_ptrYPE(min);
+	DEFINE_EXPR_NODE_t_ptrYPE(not);
+	DEFINE_EXPR_NODE_t_ptrYPE(bwsnot);
+	DEFINE_EXPR_NODE_t_ptrYPE(sizeofexpr);
+	DEFINE_EXPR_NODE_t_ptrYPE(funcall);
+	DEFINE_EXPR_NODE_t_ptrYPE(index);
+	DEFINE_EXPR_NODE_t_ptrYPE(cast);
+	DEFINE_EXPR_NODE_t_ptrYPE(deref);
+	DEFINE_EXPR_NODE_t_ptrYPE(addressof);
+	DEFINE_EXPR_NODE_t_ptrYPE(sizeoftype);
+	DEFINE_EXPR_NODE_t_ptrYPE(mult);
+	DEFINE_EXPR_NODE_t_ptrYPE(div);
+	DEFINE_EXPR_NODE_t_ptrYPE(mod);
+	DEFINE_EXPR_NODE_t_ptrYPE(add);
+	DEFINE_EXPR_NODE_t_ptrYPE(sub);
+	DEFINE_EXPR_NODE_t_ptrYPE(shiftleft);
+	DEFINE_EXPR_NODE_t_ptrYPE(shiftright);
+	DEFINE_EXPR_NODE_t_ptrYPE(less);
+	DEFINE_EXPR_NODE_t_ptrYPE(lesseeq);
+	DEFINE_EXPR_NODE_t_ptrYPE(more);
+	DEFINE_EXPR_NODE_t_ptrYPE(moreeq);
+	DEFINE_EXPR_NODE_t_ptrYPE(logicaleq);
+	DEFINE_EXPR_NODE_t_ptrYPE(noteq);
+	DEFINE_EXPR_NODE_t_ptrYPE(and);
+	DEFINE_EXPR_NODE_t_ptrYPE(xor);
+	DEFINE_EXPR_NODE_t_ptrYPE(or);
+	DEFINE_EXPR_NODE_t_ptrYPE(logicaland);
+	DEFINE_EXPR_NODE_t_ptrYPE(logicalor);
+	DEFINE_EXPR_NODE_t_ptrYPE(dot);
+	DEFINE_EXPR_NODE_t_ptrYPE(arrow);
+	DEFINE_EXPR_NODE_t_ptrYPE(identifier);
+	DEFINE_EXPR_NODE_t_ptrYPE(literal);
+	DEFINE_EXPR_NODE_t_ptrYPE(ternary);
+	DEFINE_EXPR_NODE_t_ptrYPE(assign);
+	DEFINE_EXPR_NODE_t_ptrYPE(addassign);	
+	DEFINE_EXPR_NODE_t_ptrYPE(subassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(multassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(divassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(modassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(shiftleftassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(shiftrightassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(andassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(xorassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(orassign);
+	DEFINE_EXPR_NODE_t_ptrYPE(comma);
 
-#define NEW_EXPR_NODE(VAR, NAME) NAME##_expr_node_ptr_t VAR(new NAME##_expr_node_t())
+#define NEW_EXPR_NODE(VAR, NAME) NAME##_expr_node_t_ptr VAR(new NAME##_expr_node_t())
 
 }
 

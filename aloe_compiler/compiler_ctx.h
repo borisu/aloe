@@ -12,7 +12,7 @@ using namespace llvm;
 namespace aloe
 {
 	class compiler_ctx_t;
-	typedef shared_ptr<compiler_ctx_t> compiler_ctx_ptr_t;
+	typedef shared_ptr<compiler_ctx_t> compiler_ctx_t_ptr;
 
 	class compiler_ctx_t
 	{
@@ -29,13 +29,13 @@ namespace aloe
 		virtual Function* curr_fun()		= 0;
 
 		// ast modifier
-		virtual ast_ptr_t ast()				= 0;
+		virtual ast_t_ptr ast()				= 0;
 	};
 
 	class base_ctx_modifier_t : public virtual compiler_ctx_t
 	{
 	public:
-		base_ctx_modifier_t(compiler_ctx_ptr_t prev);
+		base_ctx_modifier_t(compiler_ctx_t_ptr prev);
 
 		// llvm modifier
 		virtual LLVMContext* ctx()			override;
@@ -49,11 +49,11 @@ namespace aloe
 		virtual Function* curr_fun()		override;
 
 		// ast modifier
-		virtual ast_ptr_t ast()				override;
+		virtual ast_t_ptr ast()				override;
 
 	protected:
 
-		compiler_ctx_ptr_t prev;
+		compiler_ctx_t_ptr prev;
 
 	};
 
@@ -68,7 +68,7 @@ namespace aloe
 			DIBuilder* di_builder, 
 			DIFile* di_file, 
 			DICompileUnit* llvm_cu,
-			compiler_ctx_ptr_t prev = nullptr);
+			compiler_ctx_t_ptr prev = nullptr);
 
 		// llvm modifier
 		virtual LLVMContext* ctx()			override;
@@ -93,14 +93,14 @@ namespace aloe
 	{
 	public:
 		ast_ctx_modifier_t(
-			ast_ptr_t ast,
-			compiler_ctx_ptr_t prev = nullptr);
+			ast_t_ptr ast,
+			compiler_ctx_t_ptr prev = nullptr);
 
 		// ast modifier
-		virtual ast_ptr_t ast() override;
+		virtual ast_t_ptr ast() override;
 
 	protected:
-		ast_ptr_t _ast;
+		ast_t_ptr _ast;
 	};
 
 	class fun_ctx_modifier_t : public virtual base_ctx_modifier_t
@@ -108,7 +108,7 @@ namespace aloe
 	public:
 		fun_ctx_modifier_t(
 			Function* curr_fun,
-			compiler_ctx_ptr_t prev = nullptr);
+			compiler_ctx_t_ptr prev = nullptr);
 
 		virtual Function* curr_fun() override;
 

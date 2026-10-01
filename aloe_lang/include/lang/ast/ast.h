@@ -18,14 +18,14 @@ namespace aloe
 	{
 		ast_t() : node_t(AST_ROOT_NODE) {}
 
-		node_ptr_t root;
+		node_t_ptr root;
 
 		string source_id;
 
 		virtual ~ast_t() {};
 	};
 
-	typedef shared_ptr<ast_t> ast_ptr_t;
+	typedef shared_ptr<ast_t> ast_t_ptr;
 
 		
 }

@@ -13,7 +13,7 @@ namespace aloe
 {
 
 	struct literal_node_t;
-	typedef shared_ptr<literal_node_t> literal_node_ptr_t;
+	typedef shared_ptr<literal_node_t> literal_node_t_ptr;
 
 	enum literal_type_e
 	{
@@ -31,7 +31,7 @@ namespace aloe
 
 		literal_type_e lit_type_id;
 
-		type_proxy_ptr_t type;
+		type_proxy_t_ptr type;
 
 		variant<string, int, char> value;
 
