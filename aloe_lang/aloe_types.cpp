@@ -19,7 +19,7 @@ aloe::operator != (const aloe_type_t& t1, const aloe_type_t& t2)
 bool
 aloe::operator == (const var_t& v1, const var_t& v2)
 {
-	return v1.name == v2.name && *v1.type->target == *v2.type->target;
+	return v1.name == v2.name && *v1.var_type() == *v2.var_type();
 }
 
 bool 
@@ -35,7 +35,7 @@ aloe::operator < (const var_t& v1, const var_t& v2)
 	{
 		return v1.name < v2.name;
 	}
-	return *v1.type->target < *v2.type->target;
+	return *v1.var_type() < *v2.var_type();
 }
 
 bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
@@ -54,9 +54,9 @@ bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
 			return t1.arr->size < t2.arr->size;
 		}
 
-		if (*t1.arr->elem_type->target != *t2.arr->elem_type->target)
+		if (*t1.arr->elem_type() != *t2.arr->elem_type())
 		{
-			return *t1.arr->elem_type->target < *t2.arr->elem_type->target;
+			return *t1.arr->elem_type() < *t2.arr->elem_type();
 		}
 
 		break;
@@ -64,17 +64,17 @@ bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
 	}
 	case ALOE_TYPE_PTR:
 	{
-		if (*t1.ptr->pointee_type->target != *t2.ptr->pointee_type->target)
+		if (*t1.ptr->pointee_type() != *t2.ptr->pointee_type())
 		{
-			return *t1.ptr->pointee_type->target < *t2.ptr->pointee_type->target;
+			return *t1.ptr->pointee_type() < *t2.ptr->pointee_type();
 		}
 		break;
 	}
 	case ALOE_TYPE_FUNCTION:
 	{
-		if (*t1.fun->ret_type->target != *t2.fun->ret_type->target)
+		if (*t1.fun->ret_type() != *t2.fun->ret_type())
 		{
-			return *t1.fun->ret_type->target < *t2.fun->ret_type->target;
+			return *t1.fun->ret_type() < *t2.fun->ret_type();
 		}
 
 		if (t1.fun->params->v.size() != t2.fun->params->v.size())
@@ -97,9 +97,9 @@ bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
 	}
 	case ALOE_TYPE_LAYOUT:
 	{
-		if (t1.lay->id != t2.lay->id)
+		if (t1.layout->id != t2.layout->id)
 		{
-			return t1.lay->id < t2.lay->id;
+			return t1.layout->id < t2.layout->id;
 		}
 		
 		break;
@@ -142,27 +142,27 @@ aloe_type_t::to_str()
 			{
 				result += ", ";
 			}
-			result += fun->params->v[i]->name + ": " + fun->params->v[i]->type->target->to_str();
+			result += fun->params->v[i]->name + ": " + fun->params->v[i]->var_type()->to_str();
 		}
 		result += ") -> ";
-		result += fun->ret_type->target->to_str();
+		result += fun->ret_type()->to_str();
 		return result;
 	}
 	case ALOE_TYPE_PTR:
 	{
-		return  "^" + ptr->pointee_type->target->to_str();
+		return  "^" + ptr->pointee_type()->to_str();
 	}
 	case ALOE_TYPE_ARRAY:
 	{
-		return  arr->elem_type->target->to_str() + "[" + (arr->size == -1 ? "" : std::to_string(arr->size	)) + "]";
+		return  arr->elem_type()->to_str() + "[" + (arr->size == -1 ? "" : std::to_string(arr->size	)) + "]";
 
 	}
 	case ALOE_TYPE_LAYOUT:
 	{
-		string s = "layout " + lay->name + "{";
-		for (auto& m : lay->fields->v)
+		string s = "layout " + layout->name + "{";
+		for (auto& m : layout->fields->v)
 		{
-			s += m->name + ":" + m->type->target->to_str() + "; ";
+			s += m->name + ":" + m->var_type()->to_str() + "; ";
 		}
 		s += "}";
 		return s;

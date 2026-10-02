@@ -75,7 +75,17 @@ namespace aloe
 
 		expression_op_e op_id;
 
-		type_proxy_t_ptr type;
+		type_proxy_t_ptr p_expr_type;
+
+		void expr_type(type_proxy_t_ptr type)
+		{
+			this->p_expr_type = type;
+		}
+
+		aloe_type_t_ptr expr_type() const
+		{
+			return p_expr_type->target;
+		}
 
 		bool is_lvalue;
 	};
@@ -101,9 +111,19 @@ namespace aloe
 	{
 		identifier_expr_node_t() :expr_node_t(expr_identifier) {}
 
-		identifier_node_t_ptr id;
+		identifier_node_t_ptr idt;
 
-		node_proxy_t_ptr ref;
+		node_proxy_t_ptr p_ref;
+
+		node_t_ptr ref()
+		{
+			return p_ref->target;
+		}
+
+		void ref(node_proxy_t_ptr ref)
+		{
+			this->p_ref = ref;
+		}
 	};
 	defptr(identifier_expr_node_t);
 	
@@ -131,7 +151,7 @@ namespace aloe
 
 		expr_node_t_ptr operand;
 
-		type_proxy_t_ptr type;
+		type_proxy_t_ptr p_expr_type;
 	};
 	defptr(cast_expr_node_t);
 
@@ -139,7 +159,7 @@ namespace aloe
 	{
 		sizeoftype_expr_node_t() :expr_node_t(expr_sizeoftype) {}
 
-		type_proxy_t_ptr type;
+		type_proxy_t_ptr p_expr_type;
 
 	};
 	defptr(sizeoftype_expr_node_t);
@@ -180,7 +200,7 @@ namespace aloe
 
 		expr_node_t_ptr operand;
 
-		identifier_node_t_ptr id;
+		identifier_node_t_ptr idt;
 	};
 	defptr(dot_expr_node_t);
 
@@ -190,7 +210,7 @@ namespace aloe
 
 		expr_node_t_ptr operand;
 
-		identifier_node_t_ptr id;
+		identifier_node_t_ptr idt;
 	};
 	defptr(arrow_expr_node_t);
 

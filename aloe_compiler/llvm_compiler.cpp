@@ -159,16 +159,16 @@ llvmir_compiler_t::emit_ir_type(compiler_ctx_t_ptr ctx, aloe_type_t_ptr atype)
 	}
     case ALOE_TYPE_FUNCTION:
     {
-        Type* ret_type = emit_ir_type(ctx, atype->fun_ret_type);
+        Type* p_expr_type = emit_ir_type(ctx, atype->fun_ret_type);
 
         std::vector<Type*>  irt_args;
-        for (auto p : atype->fun_param_types)
+        for (auto p_expr_type : atype->fun_param_types)
         {
-            Type* argt = emit_ir_type(ctx, p);
+            Type* argt = emit_ir_type(ctx, p_expr_type);
             irt_args.push_back(argt);
         };
 
-        out  = FunctionType::get(ret_type, irt_args, false);
+        out  = FunctionType::get(p_expr_type, irt_args, false);
         break;
 
     }
@@ -447,13 +447,13 @@ llvmir_compiler_t::emit_var(compiler_ctx_t_ptr ctx, var_node_t_ptr node)
             false,
             GlobalValue::ExternalLinkage,
             ir_sc <Constant>(init_val->ir_value),
-			node->id->name
+			node->idt->name
             );
 
         auto* di_var = ctx->di_builder()->createGlobalVariableExpression(
             ctx->di_file(),
-            node->id->name,                // name
-            node->id->name,                // linkage name
+            node->idt->name,                // name
+            node->idt->name,                // linkage name
             ctx->di_file(),               
             node->line,
             di_cache->get_dit_type(node->atype),     
@@ -466,12 +466,12 @@ llvmir_compiler_t::emit_var(compiler_ctx_t_ptr ctx, var_node_t_ptr node)
     }
     else
     {
-        auto alloca_inst = ctx->builder()->CreateAlloca(ir_var_type, nullptr, node->id->name);
+        auto alloca_inst = ctx->builder()->CreateAlloca(ir_var_type, nullptr, node->idt->name);
         out->ir_value  = alloca_inst;
 
         auto di_var = ctx->di_builder()->createAutoVariable(
                 get_scope(ctx),        
-                node->id->name,        
+                node->idt->name,        
                 ctx->di_file(),
                 node->line,           
 				di_cache->get_dit_type(node->atype)

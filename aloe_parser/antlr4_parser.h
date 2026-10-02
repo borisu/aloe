@@ -62,7 +62,7 @@ namespace aloe
 
         virtual void check_expr_type_equality(environment_t_ptr env, aloeParser::ExpressionContext* ctx, expr_node_t_ptr expr1, expr_node_t_ptr expr2, const char* op_str);
 
-		virtual void check_type_equality(environment_t_ptr env, antlr4::ParserRuleContext* ctx, type_proxy_t_ptr type1, type_proxy_t_ptr  type2);
+		virtual void check_type_equality(environment_t_ptr env, antlr4::ParserRuleContext* ctx, aloe_type_t_ptr type1, aloe_type_t_ptr  type2);
 
 		virtual void check_binary_arithmetic(environment_t_ptr env, aloeParser::ExpressionContext* ctx, binary_expr_node_t_ptr  expr_node, const char* op_str);
 

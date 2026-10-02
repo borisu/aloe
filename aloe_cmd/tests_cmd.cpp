@@ -47,7 +47,7 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 
     try {
 
-        auto p = create_antlr4_parser();
+        auto p_expr_type = create_antlr4_parser();
 
         /*auto c = create_llvm_compiler();
 
@@ -59,7 +59,7 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 
         istringstream iss(al);
 
-        if (run_res = p->parse_from_stream(iss, ast, "<string>"))
+        if (run_res = p_expr_type->parse_from_stream(iss, ast, "<string>"))
         {
             if (expected && compile)
             {
@@ -401,13 +401,13 @@ void
 tests_cmd_t::run_parser()
 {
 
-    auto p = create_antlr4_parser();
+    auto p_expr_type = create_antlr4_parser();
 
     ast_t_ptr ast;
 
     istringstream iss(R"(layout A {  a:int ; b:A})");
 
-    bool res = p->parse_from_stream(iss, ast, "<string>", TYPE_NODE);
+    bool res = p_expr_type->parse_from_stream(iss, ast, "<string>", TYPE_NODE);
 
 }
 

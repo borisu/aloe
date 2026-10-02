@@ -9,7 +9,6 @@ namespace aloe
 	{
 		marker_node_t() :node_t(MARKER_NODE) {}
 	};
-
-	typedef shared_ptr<marker_node_t> marker_node_t_ptr;
+	defptr(marker_node_t);
 
 }

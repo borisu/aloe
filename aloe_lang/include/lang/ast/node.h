@@ -25,7 +25,7 @@ namespace aloe
 	};
 
 	struct node_t;
-	typedef shared_ptr<node_t> node_t_ptr;
+	defptr(node_t);
 
 	struct node_t : public context_t
 	{
@@ -38,9 +38,7 @@ namespace aloe
 		virtual ~node_t() {}
 	};
 
-	typedef proxy_t<node_t_ptr>
-	node_proxy_t;
+	typedef proxy_t<node_t_ptr>	node_proxy_t;
+	defptr(node_proxy_t);
 
-	typedef shared_ptr<node_proxy_t> 
-	node_proxy_t_ptr;
 }

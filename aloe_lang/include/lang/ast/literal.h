@@ -31,11 +31,22 @@ namespace aloe
 
 		literal_type_e lit_type_id;
 
-		type_proxy_t_ptr type;
+		type_proxy_t_ptr p_literal_type;
+
+		void literal_type(type_proxy_t_ptr type)
+		{
+			this->p_literal_type = type;
+		}
+
+		aloe_type_t_ptr literal_type() const
+		{
+			return p_literal_type->target;
+		}
 
 		variant<string, int, char> value;
 
 	};
+	defptr(literal_node_t);
 
 
 }

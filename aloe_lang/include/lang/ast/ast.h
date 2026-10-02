@@ -1,4 +1,5 @@
 #pragma once
+#include "base/defs.h"
 #include "node.h"
 #include "var.h"
 #include "fun.h"
@@ -24,9 +25,7 @@ namespace aloe
 
 		virtual ~ast_t() {};
 	};
-
-	typedef shared_ptr<ast_t> ast_t_ptr;
-
+	defptr(ast_t);
 		
 }
 

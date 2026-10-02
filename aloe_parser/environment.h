@@ -7,7 +7,7 @@ using namespace std;
 namespace aloe
 {
 	class environment_t;
-	typedef shared_ptr<environment_t> environment_t_ptr;
+	defptr(environment_t);
 
 	enum scope_e
 	{

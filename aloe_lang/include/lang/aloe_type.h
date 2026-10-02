@@ -38,65 +38,71 @@ namespace aloe
 	}
 
 	struct aloe_type_t;
+	defptr(aloe_type_t);
 
-	typedef
-	shared_ptr<aloe_type_t> aloe_type_t_ptr;
-
-	typedef proxy_t<aloe_type_t_ptr>
-	type_proxy_t;
-
-	typedef
-	shared_ptr<type_proxy_t> type_proxy_t_ptr;
+	typedef proxy_t<aloe_type_t_ptr> type_proxy_t;
+	defptr(type_proxy_t);
 	
 	struct var_t : public context_t
 	{
 		string name;
 
-		type_proxy_t_ptr type;
+		type_proxy_t_ptr p_type;
+
+		aloe_type_t_ptr var_type() const
+		{
+			return p_type->target;
+		}
+
+		void var_type(type_proxy_t_ptr type)
+		{
+			this->p_type = type;
+		}
 	};
+	defptr(var_t);
+	
+	typedef vector<var_t_ptr> var_vec_t;
+	defptr(var_vec_t);
 
-	typedef
-	shared_ptr<var_t> var_t_ptr;
-
-	typedef vector<var_t_ptr>
-	var_vec_t;
-
-	typedef map<string, var_t_ptr>
-	var_map_t;
+	typedef map<string, var_t_ptr>	var_map_t;
+	defptr(var_map_t);
 
 	struct var_set_t : public context_t
 	{
 		var_vec_t v;
 		var_map_t m;
 	};
-
-	typedef shared_ptr<var_set_t>
-	var_set_t_ptr;
-
-	struct gt_t;
-
-	typedef shared_ptr<gt_t>
-	gt_t_ptr;
-
+	defptr(var_set_t);
+	
 	struct gt_t
 	{
-		type_proxy_t_ptr type;
+		type_proxy_t_ptr p_gt_type;
+
+		aloe_type_t_ptr gt_type() const
+		{
+			return p_gt_type->target;
+		}
+
+		void gt_type(type_proxy_t_ptr p_gt_type)
+		{	
+			this->p_gt_type = p_gt_type;
+		}
+
 	};
+	defptr(gt_t);
 
-	typedef vector<gt_t_ptr>
-	gt_vec_t;
+	typedef vector<gt_t_ptr> gt_vec_t;
+	defptr(gt_vec_t);
 
-	typedef map<aloe_type_t, gt_t_ptr>
-	gt_map_t;
+	typedef map<aloe_type_t, gt_t_ptr>	gt_map_t;
+	defptr(gt_map_t);
 
 	struct gt_set_t : public context_t
 	{
 		gt_vec_t v;
 		gt_map_t m;
 	};
-
-	typedef shared_ptr<gt_set_t>
-	gt_set_t_ptr;
+	defptr(gt_set_t);
 
 	struct layout_info_t
 	{
@@ -110,9 +116,7 @@ namespace aloe
 
 		bool is_incomplete;
 	};
-
-	typedef shared_ptr<layout_info_t>	
-	layout_info_t_ptr;
+	defptr(layout_info_t);
 
 	struct array_info_t
 	{
@@ -121,34 +125,57 @@ namespace aloe
 
 		}
 
-		type_proxy_t_ptr elem_type;
+		type_proxy_t_ptr p_elem_type;
+
+		void elem_type(type_proxy_t_ptr p_elem_type)
+		{
+			this->p_elem_type = p_elem_type;
+		}
+
+		aloe_type_t_ptr elem_type() const
+		{
+			return p_elem_type->target;
+		}
 
 		int size; // -1 for unsized arrays
 	};
-
-	typedef shared_ptr<array_info_t>
-	array_info_t_ptr;
+	defptr(array_info_t);
 
 	struct ptr_info_t
 	{
-		type_proxy_t_ptr pointee_type;
-	};
+		type_proxy_t_ptr p_ptr_type;
 
-	typedef shared_ptr<ptr_info_t>
-	ptr_info_t_ptr;
+		void pointee_type(type_proxy_t_ptr p_ptr_type)
+		{
+			this->p_ptr_type = p_ptr_type;
+		}
+
+		aloe_type_t_ptr pointee_type() const
+		{
+			return p_ptr_type->target;
+		}
+	};
+	defptr(ptr_info_t);
 
 	struct fun_info_t
 	{
 
-		type_proxy_t_ptr ret_type;
+		type_proxy_t_ptr p_ret_type;
+
+		aloe_type_t_ptr ret_type() const
+		{
+			return p_ret_type->target;
+		}
+
+		void ret_type(type_proxy_t_ptr p_ret_type)
+		{
+			this->p_ret_type = p_ret_type;
+		}
 
 		var_set_t_ptr params;
 
 	};
-
-	typedef shared_ptr<fun_info_t>
-	fun_info_t_ptr;
-
+	defptr(fun_info_t);
 
 	struct aloe_type_t : public context_t
 	{
@@ -159,7 +186,7 @@ namespace aloe
 
 		aloe_type_e type_id;
 
-		layout_info_t_ptr lay;
+		layout_info_t_ptr layout;
 
 		array_info_t_ptr arr;
 
@@ -171,6 +198,7 @@ namespace aloe
 
 		string to_str();
 	};
+	
 
 	bool operator==(const aloe_type_t& t1, const aloe_type_t& t2);
 

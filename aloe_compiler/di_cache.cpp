@@ -68,11 +68,11 @@ di_cache_t::get_dit_type(aloe_type_t_ptr atype)
         {
 
             SmallVector<Metadata*, 8>   dit_args;
-            dit_args.push_back(get_dit_type(atype->fun->ret_type));
+            dit_args.push_back(get_dit_type(atype->fun->p_expr_type));
 
-            for (auto p : atype->fun->params->v)
+            for (auto p_expr_type : atype->fun->params->v)
             {
-                dit_args.push_back(get_dit_type(p));
+                dit_args.push_back(get_dit_type(p_expr_type));
             };
 
             di_cache[*atype] = di_builder.createSubroutineType(di_builder.getOrCreateTypeArray(dit_args));

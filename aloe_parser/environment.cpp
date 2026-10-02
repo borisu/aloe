@@ -11,33 +11,33 @@ base_modifier_t::base_modifier_t(environment_t_ptr env):prev(env)
 }
 
 type_proxy_t_ptr
-base_modifier_t::register_type(identifier_node_t_ptr id, aloe_type_t_ptr node)
+base_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr node)
 {
-    return prev->register_type(id, node);
+    return prev->register_type(idt, node);
 }
 
 type_proxy_t_ptr
-base_modifier_t::find_type(identifier_node_t_ptr id, bool local_scope)
+base_modifier_t::find_type(identifier_node_t_ptr idt, bool local_scope)
 {
 	if (prev == nullptr)
 		return nullptr;
 
-    return prev->find_type(id, local_scope);
+    return prev->find_type(idt, local_scope);
 }
 
 void 
-base_modifier_t::register_object(identifier_node_t_ptr id, node_t_ptr node)
+base_modifier_t::register_object(identifier_node_t_ptr idt, node_t_ptr node)
 {
-	prev->register_object(id, node);
+	prev->register_object(idt, node);
 }
 
 node_proxy_t_ptr 
-base_modifier_t::find_object(identifier_node_t_ptr id, bool local_scope) 
+base_modifier_t::find_object(identifier_node_t_ptr idt, bool local_scope) 
 {
 	if (prev == nullptr)
 		return nullptr;
 
-	return prev->find_object(id, local_scope);
+	return prev->find_object(idt, local_scope);
 }   
 
 scope_e
@@ -74,12 +74,12 @@ environment_modifier_t::environment_modifier_t(environment_t_ptr env) :base_modi
 };
 
 type_proxy_t_ptr
-environment_modifier_t::register_type(identifier_node_t_ptr id, aloe_type_t_ptr node)
+environment_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr node)
 {
 	
-	if (type_map.count(id->name) != 0)
+	if (type_map.count(idt->name) != 0)
     {
-        auto prev = type_map[id->name];
+        auto prev = type_map[idt->name];
         prev->target = node;
     }
     else
@@ -88,18 +88,18 @@ environment_modifier_t::register_type(identifier_node_t_ptr id, aloe_type_t_ptr 
         // so that when the type is redefined, the existing pointer will be updated with 
 		// the new type information. This way, anyone holding a pointer to the type will 
         // see the updated information.
-        type_map[id->name] = newptr(type_proxy_t,node); 
+        type_map[idt->name] = newptr(type_proxy_t,node); 
     }
 
-    return type_map[id->name];
+    return type_map[idt->name];
 }
 
 type_proxy_t_ptr
-environment_modifier_t::find_type(identifier_node_t_ptr id, bool local_scope)
+environment_modifier_t::find_type(identifier_node_t_ptr idt, bool local_scope)
 {
-    if (type_map.count(id->name) > 0)
+    if (type_map.count(idt->name) > 0)
     {
-        return type_map[id->name];
+        return type_map[idt->name];
     }
 
     if (local_scope)
@@ -108,31 +108,31 @@ environment_modifier_t::find_type(identifier_node_t_ptr id, bool local_scope)
 	if (prev == nullptr)
 		return nullptr;
     
-    return prev->find_type(id, false);
+    return prev->find_type(idt, false);
 
 }
 
 void
-environment_modifier_t::register_object(identifier_node_t_ptr id, node_t_ptr node)
+environment_modifier_t::register_object(identifier_node_t_ptr idt, node_t_ptr node)
 {
-    if (obj_map.count(id->name) != 0)
+    if (obj_map.count(idt->name) != 0)
     {
-        auto &proxy = obj_map[id->name];
+        auto &proxy = obj_map[idt->name];
 		proxy->target->ignore = true;
 		proxy->target = node;
     }
     else
     {
-        obj_map[id->name] = make_shared<node_proxy_t>(node);
+        obj_map[idt->name] = make_shared<node_proxy_t>(node);
     }
 }
 
 node_proxy_t_ptr
-environment_modifier_t::find_object(identifier_node_t_ptr id, bool local_scope)
+environment_modifier_t::find_object(identifier_node_t_ptr idt, bool local_scope)
 {
-    if (obj_map.count(id->name) > 0)
+    if (obj_map.count(idt->name) > 0)
     {
-        return obj_map[id->name];
+        return obj_map[idt->name];
     }
 
     if (local_scope)
@@ -141,7 +141,7 @@ environment_modifier_t::find_object(identifier_node_t_ptr id, bool local_scope)
     if (prev == nullptr)
         return nullptr;
 
-    return prev->find_object(id, false);
+    return prev->find_object(idt, false);
 }
 
 

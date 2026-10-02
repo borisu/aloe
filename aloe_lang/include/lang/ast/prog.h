@@ -15,7 +15,6 @@ namespace aloe
 		vector<node_t_ptr> statements;
 
 	};
-
-	typedef shared_ptr<prog_node_t> prog_node_t_ptr;
+	defptr(prog_node_t);
 
 }

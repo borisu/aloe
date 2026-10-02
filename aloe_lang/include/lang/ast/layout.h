@@ -13,15 +13,20 @@ namespace aloe
 	{
 		layout_node_t() :node_t(LAYOUT_NODE) {}
 
-		type_proxy_t_ptr type;
+		type_proxy_t_ptr p_layout_type;
+
+		aloe_type_t_ptr layout_type()
+		{
+			return p_layout_type->target;
+		}
+
+		void layout_type(type_proxy_t_ptr type)
+		{
+			this->p_layout_type = type;
+		}
 
 	};
-
-	typedef shared_ptr<layout_node_t>
-	layout_node_t_ptr;
-
-	
-
+	defptr(layout_node_t);
 
 }
 
