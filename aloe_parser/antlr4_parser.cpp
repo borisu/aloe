@@ -188,6 +188,8 @@ antl4_parser_t::walk_prog(environment_t_ptr env, aloeParser::ProgContext* ctx)
 type_proxy_t_ptr
 antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
 {
+    assert(ctx != nullptr);
+
     aloe_type_t_ptr type;
     type_proxy_t_ptr out;
 
@@ -491,7 +493,7 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
     out->fun_type(walk_fun_type(new_env, ctx->funType()));
 
 	// check that function is not defined with different type
-   ASSERT_LOC( !prev || *prev_fun->fun_type() == *out->fun_type(), "function %s was already declared with different type at (%d:%d)", out->idt->name.c_str(), prev_fun->line, prev_fun->pos);
+    ASSERT_LOC( !prev || *prev_fun->fun_type() == *out->fun_type(), "function %s was already declared with different type at (%d:%d)", out->idt->name.c_str(), prev_fun->line, prev_fun->pos);
     
     if (out->idt)
     {
@@ -777,7 +779,7 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
 	   expr_node->fun_expr = walk_expression(env, e->expression());
        
-       ASSERT_LOC(expr_node->fun_expr->p_expr_type->target->type_id == ALOE_TYPE_FUNCTION, "expression '%s' is not of a function type", ctx->getText().c_str());
+       ASSERT_LOC(expr_node->fun_expr->expr_type()->type_id == ALOE_TYPE_FUNCTION, "expression '%s' is not of a function type", ctx->getText().c_str());
        
 
        auto fun_node_type = expr_node->fun_expr->p_expr_type;
@@ -1265,9 +1267,9 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 
        check_expr_type_equality(env, ctx, expr_node->true_expr, expr_node->false_expr, "?");
        
-       ASSERT_LOC(is_arithmetic(expr_node->condition->p_expr_type->target->type_id), "operator '%s' cannot be applied to conditional expressions of type '%s'",
+       ASSERT_LOC(is_arithmetic(expr_node->condition->expr_type()->type_id), "operator '%s' cannot be applied to conditional expressions of type '%s'",
             "?", 
-            expr_node->condition->p_expr_type->target->to_str().c_str());
+            expr_node->condition->expr_type()->to_str().c_str());
        
 
        out = expr_node;
@@ -1486,22 +1488,22 @@ void
 antl4_parser_t::check_expr_type_equality(environment_t_ptr env, aloeParser::ExpressionContext* ctx, expr_node_t_ptr expr1, expr_node_t_ptr expr2, const char* op_str)
 {
     ASSERT_LOC(
-        *expr1->p_expr_type->target == *expr2->p_expr_type->target, 
+        *expr1->expr_type() == *expr2->expr_type(), 
         "operator '%s' cannot be applied to expressions of different types '%s' and '%s'",
         op_str,
-        expr1->p_expr_type->target->to_str().c_str(),
-        expr2->p_expr_type->target->to_str().c_str());
+        expr1->expr_type()->to_str().c_str(),
+        expr2->expr_type()->to_str().c_str());
 }
 
 void 
 antl4_parser_t::check_binary_arithmetic(environment_t_ptr env, aloeParser::ExpressionContext* ctx, binary_expr_node_t_ptr  expr_node, const char* op_str)
 {
     ASSERT_LOC(
-        is_arithmetic(expr_node->operand1->p_expr_type->target->type_id) &&  is_arithmetic(expr_node->operand2->p_expr_type->target->type_id), 
+        is_arithmetic(expr_node->operand1->expr_type()->type_id) &&  is_arithmetic(expr_node->operand2->expr_type()->type_id), 
         "operator '%s' cannot be applied to expressions of type '%s' and '%s'",
 		op_str,
-		expr_node->operand1->p_expr_type->target->to_str().c_str(),
-		expr_node->operand2->p_expr_type->target->to_str().c_str());
+		expr_node->operand1->expr_type()->to_str().c_str(),
+		expr_node->operand2->expr_type()->to_str().c_str());
 
 	check_expr_type_equality(env, ctx, expr_node->operand1, expr_node->operand2, op_str);
 }
@@ -1510,10 +1512,10 @@ void
 antl4_parser_t::check_unary_arithmetic(environment_t_ptr env, aloeParser::ExpressionContext* ctx, unary_expr_node_t_ptr  expr_node, const char* op_str)
 {
     ASSERT_LOC(
-        is_arithmetic(expr_node->operand->p_expr_type->target->type_id), 
+        is_arithmetic(expr_node->operand->expr_type()->type_id), 
         "operator '%s' cannot be applied to expression of type '%s'",
 		op_str,
-		expr_node->operand->p_expr_type->target->to_str().c_str());
+		expr_node->operand->expr_type()->to_str().c_str());
 }
 
 void 
@@ -1521,7 +1523,7 @@ antl4_parser_t::check_is_lvalue(environment_t_ptr env, aloeParser::ExpressionCon
 {
     ASSERT_LOC(
         expr_node->is_lvalue == true, 
-        "operator '%s' cannot be applied to rvalue expression of type '%s'", op_str, expr_node->p_expr_type->target->to_str().c_str());
+        "operator '%s' cannot be applied to rvalue expression of type '%s'", op_str, expr_node->expr_type()->to_str().c_str());
 
 }
 
@@ -1531,19 +1533,19 @@ antl4_parser_t::check_assignment(environment_t_ptr env, aloeParser::ExpressionCo
     check_is_lvalue(env, ctx, lhs, "=");
 
     ASSERT_LOC(
-        *lhs->p_expr_type->target == *rhs->p_expr_type->target, 
+        *lhs->expr_type() == *rhs->expr_type(), 
         "operator '=' cannot be applied to expressions of type '%s' and '%s'",
-		lhs->p_expr_type->target->to_str().c_str(),
-		rhs->p_expr_type->target->to_str().c_str());
+		lhs->expr_type()->to_str().c_str(),
+		rhs->expr_type()->to_str().c_str());
 }
 
 void 
 antl4_parser_t::check_is_pointer(environment_t_ptr env, aloeParser::ExpressionContext* ctx, expr_node_t_ptr expr_node, const char* op_str)
 {
     ASSERT_LOC(
-        expr_node->p_expr_type->target->type_id == ALOE_TYPE_PTR, "operator '%s' cannot be applied to expression of non-pointer type '%s'",
+        expr_node->expr_type()->type_id == ALOE_TYPE_PTR, "operator '%s' cannot be applied to expression of non-pointer type '%s'",
 		op_str,
-		expr_node->p_expr_type->target->to_str().c_str());
+		expr_node->expr_type()->to_str().c_str());
 }
 
 
