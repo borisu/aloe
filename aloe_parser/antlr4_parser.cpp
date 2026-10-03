@@ -88,7 +88,7 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_t_ptr& ast, const string&
         case TYPE_NODE:
         {
             auto type_node   = newptr(type_node_t);
-            type_node->p_type = walk_type(env, parser.atype());
+            type_node->p_type = walk_type(env, parser.type());
 
             ast->root        = type_node;
 
@@ -215,17 +215,17 @@ antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
     }
     else if (E_INSTANCE_OF(aloeParser::Type_groupedContext))
     {
-		out = walk_type(env, e->atype());
+		out = walk_type(env, e->type());
     }
     else if (E_INSTANCE_OF(aloeParser::Type_pointerContext))
     {
         type = newptr(aloe_type_t, ALOE_TYPE_PTR);
-		type->ptr->pointee_type(walk_type(env, e->atype()));
+		type->ptr->pointee_type(walk_type(env, e->type()));
     }
 	else if (E_INSTANCE_OF(aloeParser::Type_arrayContext))
     {
         type = newptr(aloe_type_t, ALOE_TYPE_ARRAY);
-        type->arr->elem_type(walk_type(env, e->atype()));
+        type->arr->elem_type(walk_type(env, e->type()));
 		type->arr->size  = e->DigitSequence() ? stoul(e->DigitSequence()->getText()) : -1;
     }
     else if (E_INSTANCE_OF(aloeParser::Type_layoutContext))
@@ -352,9 +352,9 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
         out->layout_type()->layout->gt_chain = walk_gt_chain_node(env, ctx->gtChain());
     }
 
-	if (ctx->layoutMemberList())
+	if (ctx->layoutFieldsList())
 	{
-		out->layout_type()->layout->fields = walk_layout_member_list(env, ctx->layoutMemberList());
+		out->layout_type()->layout->fields = walk_layout_member_list(env, ctx->layoutFieldsList());
 	}
 
     type->is_incomplete = false;
@@ -363,7 +363,7 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
 }
 
 var_t_ptr
-antl4_parser_t::walk_layout_member(environment_t_ptr env, aloeParser::LayoutMemberContext* ctx)
+antl4_parser_t::walk_layout_member(environment_t_ptr env, aloeParser::LayoutFieldContext* ctx)
 {
     auto out = newptr(var_t);
     INIT_POS(out, ctx);
@@ -372,7 +372,7 @@ antl4_parser_t::walk_layout_member(environment_t_ptr env, aloeParser::LayoutMemb
         out->name = ctx->identifier()->getText();
     }
 
-    out->var_type(walk_type(env, ctx->atype()));
+    out->var_type(walk_type(env, ctx->type()));
 
     ASSERT(!out->var_type()->is_incomplete, "incomplete type '%s' cannot be used as layout field type.", out->var_type()->name().c_str());
 
@@ -380,12 +380,12 @@ antl4_parser_t::walk_layout_member(environment_t_ptr env, aloeParser::LayoutMemb
 }
 
 var_set_t_ptr
-antl4_parser_t::walk_layout_member_list(environment_t_ptr env, aloeParser::LayoutMemberListContext* ctx)
+antl4_parser_t::walk_layout_member_list(environment_t_ptr env, aloeParser::LayoutFieldsListContext* ctx)
 {
     auto out = newptr(var_set_t);
     INIT_POS(out, ctx);
 
-    for (auto& member : ctx->layoutMember())
+    for (auto& member : ctx->layoutField())
     {
         auto var = walk_layout_member(env, member);
 
@@ -456,7 +456,7 @@ antl4_parser_t::walk_fun_type(environment_t_ptr env, aloeParser::FunTypeContext*
 
     auto out = newptr(type_proxy_t, type);
 
-    type->fun->ret_type(walk_type(env, ctx->atype()));
+    type->fun->ret_type(walk_type(env, ctx->type()));
 
     environment_t_ptr new_env(new scope_modifier_t(SCOPE_FUN_ARGS, env));
     type->fun->params = walk_var_list(new_env, ctx->varList());
@@ -578,7 +578,7 @@ antl4_parser_t::walk_var(environment_t_ptr env, aloeParser::VarDeclarationContex
 		RAISE_LOC("variable declaration must have an identifier in this scope");
     }
     
-    out->var_type(walk_type(env, ctx->atype()));
+    out->var_type(walk_type(env, ctx->type()));
    
     if (ctx->expression())
     {
@@ -925,7 +925,7 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        auto expr_node = newptr(cast_expr_node_t);
        INIT_POS(expr_node, ctx);
 
-       expr_node->p_expr_type = walk_type(env, e->atype());
+       expr_node->p_expr_type = walk_type(env, e->type());
        expr_node->operand   = walk_expression(env, e->expression());
 
        out = expr_node;
@@ -973,7 +973,7 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        auto expr_node = newptr(sizeoftype_expr_node_t);
        INIT_POS(expr_node, ctx);
 
-       expr_node->p_expr_type = walk_type(env, e->atype());
+       expr_node->p_expr_type = walk_type(env, e->type());
        out = expr_node;
 
    }

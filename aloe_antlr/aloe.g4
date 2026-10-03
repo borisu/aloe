@@ -72,7 +72,7 @@ varList
 /***************/
 
 layoutDeclaration
-    : 'layout' identifier? gtChain? '{' layoutMemberList '}'  
+    : 'layout' identifier? gtChain? '{' layoutFieldsList '}'  
     ;
 
 gtChain
@@ -83,12 +83,12 @@ gtMember
     : '>' (identifier | layoutDeclaration)
     ;
 
-layoutMemberList
-    : layoutMember (';' | layoutMember)*
+layoutFieldsList
+    : layoutField (';' | layoutField)*
     ;
 
-layoutMember
-    : identifier? ':' type
+layoutField
+    : 'field'? identifier? ':' type
     ;
 
 /********************/
