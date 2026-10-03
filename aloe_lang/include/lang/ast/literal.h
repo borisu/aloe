@@ -13,7 +13,7 @@ namespace aloe
 {
 
 	struct literal_node_t;
-	typedef shared_ptr<literal_node_t> literal_node_t_ptr;
+	defptr(literal_node_t);
 
 	enum literal_type_e
 	{

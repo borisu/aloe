@@ -23,8 +23,6 @@ namespace aloe
 		DIType* di_type;
 		
 	};
-
-	typedef shared_ptr<value_t>
-	value_t_ptr;
+	defptr(value_t)
 
 }

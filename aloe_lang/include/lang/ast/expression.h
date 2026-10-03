@@ -12,7 +12,7 @@ using namespace std;
 namespace aloe
 {
 	struct expr_node_t;
-	typedef shared_ptr<expr_node_t> expr_node_t_ptr;
+	defptr(expr_node_t);
 
 	enum expression_op_e
 	{

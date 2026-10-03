@@ -23,10 +23,7 @@ namespace aloe
 		DIBuilder& di_builder;
 
 	};
-
-	typedef shared_ptr<di_cache_t> 
-	di_cache_t_ptr;
-
+	defptr(di_cache_t);
 }
 
 

@@ -12,7 +12,7 @@ using namespace llvm;
 namespace aloe
 {
 	class compiler_ctx_t;
-	typedef shared_ptr<compiler_ctx_t> compiler_ctx_t_ptr;
+	defptr(compiler_ctx_t);
 
 	class compiler_ctx_t
 	{

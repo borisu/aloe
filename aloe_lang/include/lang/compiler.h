@@ -25,7 +25,6 @@ namespace aloe
 		virtual void set_no_debug(bool no_debug) = 0;
 	
 	};
-
-	typedef shared_ptr<compiler_t> compiler_t_ptr;
+	defptr(compiler_t);
 	
 }
