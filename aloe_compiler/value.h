@@ -1,4 +1,5 @@
 #pragma once
+#include "base/defs.h"
 
 using namespace llvm;
 namespace aloe
@@ -9,20 +10,20 @@ namespace aloe
 		value_t() :
 			ir_value(nullptr), 
 			is_lvalue(false), 
-			lval_type(nullptr),
+			lval_ir_type(nullptr),
 			di_type(nullptr) {}
 
 		Value* ir_value;
 
 		bool is_lvalue;
 
-		aloe_type_t_ptr aloe_type;
+		aloe_type_t_ptr type;
 
-		Type* lval_type;
+		Type* lval_ir_type;
 
 		DIType* di_type;
 		
 	};
-	defptr(value_t)
+	defptr(value_t);
 
 }

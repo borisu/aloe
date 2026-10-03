@@ -56,7 +56,7 @@ di_cache_t::get_dit_type(aloe_type_t_ptr atype)
         if (di_cache.find(*atype) == di_cache.end())
         {
             di_cache[*atype] = di_builder.createPointerType(
-				get_dit_type(atype->ptr_type),
+				get_dit_type(atype->ptr->pointee_type()),
                 ALOE_PTR_SIZE);
         }
 
@@ -68,11 +68,11 @@ di_cache_t::get_dit_type(aloe_type_t_ptr atype)
         {
 
             SmallVector<Metadata*, 8>   dit_args;
-            dit_args.push_back(get_dit_type(atype->fun->p_expr_type));
+            dit_args.push_back(get_dit_type(atype->fun->ret_type()));
 
-            for (auto p_expr_type : atype->fun->params->v)
+            for (auto var : atype->fun->params->v)
             {
-                dit_args.push_back(get_dit_type(p_expr_type));
+                dit_args.push_back(get_dit_type(var->var_type()));
             };
 
             di_cache[*atype] = di_builder.createSubroutineType(di_builder.getOrCreateTypeArray(dit_args));
@@ -85,13 +85,13 @@ di_cache_t::get_dit_type(aloe_type_t_ptr atype)
     {
         if (di_cache.find(*atype) == di_cache.end())
         {
-            DISubrange* range = di_builder.getOrCreateSubrange(0, atype->arr_size);
+            DISubrange* range = di_builder.getOrCreateSubrange(0, atype->arr->size);
             DINodeArray subscripts = di_builder.getOrCreateArray(range);
 
 			di_cache[*atype] = di_builder.createArrayType(
-				atype->arr_size,
+				atype->arr->size,
 				ALOE_CHAR_SIZE,
-				get_dit_type(atype->arr_type),
+				get_dit_type(atype->arr->elem_type()),
                 subscripts);
         }
         break;

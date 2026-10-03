@@ -15,7 +15,7 @@ using namespace std;
 using namespace antlr4;
 
 static int object_id = 0;
-static int anonymous_id_counter = 0;
+static int uid_counter = 0;
 
 #define E_INSTANCE_OF(C) C* e = dynamic_cast<C*>(ctx)    
 
@@ -76,7 +76,6 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_t_ptr& ast, const string&
 		environment_t_ptr env_mod(new environment_modifier_t(scp_mod));
 
         environment_t_ptr env = env_mod;
-
 
         switch (root_grammar)
         {
@@ -169,7 +168,7 @@ antl4_parser_t::walk_prog(environment_t_ptr env, aloeParser::ProgContext* ctx)
 			{
 				RAISE_LOC("unknown declaration statement '%s'", statement_ctx->getText().c_str());
 			}
-			out->statements.push_back(out);
+			out->statements.push_back(statement_node);
             
         }
         catch (aloe_exception_t &e)
@@ -328,6 +327,7 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
 
 	type->layout = newptr(layout_info_t);
 	type->is_incomplete = true;
+	type->layout->id = uid_counter++;
 
     if (ctx->identifier())
     {
@@ -474,7 +474,6 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
 	out->is_defined  = true;
     out->idt         = walk_identifier(env, ctx->identifier());
     
-
     auto prev      = out->idt  ? env->find_object(out->idt) : nullptr;
 
     ASSERT_LOC(!prev || prev->target->node_type_id == out->node_type_id, "identifier %s was already defined as a different kind at (%d,%d)", out->idt->name.c_str(), prev->target->line, prev->target->pos);
@@ -539,6 +538,7 @@ antl4_parser_t::walk_var_list( environment_t_ptr env, aloeParser::VarListContext
     {
         auto var_node = walk_var(env, varCtx);
         var_t_ptr var = var_t_ptr(new var_t());
+        var->ref      = var_node;
 
         var->var_type(var_node->p_var_type);
         if (var_node->idt)
@@ -591,6 +591,7 @@ antl4_parser_t::walk_var(environment_t_ptr env, aloeParser::VarDeclarationContex
 		check_type_equality(env, ctx, out->initializer->expr_type(), out->var_type());
     }
 
+    
     if (out->idt)
     {
         env->register_object(out->idt, out);
@@ -670,9 +671,7 @@ antl4_parser_t::walk_arg_list(environment_t_ptr env, aloeParser::ArgumentExpress
 return_node_t_ptr  
 antl4_parser_t::walk_return(environment_t_ptr env, aloeParser::ReturnStatementContext* ctx)
 {
-    
 	ASSERT_LOC(env->curr_fun(), "return statement is not allowed outside of function");
-    
 
     return_node_t_ptr out(new return_node_t());
     INIT_POS(out, ctx);

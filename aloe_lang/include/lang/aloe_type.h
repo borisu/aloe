@@ -6,6 +6,7 @@
 #include <map>
 #include "base/defs.h"
 #include "lang/context.h"
+#include "lang/ast/node.h"
 
 using namespace std;
 
@@ -43,7 +44,9 @@ namespace aloe
 	typedef proxy_t<aloe_type_t_ptr> type_proxy_t;
 	defptr(type_proxy_t);
 	
-	struct var_t : public context_t
+	struct var_t : 
+		public context_t, 
+		public node_ref_t
 	{
 		string name;
 
@@ -104,7 +107,7 @@ namespace aloe
 	};
 	defptr(gt_set_t);
 
-	struct layout_info_t
+	struct layout_info_t 
 	{
 		layout_info_t() : id(-1), 
 			gt_chain(newptr(gt_set_t)), 
@@ -161,9 +164,8 @@ namespace aloe
 	};
 	defptr(ptr_info_t);
 
-	struct fun_info_t
+	struct fun_info_t 
 	{
-
 		type_proxy_t_ptr p_ret_type;
 
 		aloe_type_t_ptr ret_type() const

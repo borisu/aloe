@@ -107,9 +107,7 @@ namespace aloe
 
 		di_cache_t_ptr di_cache;
 
-		map<node_t_ptr, value_t_ptr> id_cache;
-
-		map<node_t_ptr, Type*> type_cache; // for types that are not internalized by LLVM (e.g. struct types)
+		map<node_t_ptr, value_t_ptr> obj_cache;
 
 		bool validate;
 

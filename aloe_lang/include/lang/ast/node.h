@@ -27,7 +27,7 @@ namespace aloe
 	struct node_t;
 	defptr(node_t);
 
-	struct node_t : public context_t
+	struct node_t : public context_t, public noncopyable_t
 	{
 		node_t(node_type_e node_type) : node_type_id(node_type),ignore (false) {}
 
@@ -40,5 +40,11 @@ namespace aloe
 
 	typedef proxy_t<node_t_ptr>	node_proxy_t;
 	defptr(node_proxy_t);
+
+	struct node_ref_t
+	{
+		node_t_ptr ref;
+	};
+	defptr(node_ref_t);
 
 }

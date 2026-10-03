@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "base/defs.h"
+#include "lang/aloe_exception.h"
 #include "lang/aloe_type.h"
 
 using namespace aloe;
@@ -97,6 +98,8 @@ bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
 	}
 	case ALOE_TYPE_LAYOUT:
 	{
+		ASSERT(t1.layout->id != -1 && t2.layout->id != -1, "Attempt to compare layout without uid");
+
 		if (t1.layout->id != t2.layout->id)
 		{
 			return t1.layout->id < t2.layout->id;

@@ -18,6 +18,13 @@ namespace aloe
 		T target;
 	};
 
+	struct noncopyable_t
+	{
+		noncopyable_t() = default;
+		noncopyable_t(const noncopyable_t&) = delete;
+		noncopyable_t& operator=(const noncopyable_t&) = delete;
+	};
+
 }
 
 
