@@ -11,9 +11,9 @@ base_modifier_t::base_modifier_t(environment_t_ptr env):prev(env)
 }
 
 type_proxy_t_ptr
-base_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr node)
+base_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr type)
 {
-    return prev->register_type(idt, node);
+    return prev->register_type(idt, type);
 }
 
 type_proxy_t_ptr
@@ -26,9 +26,9 @@ base_modifier_t::find_type(identifier_node_t_ptr idt, bool local_scope)
 }
 
 void 
-base_modifier_t::register_object(identifier_node_t_ptr idt, node_t_ptr node)
+base_modifier_t::register_object(identifier_node_t_ptr idt, node_t_ptr type)
 {
-	prev->register_object(idt, node);
+	prev->register_object(idt, type);
 }
 
 node_proxy_t_ptr 
@@ -74,13 +74,13 @@ environment_modifier_t::environment_modifier_t(environment_t_ptr env) :base_modi
 };
 
 type_proxy_t_ptr
-environment_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr node)
+environment_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr type)
 {
 	
 	if (type_map.count(idt->name) != 0)
     {
         auto prev = type_map[idt->name];
-        prev->target = node;
+        prev->target = type;
     }
     else
     {
@@ -88,7 +88,7 @@ environment_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr
         // so that when the type is redefined, the existing pointer will be updated with 
 		// the new type information. This way, anyone holding a pointer to the type will 
         // see the updated information.
-        type_map[idt->name] = newptr(type_proxy_t,node); 
+        type_map[idt->name] = newptr(type_proxy_t,type); 
     }
 
     return type_map[idt->name];

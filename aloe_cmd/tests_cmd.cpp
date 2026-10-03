@@ -416,7 +416,7 @@ tests_cmd_t::run_tests()
 {
     success = true;
 
-    if (true)
+    if (false)
     {
         run_parser();
 		return true;
@@ -430,10 +430,14 @@ tests_cmd_t::run_tests()
         dump_ir = true;
         no_debug = true;
 
-        TEST_PARSE_STRING(R"(
-            fun foo:()-> void { }
-            expect fun foo:()-> void; 
-    )", true);
+        TEST_PARSE_STRING(R"( 
+        fun foo:() -> void 
+        {
+            var a:^int   = 0:^int
+            var b:^^int  = 0:^^int  
+            var c:^^^int = 0:^^^int
+        })",
+            true);
 
         return true;
 

@@ -119,6 +119,47 @@ bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
 }
 
 
+std::string
+aloe_type_t::name()
+{
+	switch (type_id)
+	{
+	case ALOE_TYPE_CHAR:
+	{
+		return "char";
+	}
+	case ALOE_TYPE_VOID:
+	{
+		return "void";
+	}
+	case ALOE_TYPE_DOUBLE:
+	{
+		return "float";
+	}
+	case ALOE_TYPE_INT:
+	{
+		return "int";
+	}
+	case ALOE_TYPE_FUNCTION:
+	{
+		return "fun " + fun->name;
+	}
+	case ALOE_TYPE_PTR:
+	{
+		return  "^" + ptr->pointee_type()->name();
+	}
+	case ALOE_TYPE_ARRAY:
+	{
+		return  arr->elem_type()->name() + "[" + (arr->size == -1 ? "" : std::to_string(arr->size)) + "]";
+	}
+	case ALOE_TYPE_LAYOUT:
+	{
+		return layout->name;
+	}
+	default:
+		return "unknown";
+	}
+}
 
 std::string
 aloe_type_t::to_str()
@@ -126,13 +167,21 @@ aloe_type_t::to_str()
 	switch (type_id)
 	{
 	case ALOE_TYPE_CHAR:
+	{
 		return "char";
+	}
 	case ALOE_TYPE_VOID:
+	{
 		return "void";
+	}
 	case ALOE_TYPE_DOUBLE:
+	{
 		return "float";
+	}
 	case ALOE_TYPE_INT:
+	{
 		return "int";
+	}
 	case ALOE_TYPE_FUNCTION:
 	{
 		std::string result = "fun(";
@@ -160,10 +209,12 @@ aloe_type_t::to_str()
 	case ALOE_TYPE_LAYOUT:
 	{
 		string s = "layout " + layout->name + "{";
+		
 		for (auto& m : layout->fields->v)
 		{
 			s += m->name + ":" + m->var_type()->to_str() + "; ";
 		}
+		
 		s += "}";
 		return s;
 	}

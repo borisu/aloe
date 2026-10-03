@@ -151,15 +151,12 @@ namespace aloe
 
 		expr_node_t_ptr operand;
 
-		type_proxy_t_ptr p_expr_type;
 	};
 	defptr(cast_expr_node_t);
 
 	struct sizeoftype_expr_node_t : public expr_node_t
 	{
 		sizeoftype_expr_node_t() :expr_node_t(expr_sizeoftype) {}
-
-		type_proxy_t_ptr p_expr_type;
 
 	};
 	defptr(sizeoftype_expr_node_t);

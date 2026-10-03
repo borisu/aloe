@@ -189,8 +189,6 @@ type_proxy_t_ptr
 antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
 {
     aloe_type_t_ptr type;
-	INIT_POS(type, ctx);
-
     type_proxy_t_ptr out;
 
     if (E_INSTANCE_OF(aloeParser::Type_intContext)) 
@@ -236,7 +234,7 @@ antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
     {
         auto id_node = walk_identifier(env, e->identifier());
 		out = env->find_type(id_node);
-        ASSERT_LOC(type, "undefined identifier '%s'", id_node->name.c_str());
+        ASSERT_LOC(out, "undefined identifier '%s'", id_node->name.c_str());
     }
     else
     {
@@ -247,7 +245,8 @@ antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
     {
         out = newptr(type_proxy_t, type);
     }
-     
+
+    INIT_POS(out->target, ctx);
     return out;
 }
 
@@ -303,12 +302,12 @@ antl4_parser_t::walk_layout_expectation(environment_t_ptr env, aloeParser::Expec
 
 	auto idt = walk_identifier(env, ctx->identifier());
     type->layout->name = idt->name;
-	type->layout->is_incomplete = true;
+	type->is_incomplete = true;
 
     auto prev = env->find_type(idt, true);
     if (prev)
     {
-        ASSERT_LOC(*prev->target == *type, "identifier %s was already defined with different type at (%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
+        ASSERT_LOC(*prev->target == *type, "identifier '%s' was already defined with different type at (%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
     }
     else
     {
@@ -323,6 +322,10 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
     INIT_POS(out, ctx);
 
     auto type = newptr(aloe_type_t, ALOE_TYPE_LAYOUT);
+    INIT_POS(type, ctx);
+
+	type->layout = newptr(layout_info_t);
+	type->is_incomplete = true;
 
     if (ctx->identifier())
     {
@@ -330,14 +333,18 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
         type->layout->name = idt->name;
        
         auto prev = env->find_type(idt, true);
-        if (prev)
-        {
-          ASSERT_LOC (prev->target->layout->is_incomplete, "layout %s was already defined at(%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
-        }
 
-        out->p_layout_type = env->register_type(idt,type);
+        ASSERT_LOC(!prev || prev->target->type_id == ALOE_TYPE_LAYOUT, "identifier '%s' was already defined as a different kind at (%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
+
+        ASSERT_LOC (!prev || prev->target->is_incomplete, "layout '%s' was already defined at(%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
+        
+        out->layout_type(env->register_type(idt,type));
     }
-
+    else
+    {
+        out->layout_type(newptr(type_proxy_t, type));
+    }
+    
     if (ctx->gtChain())
     {
         out->layout_type()->layout->gt_chain = walk_gt_chain_node(env, ctx->gtChain());
@@ -347,6 +354,8 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
 	{
 		out->layout_type()->layout->fields = walk_layout_member_list(env, ctx->layoutMemberList());
 	}
+
+    type->is_incomplete = false;
 
     return out;
 }
@@ -362,6 +371,8 @@ antl4_parser_t::walk_layout_member(environment_t_ptr env, aloeParser::LayoutMemb
     }
 
     out->var_type(walk_type(env, ctx->atype()));
+
+    ASSERT(!out->var_type()->is_incomplete, "incomplete type '%s' cannot be used as layout field type.", out->var_type()->name().c_str());
 
     return out;
 }
@@ -381,6 +392,7 @@ antl4_parser_t::walk_layout_member_list(environment_t_ptr env, aloeParser::Layou
         if (!var->name.empty())
         {
             ASSERT_LOC(out->m.count(var->name)  == 0,"layout member '%s' was already defined at (%d,%d)", var->name.c_str(), out->m[var->name]->line, out->m[var->name]->pos);
+            
             out->m[var->name] = var;
         }
     }
@@ -397,7 +409,9 @@ antl4_parser_t::walk_gt_chain_node(environment_t_ptr env, aloeParser::GtChainCon
 	{
         auto gt = walk_gt_chain_member(env, member);
 
-        ASSERT(out->m.count(*gt->gt_type()) == 0, "same type '%s' appears twice in gt chain first at (%d,%d)", gt->gt_type()->to_str().c_str(), gt->gt_type()->line, gt->gt_type()->pos);
+        ASSERT(out->m.count(*gt->gt_type()) == 0, "same type '%s' appears twice in gt chain first at (%d,%d)", gt->gt_type()->name().c_str(), gt->gt_type()->line, gt->gt_type()->pos);
+
+        ASSERT(!gt->gt_type()->is_incomplete, "incomplete type '%s' cannot be used in gt chain", gt->gt_type()->name().c_str());
         
         out->m[*gt->gt_type()] = gt;
         out->v.push_back(gt);
@@ -461,7 +475,7 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
 
     auto prev      = out->idt  ? env->find_object(out->idt) : nullptr;
 
-    ASSERT_LOC(prev->target->node_type_id == out->node_type_id, "identifier %s was already defined as a different kind at (%d,%d)", out->idt->name.c_str(), prev->target->line, prev->target->pos);
+    ASSERT_LOC(!prev || prev->target->node_type_id == out->node_type_id, "identifier %s was already defined as a different kind at (%d,%d)", out->idt->name.c_str(), prev->target->line, prev->target->pos);
 
     auto prev_fun       = prev ? castptr(fun_node_t, prev->target) : nullptr;
 
@@ -531,7 +545,10 @@ antl4_parser_t::walk_var_list( environment_t_ptr env, aloeParser::VarListContext
         var_t_ptr var = var_t_ptr(new var_t());
 
         var->var_type(var_node->p_var_type);
-        var->name  = var_node->idt->name;
+        if (var_node->idt)
+        {
+            var->name = var_node->idt->name;
+        }
 
         if (!var->name.empty())
         {

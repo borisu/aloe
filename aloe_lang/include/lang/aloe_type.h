@@ -47,16 +47,16 @@ namespace aloe
 	{
 		string name;
 
-		type_proxy_t_ptr p_type;
+		type_proxy_t_ptr p_var_type;
 
 		aloe_type_t_ptr var_type() const
 		{
-			return p_type->target;
+			return p_var_type->target;
 		}
 
 		void var_type(type_proxy_t_ptr type)
 		{
-			this->p_type = type;
+			this->p_var_type = type;
 		}
 	};
 	defptr(var_t);
@@ -106,6 +106,11 @@ namespace aloe
 
 	struct layout_info_t
 	{
+		layout_info_t() : id(-1), 
+			gt_chain(newptr(gt_set_t)), 
+			fields(newptr(var_set_t))
+		{
+		}
 		string name;
 
 		int id;
@@ -114,7 +119,6 @@ namespace aloe
 
 		var_set_t_ptr fields;
 
-		bool is_incomplete;
 	};
 	defptr(layout_info_t);
 
@@ -174,14 +178,22 @@ namespace aloe
 
 		var_set_t_ptr params;
 
+		string name;
+
 	};
 	defptr(fun_info_t);
 
 	struct aloe_type_t : public context_t
 	{
-		aloe_type_t(aloe_type_e cat_id) : type_id(cat_id)
+		aloe_type_t(aloe_type_e cat_id) : 
+			type_id(cat_id), 
+			is_incomplete(false),
+			layout (newptr(layout_info_t)),
+			arr (newptr(array_info_t)),
+			ptr (newptr(ptr_info_t)),
+			fun (newptr(fun_info_t))
 		{
-
+		
 		}
 
 		aloe_type_e type_id;
@@ -193,10 +205,14 @@ namespace aloe
 		ptr_info_t_ptr ptr;
 
 		fun_info_t_ptr fun;
+
+		bool is_incomplete;
 	
 		virtual ~aloe_type_t() {};
 
 		string to_str();
+
+		string name();
 	};
 	
 
