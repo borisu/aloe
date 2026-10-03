@@ -1,6 +1,6 @@
 #pragma once
 #include <map>
-#include "lang\aloe_type.h"
+#include "lang/ast/type.h"
 #include "value.h"
 
 using namespace llvm;
@@ -14,11 +14,11 @@ namespace aloe
 
 		di_cache_t(DIBuilder& dib);
 
-		DIType* get_dit_type(aloe_type_t_ptr atype);
+		DIType* get_dit_type(type_node_t_ptr atype);
 
 	private:
 
-		map<aloe_type_t, DIType*> di_cache;
+		map<type_node_t, DIType*> di_cache;
 
 		DIBuilder& di_builder;
 

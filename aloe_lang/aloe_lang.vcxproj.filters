@@ -21,9 +21,6 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\lang\aloe_type.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\lang\compiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -63,13 +60,13 @@
     <ClInclude Include="include\lang\ast\var.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\lang\context.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\lang\ast\layout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\lang\ast\type.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\lang\ast\fwd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,7 +74,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="aloe_types.cpp">
+    <ClCompile Include="type.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="aloe_exception.cpp">

@@ -1,9 +1,9 @@
 #pragma once
 #pragma once
 #include <stack>
-#include "lang\aloe_type.h"
-#include "lang\ast\ast.h"
-#include "lang\compiler.h"
+#include "lang/ast/type.h"
+#include "lang/ast/ast.h"
+#include "lang/compiler.h"
 #include "value.h"
 #include "di_cache.h"
 

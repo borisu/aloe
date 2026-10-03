@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include "lang/ast/node.h"
-#include "lang/aloe_type.h"
+#include "lang/ast/type.h"
 
 using namespace std;
 
@@ -15,7 +15,7 @@ namespace aloe
 
 		type_proxy_t_ptr p_layout_type;
 
-		aloe_type_t_ptr layout_type()
+		type_node_t_ptr layout_type()
 		{
 			return p_layout_type->target;
 		}

@@ -4,7 +4,7 @@
 #include <variant>
 #include "node.h"
 #include "var.h"
-#include "lang/aloe_type.h"
+#include "lang/ast/type.h"
 
 
 using namespace std;
@@ -38,7 +38,7 @@ namespace aloe
 			this->p_literal_type = type;
 		}
 
-		aloe_type_t_ptr literal_type() const
+		type_node_t_ptr literal_type() const
 		{
 			return p_literal_type->target;
 		}

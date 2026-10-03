@@ -1,5 +1,6 @@
 #pragma once
 #include "base/defs.h"
+#include "fwd.h"
 #include "node.h"
 #include "var.h"
 #include "fun.h"

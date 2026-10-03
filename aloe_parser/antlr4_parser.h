@@ -48,7 +48,7 @@ namespace aloe
 
 		virtual var_set_t_ptr walk_layout_member_list(environment_t_ptr env, aloeParser::LayoutFieldsListContext* ctx);
 
-		virtual var_t_ptr walk_layout_member(environment_t_ptr env, aloeParser::LayoutFieldContext* ctx);
+		virtual var_node_t_ptr walk_layout_member(environment_t_ptr env, aloeParser::LayoutFieldContext* ctx);
 
 		virtual expr_node_t_ptr walk_expression(environment_t_ptr env, aloeParser::ExpressionContext* ctx);
 
@@ -62,7 +62,7 @@ namespace aloe
 
         virtual void check_expr_type_equality(environment_t_ptr env, aloeParser::ExpressionContext* ctx, expr_node_t_ptr expr1, expr_node_t_ptr expr2, const char* op_str);
 
-		virtual void check_type_equality(environment_t_ptr env, antlr4::ParserRuleContext* ctx, aloe_type_t_ptr type1, aloe_type_t_ptr  type2);
+		virtual void check_type_equality(environment_t_ptr env, antlr4::ParserRuleContext* ctx, type_node_t_ptr type1, type_node_t_ptr  type2);
 
 		virtual void check_binary_arithmetic(environment_t_ptr env, aloeParser::ExpressionContext* ctx, binary_expr_node_t_ptr  expr_node, const char* op_str);
 

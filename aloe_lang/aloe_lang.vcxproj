@@ -153,10 +153,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="include\lang\aloe_type.h" />
     <ClInclude Include="include\lang\ast\ast.h" />
     <ClInclude Include="include\lang\ast\expression.h" />
     <ClInclude Include="include\lang\ast\fun.h" />
+    <ClInclude Include="include\lang\ast\fwd.h" />
     <ClInclude Include="include\lang\ast\identifier.h" />
     <ClInclude Include="include\lang\ast\layout.h" />
     <ClInclude Include="include\lang\ast\literal.h" />
@@ -167,13 +167,12 @@
     <ClInclude Include="include\lang\ast\var.h" />
     <ClInclude Include="include\lang\compiler.h" />
     <ClInclude Include="include\lang\aloe_exception.h" />
-    <ClInclude Include="include\lang\context.h" />
     <ClInclude Include="include\lang\intrinsics.h" />
     <ClInclude Include="include\lang\parser.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="aloe_types.cpp" />
+    <ClCompile Include="type.cpp" />
     <ClCompile Include="aloe_exception.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

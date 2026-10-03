@@ -8,7 +8,6 @@ using namespace std;
 
 namespace aloe
 {
-
 	struct identifier_node_t : public node_t
 	{
 		identifier_node_t() :node_t(IDENTFIER_NODE){};

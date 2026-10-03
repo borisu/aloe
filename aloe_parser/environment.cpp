@@ -1,4 +1,6 @@
 #include "pch.h"
+#include "lang/ast/fwd.h"
+#include "lang/ast/node.h"
 #include "environment.h"
 #include "lang/aloe_exception.h"
 
@@ -11,7 +13,7 @@ base_modifier_t::base_modifier_t(environment_t_ptr env):prev(env)
 }
 
 type_proxy_t_ptr
-base_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr type)
+base_modifier_t::register_type(identifier_node_t_ptr idt, type_node_t_ptr type)
 {
     return prev->register_type(idt, type);
 }
@@ -74,7 +76,7 @@ environment_modifier_t::environment_modifier_t(environment_t_ptr env) :base_modi
 };
 
 type_proxy_t_ptr
-environment_modifier_t::register_type(identifier_node_t_ptr idt, aloe_type_t_ptr type)
+environment_modifier_t::register_type(identifier_node_t_ptr idt, type_node_t_ptr type)
 {
 	
 	if (type_map.count(idt->name) != 0)

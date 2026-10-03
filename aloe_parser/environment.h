@@ -22,7 +22,7 @@ namespace aloe
 	{
 	public:
 		
-		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, aloe_type_t_ptr node) = 0;
+		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) = 0;
 		
 		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope = false) = 0;
 
@@ -44,7 +44,7 @@ namespace aloe
 
 		base_modifier_t(environment_t_ptr env = nullptr);
 
-		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, aloe_type_t_ptr node) override;
+		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) override;
 
 		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope) override;
 
@@ -70,7 +70,7 @@ namespace aloe
 
 		environment_modifier_t(environment_t_ptr env = nullptr);
 
-		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, aloe_type_t_ptr node) override;
+		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) override;
 
 		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope) override;
 

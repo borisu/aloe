@@ -11,7 +11,7 @@ di_cache_t::di_cache_t(DIBuilder& dib) :
 }
 
 DIType*
-di_cache_t::get_dit_type(aloe_type_t_ptr atype)
+di_cache_t::get_dit_type(type_node_t_ptr atype)
 {
     switch (atype->type_id)
     {

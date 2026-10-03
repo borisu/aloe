@@ -110,15 +110,12 @@ llvmir_compiler_t::compile(
     return res;
 }
 
-Type* 
-llvmir_compiler_t::emit_ir_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node)
-{
-    init_dloc(ctx, node);
-    return emit_ir_type(ctx, node->type());}
 
 Type*
-llvmir_compiler_t::emit_ir_type(compiler_ctx_t_ptr ctx, aloe_type_t_ptr type)
+llvmir_compiler_t::emit_ir_type(compiler_ctx_t_ptr ctx, type_node_t_ptr type)
 {
+    init_dloc(ctx, type);
+
     Type* out = nullptr;
 
     switch (type->type_id)
@@ -274,14 +271,14 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_t_ptr ctx, Function* fun, fu
         auto* arg_slot = ctx->builder()->CreateAlloca(ir_arg->getType());
         ctx->builder()->CreateStore(ir_arg, arg_slot);
 
-        if (!var->name.empty())
+        if (!var->idt->name.empty())
         {
             //auto var_name = arg_node->id->name;
             //ir_arg->setName(var_name);
 
             auto arg_dvar = ctx->di_builder()->createParameterVariable(
                 get_scope(ctx),
-                var->name,
+                var->idt->name,
                 i + 1,
                 ctx->di_file(),
                 node->line,
@@ -304,7 +301,7 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_t_ptr ctx, Function* fun, fu
         arg_val->lval_ir_type = ir_arg->getType();
         arg_val->type = var->var_type();
 
-        obj_cache[var->ref] = arg_val;
+        obj_cache[var] = arg_val;
 
     }
 
@@ -419,7 +416,7 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t_ptr ctx, identifier_expr_
 
 
 value_t_ptr 
-llvmir_compiler_t::emit_default(compiler_ctx_t_ptr ctx, aloe_type_t_ptr atype)
+llvmir_compiler_t::emit_default(compiler_ctx_t_ptr ctx, type_node_t_ptr atype)
 {
 	value_t_ptr out(new value_t());
 
@@ -807,7 +804,7 @@ llvmir_compiler_t::emit_expr_postfix(compiler_ctx_t_ptr ctx, unary_expr_node_t_p
     case expr_sfxminmin:
     case expr_sfxplusplus:
     {
-        value_t_ptr const_val = emit_constant(ctx, 1, make_shared<aloe_type_t>(ALOE_TYPE_INT), node);
+        value_t_ptr const_val = emit_constant(ctx, 1, make_shared<type_node_t>(ALOE_TYPE_INT), node);
 
         check_ir_type_equal(ctx, operand_rval->ir_value, const_val->ir_value, node);
         value_t_ptr math_val = emit_raw_binary_arithmetic(ctx, node->op_id == expr_sfxminmin ? expr_sub : expr_add, 
@@ -859,7 +856,7 @@ llvmir_compiler_t::emit_expr_prefix(compiler_ctx_t_ptr ctx, unary_expr_node_t_pt
     case expr_preminmin:
     {
 		check_lvalue(ctx, operand_val, node);
-		value_t_ptr const_val = emit_constant(ctx, 1 , make_shared<aloe_type_t>(ALOE_TYPE_INT), node);
+		value_t_ptr const_val = emit_constant(ctx, 1 , make_shared<type_node_t>(ALOE_TYPE_INT), node);
 
         value_t_ptr operand_rval(new value_t());
         operand_rval->ir_value = emit_rvalue(ctx, operand_val);
@@ -1086,7 +1083,7 @@ llvmir_compiler_t::check_lvalue(compiler_ctx_t_ptr ctx, value_t_ptr v, node_t_pt
 }
 
 value_t_ptr 
-llvmir_compiler_t::emit_constant(compiler_ctx_t_ptr ctx, variant<int, float, double, char> var, aloe_type_t_ptr atype, node_t_ptr node)
+llvmir_compiler_t::emit_constant(compiler_ctx_t_ptr ctx, variant<int, float, double, char> var, type_node_t_ptr atype, node_t_ptr node)
 {
     value_t_ptr val(new value_t());
 

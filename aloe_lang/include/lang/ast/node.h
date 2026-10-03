@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include "base/defs.h"
-#include "lang/context.h"
+#include "fwd.h"
 
 using namespace std;
 
@@ -27,24 +27,19 @@ namespace aloe
 	struct node_t;
 	defptr(node_t);
 
-	struct node_t : public context_t, public noncopyable_t
+	struct node_t 
 	{
-		node_t(node_type_e node_type) : node_type_id(node_type),ignore (false) {}
+		node_t(node_type_e node_type) : node_type_id(node_type),ignore (false), line(0), pos(0) {}
 
 		node_type_e node_type_id;
 		
 		bool ignore;
 
+		int line;
+
+		int pos;
+
 		virtual ~node_t() {}
 	};
-
-	typedef proxy_t<node_t_ptr>	node_proxy_t;
-	defptr(node_proxy_t);
-
-	struct node_ref_t
-	{
-		node_t_ptr ref;
-	};
-	defptr(node_ref_t);
 
 }

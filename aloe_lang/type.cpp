@@ -1,45 +1,25 @@
 #include "pch.h"
 #include "base/defs.h"
 #include "lang/aloe_exception.h"
-#include "lang/aloe_type.h"
+#include "lang/ast/fwd.h"
+#include "lang/ast/var.h"
+#include "lang/ast/type.h"
 
 using namespace aloe;
 
 bool
-aloe::operator == (const aloe_type_t& t1, const aloe_type_t& t2)  
+aloe::operator == (const type_node_t& t1, const type_node_t& t2)  
 {
 	return  !(t1 < t2) && !(t2 < t1);
 }
 
 bool
-aloe::operator != (const aloe_type_t& t1, const aloe_type_t& t2)
+aloe::operator != (const type_node_t& t1, const type_node_t& t2)
 {
 	return  !(t1 == t2);
 }
 
-bool
-aloe::operator == (const var_t& v1, const var_t& v2)
-{
-	return v1.name == v2.name && *v1.var_type() == *v2.var_type();
-}
-
-bool 
-aloe::operator != (const var_t& v1, const var_t& v2)
-{
-	return !(v1 == v2);
-}
-
-bool 
-aloe::operator < (const var_t& v1, const var_t& v2)
-{
-	if (v1.name != v2.name)
-	{
-		return v1.name < v2.name;
-	}
-	return *v1.var_type() < *v2.var_type();
-}
-
-bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
+bool aloe::operator < (const type_node_t& t1, const type_node_t& t2)
 {
 	if (t1.type_id != t2.type_id)
 	{
@@ -88,9 +68,9 @@ bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
 			auto param1 = t1.fun->params->v[i];
 			auto param2 = t2.fun->params->v[i];
 
-			if (*param1 != *param2)
+			if (*param1->var_type() != *param2->var_type())
 			{
-				return *param1 < *param2;
+				return *param1->var_type() < *param2->var_type();
 			}
 		}
 		break;
@@ -123,7 +103,7 @@ bool aloe::operator < (const aloe_type_t& t1, const aloe_type_t& t2)
 
 
 std::string
-aloe_type_t::name()
+type_node_t::name()
 {
 	switch (type_id)
 	{
@@ -165,7 +145,7 @@ aloe_type_t::name()
 }
 
 std::string
-aloe_type_t::to_str()
+type_node_t::to_str()
 {
 	switch (type_id)
 	{
@@ -194,7 +174,7 @@ aloe_type_t::to_str()
 			{
 				result += ", ";
 			}
-			result += fun->params->v[i]->name + ": " + fun->params->v[i]->var_type()->to_str();
+			result += fun->params->v[i]->name() + ": " + fun->params->v[i]->var_type()->to_str();
 		}
 		result += ") -> ";
 		result += fun->ret_type()->to_str();
@@ -215,7 +195,7 @@ aloe_type_t::to_str()
 		
 		for (auto& m : layout->fields->v)
 		{
-			s += m->name + ":" + m->var_type()->to_str() + "; ";
+			s += m->name() + ":" + m->var_type()->to_str() + "; ";
 		}
 		
 		s += "}";
@@ -224,7 +204,112 @@ aloe_type_t::to_str()
 	default:
 		return "unknown";
 	}
-
-	
 }
 
+type_node_t_ptr 
+gt_t::gt_type() const
+{
+	return p_gt_type->target;
+}
+
+void 
+gt_t::gt_type(type_proxy_t_ptr p_gt_type)
+{
+	this->p_gt_type = p_gt_type;
+}
+
+
+void var_node_t::var_type(type_proxy_t_ptr type)
+{
+	this->p_var_type = type;
+}
+
+type_node_t_ptr var_node_t::var_type() const
+{
+	return p_var_type->target;
+}
+
+string var_node_t::name() const
+{
+	if (idt)
+		return idt->name;
+	else
+		return "";
+}
+
+type_node_t_ptr fun_info_t::ret_type() const
+{
+	return p_ret_type->target;
+}
+
+void fun_info_t::ret_type(type_proxy_t_ptr p_ret_type)
+{
+	this->p_ret_type = p_ret_type;
+}
+
+
+void array_info_t::elem_type(type_proxy_t_ptr p_elem_type)
+{
+	this->p_elem_type = p_elem_type;
+}
+
+type_node_t_ptr array_info_t::elem_type() const
+{
+	return p_elem_type->target;
+}
+
+void ptr_info_t::pointee_type(type_proxy_t_ptr p_ptr_type)
+{
+	this->p_ptr_type = p_ptr_type;
+}
+
+type_node_t_ptr ptr_info_t::pointee_type() const
+{
+	return p_ptr_type->target;
+}
+
+layout_info_t::layout_info_t() : id(-1),
+gt_chain(newptr(gt_set_t)),
+fields(newptr(var_set_t))
+{
+
+}
+
+array_info_t::array_info_t() :size(-1)
+{
+
+}
+
+type_node_t::type_node_t(aloe_type_e cat_id) :
+	node_t(TYPE_NODE),
+	type_id(cat_id),
+	is_incomplete(false),
+	layout(newptr(layout_info_t)),
+	arr(newptr(array_info_t)),
+	ptr(newptr(ptr_info_t)),
+	fun(newptr(fun_info_t))
+{
+
+}
+
+/*bool
+aloe::operator == (const var_node_t& v1, const var_node_t& v2)
+{
+	return v1.name() == v2.name() && *v1.var_type() == *v2.var_type();
+}
+
+bool
+aloe::operator != (const var_node_t& v1, const var_node_t& v2)
+{
+	return !(v1 == v2);
+}
+
+bool
+aloe::operator < (const var_node_t& v1, const var_node_t& v2)
+{
+	if (v1.name()	 != v2.name())
+	{
+		return v1.name() < v2.name();
+	}
+	return *v1.var_type() < *v2.var_type();
+}*/

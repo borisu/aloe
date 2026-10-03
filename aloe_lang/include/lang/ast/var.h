@@ -2,10 +2,9 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "fwd.h"
 #include "node.h"
-#include "literal.h"
-#include "expression.h"
-#include "type.h"
+#include "identifier.h"
 
 using namespace std;
 
@@ -19,18 +18,15 @@ namespace aloe
 
 		type_proxy_t_ptr		p_var_type;
 
-		void var_type(type_proxy_t_ptr type)
-		{
-			this->p_var_type = type;
-		}
+		void var_type(type_proxy_t_ptr type);
 
-		aloe_type_t_ptr var_type() const
-		{
-			return p_var_type->target;
-		}
+		type_node_t_ptr var_type() const;
 
-		expr_node_t_ptr			initializer;
+		string name() const;
+
+		expr_node_t_ptr	initializer;
 	};
+
 	defptr(var_node_t);
 
 }

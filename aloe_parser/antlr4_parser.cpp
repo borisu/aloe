@@ -2,7 +2,7 @@
 #include "base/defs.h"
 #include "base/scope_guard.h"
 #include "lang/aloe_exception.h"
-#include "lang/aloe_type.h"
+#include "lang/ast/type.h"
 #include "lang/ast/ast.h"
 #include "utils.h"
 #include "antlr4_parser.h"
@@ -86,11 +86,7 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_t_ptr& ast, const string&
         }
         case TYPE_NODE:
         {
-            auto type_node   = newptr(type_node_t);
-            type_node->p_type = walk_type(env, parser.type());
-
-            ast->root        = type_node;
-
+            ast->root = walk_type(env, parser.type())->target;
             break;
         }
         default:
@@ -189,24 +185,24 @@ antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
 {
     assert(ctx != nullptr);
 
-    aloe_type_t_ptr type;
+    type_node_t_ptr type;
     type_proxy_t_ptr out;
 
     if (E_INSTANCE_OF(aloeParser::Type_intContext)) 
     {
-		type = newptr(aloe_type_t,ALOE_TYPE_INT);
+		type = newptr(type_node_t,ALOE_TYPE_INT);
     }
     else if (E_INSTANCE_OF(aloeParser::Type_charContext))
     {
-		type = newptr(aloe_type_t,ALOE_TYPE_CHAR);
+		type = newptr(type_node_t,ALOE_TYPE_CHAR);
     }
     else if (E_INSTANCE_OF(aloeParser::Type_doubleContext))
     {
-        type = newptr(aloe_type_t, ALOE_TYPE_DOUBLE);
+        type = newptr(type_node_t, ALOE_TYPE_DOUBLE);
     }
     else if (E_INSTANCE_OF(aloeParser::Type_voidContext))
     {
-        type = newptr(aloe_type_t, ALOE_TYPE_VOID);
+        type = newptr(type_node_t, ALOE_TYPE_VOID);
 	}
     else if (E_INSTANCE_OF(aloeParser::Type_funContext))
     {
@@ -218,12 +214,12 @@ antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
     }
     else if (E_INSTANCE_OF(aloeParser::Type_pointerContext))
     {
-        type = newptr(aloe_type_t, ALOE_TYPE_PTR);
+        type = newptr(type_node_t, ALOE_TYPE_PTR);
 		type->ptr->pointee_type(walk_type(env, e->type()));
     }
 	else if (E_INSTANCE_OF(aloeParser::Type_arrayContext))
     {
-        type = newptr(aloe_type_t, ALOE_TYPE_ARRAY);
+        type = newptr(type_node_t, ALOE_TYPE_ARRAY);
         type->arr->elem_type(walk_type(env, e->type()));
 		type->arr->size  = e->DigitSequence() ? stoul(e->DigitSequence()->getText()) : -1;
     }
@@ -298,7 +294,7 @@ antl4_parser_t::walk_fun_expectation(environment_t_ptr env, aloeParser::ExpectFu
 void 
 antl4_parser_t::walk_layout_expectation(environment_t_ptr env, aloeParser::ExpectLayoutContext* ctx)
 {
-    auto type = newptr(aloe_type_t, ALOE_TYPE_LAYOUT);
+    auto type = newptr(type_node_t, ALOE_TYPE_LAYOUT);
     INIT_POS(type, ctx);
 
 	auto idt = walk_identifier(env, ctx->identifier());
@@ -322,7 +318,7 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
     auto out = newptr(layout_node_t);
     INIT_POS(out, ctx);
 
-    auto type = newptr(aloe_type_t, ALOE_TYPE_LAYOUT);
+    auto type = newptr(type_node_t, ALOE_TYPE_LAYOUT);
     INIT_POS(type, ctx);
 
 	type->layout = newptr(layout_info_t);
@@ -362,14 +358,14 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
     return out;
 }
 
-var_t_ptr
+var_node_t_ptr
 antl4_parser_t::walk_layout_member(environment_t_ptr env, aloeParser::LayoutFieldContext* ctx)
 {
-    auto out = newptr(var_t);
+    auto out = newptr(var_node_t);
     INIT_POS(out, ctx);
    
     if (ctx->identifier()) {
-        out->name = ctx->identifier()->getText();
+        out->idt = walk_identifier(env, ctx->identifier());
     }
 
     out->var_type(walk_type(env, ctx->type()));
@@ -383,7 +379,6 @@ var_set_t_ptr
 antl4_parser_t::walk_layout_member_list(environment_t_ptr env, aloeParser::LayoutFieldsListContext* ctx)
 {
     auto out = newptr(var_set_t);
-    INIT_POS(out, ctx);
 
     for (auto& member : ctx->layoutField())
     {
@@ -391,11 +386,11 @@ antl4_parser_t::walk_layout_member_list(environment_t_ptr env, aloeParser::Layou
 
         out->v.push_back(var);
 
-        if (!var->name.empty())
+        if (!var->name().empty())
         {
-            ASSERT_LOC(out->m.count(var->name)  == 0,"layout member '%s' was already defined at (%d,%d)", var->name.c_str(), out->m[var->name]->line, out->m[var->name]->pos);
+            ASSERT_LOC(out->m.count(var->name())  == 0,"layout member '%s' was already defined at (%d,%d)", var->name().c_str(), out->m[var->name()]->line, out->m[var->name()]->pos);
             
-            out->m[var->name] = var;
+            out->m[var->name()] = var;
         }
     }
     return out;
@@ -405,17 +400,13 @@ gt_set_t_ptr
 antl4_parser_t::walk_gt_chain_node(environment_t_ptr env, aloeParser::GtChainContext* ctx)
 {
     auto out = newptr(gt_set_t);
-    INIT_POS(out, ctx);
-	
+    
 	for (auto& member : ctx->gtMember())
 	{
         auto gt = walk_gt_chain_member(env, member);
 
-        ASSERT(out->m.count(*gt->gt_type()) == 0, "same type '%s' appears twice in gt chain first at (%d,%d)", gt->gt_type()->name().c_str(), gt->gt_type()->line, gt->gt_type()->pos);
-
         ASSERT(!gt->gt_type()->is_incomplete, "incomplete type '%s' cannot be used in gt chain", gt->gt_type()->name().c_str());
         
-        out->m[*gt->gt_type()] = gt;
         out->v.push_back(gt);
 	}
 
@@ -451,7 +442,7 @@ antl4_parser_t::walk_gt_chain_member(environment_t_ptr env, aloeParser::GtMember
 type_proxy_t_ptr
 antl4_parser_t::walk_fun_type(environment_t_ptr env, aloeParser::FunTypeContext* ctx)
 {
-    auto type = newptr(aloe_type_t, ALOE_TYPE_FUNCTION);
+    auto type = newptr(type_node_t, ALOE_TYPE_FUNCTION);
     INIT_POS(type, ctx);
 
     auto out = newptr(type_proxy_t, type);
@@ -530,29 +521,20 @@ var_set_t_ptr
 antl4_parser_t::walk_var_list( environment_t_ptr env, aloeParser::VarListContext* ctx)
 {
     auto out = newptr(var_set_t);
-    INIT_POS(out, ctx);
     
     bool err = false;
     
     for (auto& varCtx : ctx->varDeclaration())
     {
         auto var_node = walk_var(env, varCtx);
-        var_t_ptr var = var_t_ptr(new var_t());
-        var->ref      = var_node;
-
-        var->var_type(var_node->p_var_type);
-        if (var_node->idt)
+        
+        if (!var_node->name().empty())
         {
-            var->name = var_node->idt->name;
-        }
-
-        if (!var->name.empty())
-        {
-            ASSERT(out->m.count(var->name) == 0, "same type appears twice in vars");
-            out->m[var->name] = var;
+            ASSERT(out->m.count(var_node->idt->name) == 0, "same var/field appears twice");
+            out->m[var_node->name()] = var_node;
         }
 		
-		out->v.push_back(var);
+		out->v.push_back(var_node);
     };
     
     return out;
@@ -623,7 +605,7 @@ antl4_parser_t::walk_literal(environment_t_ptr env, aloeParser::LiteralContext* 
     {
         out->lit_type_id = LIT_INT;
         out->value = std::stoi(ctx->DigitSequence()->getText());
-		out->literal_type(newptr(type_proxy_t,newptr(aloe_type_t, ALOE_TYPE_INT)));
+		out->literal_type(newptr(type_proxy_t,newptr(type_node_t, ALOE_TYPE_INT)));
     }
     else if (ctx->StringLiteral().size() > 0)
     {
@@ -634,8 +616,8 @@ antl4_parser_t::walk_literal(environment_t_ptr env, aloeParser::LiteralContext* 
             sf += s->getText();
         }
         out->value = unescape(sf.substr(1, sf.size() - 2));
-        out->literal_type(newptr(type_proxy_t, newptr(aloe_type_t, ALOE_TYPE_ARRAY)));
-		out->literal_type()->arr->elem_type(newptr(type_proxy_t, newptr(aloe_type_t, ALOE_TYPE_CHAR)));
+        out->literal_type(newptr(type_proxy_t, newptr(type_node_t, ALOE_TYPE_ARRAY)));
+		out->literal_type()->arr->elem_type(newptr(type_proxy_t, newptr(type_node_t, ALOE_TYPE_CHAR)));
 		out->literal_type()->arr->size = (int)std::get<string>(out->value).size() + 1; // +1 for null terminator
 		
     }
@@ -643,7 +625,7 @@ antl4_parser_t::walk_literal(environment_t_ptr env, aloeParser::LiteralContext* 
     {
 		out->lit_type_id = LIT_CHAR;
         out->value = unescape(ctx->CharacterConstant()->getText())[0];
-        out->literal_type(newptr(type_proxy_t, newptr(aloe_type_t, ALOE_TYPE_CHAR)));
+        out->literal_type(newptr(type_proxy_t, newptr(type_node_t, ALOE_TYPE_CHAR)));
    	
     }
     else
@@ -799,7 +781,7 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 		   
 		   ASSERT_LOC(*arg->expr_type() == *param->var_type(), "function call expects argument %d of type '%s' but argument of type '%s' was provided",
 			    i + 1,
-			    param->name.c_str(),
+			    param->name().c_str(),
 			    arg->expr_type()->to_str().c_str());
            
        }
@@ -952,7 +934,7 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        check_is_lvalue(env, ctx, expr_node->operand, "^");
 
        
-       expr_node->p_expr_type = newptr(type_proxy_t,newptr (aloe_type_t,ALOE_TYPE_PTR));
+       expr_node->p_expr_type = newptr(type_proxy_t,newptr (type_node_t,ALOE_TYPE_PTR));
 	   expr_node->expr_type()->ptr->pointee_type(expr_node->operand->p_expr_type);
 
        out = expr_node;
@@ -963,7 +945,7 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand = walk_expression(env, e->expression());
-	   expr_node->p_expr_type = newptr(type_proxy_t, newptr(aloe_type_t, ALOE_TYPE_INT)); // sizeof operator always returns int
+	   expr_node->p_expr_type = newptr(type_proxy_t, newptr(type_node_t, ALOE_TYPE_INT)); // sizeof operator always returns int
 
        out = expr_node;
 
@@ -1474,7 +1456,7 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
 }
 
 void
-antl4_parser_t::check_type_equality(environment_t_ptr env, antlr4::ParserRuleContext* ctx, aloe_type_t_ptr type1, aloe_type_t_ptr  type2)
+antl4_parser_t::check_type_equality(environment_t_ptr env, antlr4::ParserRuleContext* ctx, type_node_t_ptr type1, type_node_t_ptr  type2)
 {
     ASSERT_LOC(
         *type1 == *type2, 

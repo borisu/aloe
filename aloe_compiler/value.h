@@ -17,7 +17,7 @@ namespace aloe
 
 		bool is_lvalue;
 
-		aloe_type_t_ptr type;
+		type_node_t_ptr type;
 
 		Type* lval_ir_type;
 

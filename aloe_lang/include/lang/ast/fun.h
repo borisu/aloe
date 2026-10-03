@@ -23,7 +23,7 @@ namespace aloe
 
 		type_proxy_t_ptr	    p_fun_type;
 
-		aloe_type_t_ptr fun_type() const
+		type_node_t_ptr fun_type() const
 		{
 			return p_fun_type->target;
 		}

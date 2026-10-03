@@ -2,18 +2,16 @@
 #include <string>
 #include <vector>
 #include <variant>
+#include "fwd.h"
 #include "node.h"
+#include "type.h"
 #include "literal.h"
 #include "identifier.h"
-#include "type.h"
 
 using namespace std;
 
 namespace aloe
 {
-	struct expr_node_t;
-	defptr(expr_node_t);
-
 	enum expression_op_e
 	{
 		expr_identifier,
@@ -67,7 +65,7 @@ namespace aloe
 		expr_xorassign,
 		expr_orassign,
 		expr_comma
-	} ;
+	};
 
 	struct expr_node_t : public node_t
 	{
@@ -82,7 +80,7 @@ namespace aloe
 			this->p_expr_type = type;
 		}
 
-		aloe_type_t_ptr expr_type() const
+		type_node_t_ptr expr_type() const
 		{
 			return p_expr_type->target;
 		}
