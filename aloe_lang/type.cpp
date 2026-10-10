@@ -207,13 +207,13 @@ type_node_t::to_str()
 }
 
 type_node_t_ptr 
-gt_t::gt_type() const
+gt_node_t::gt_type() const
 {
 	return p_gt_type->target;
 }
 
 void 
-gt_t::gt_type(type_proxy_t_ptr p_gt_type)
+gt_node_t::gt_type(type_proxy_t_ptr p_gt_type)
 {
 	this->p_gt_type = p_gt_type;
 }
@@ -291,25 +291,3 @@ type_node_t::type_node_t(aloe_type_e cat_id) :
 {
 
 }
-
-/*bool
-aloe::operator == (const var_node_t& v1, const var_node_t& v2)
-{
-	return v1.name() == v2.name() && *v1.var_type() == *v2.var_type();
-}
-
-bool
-aloe::operator != (const var_node_t& v1, const var_node_t& v2)
-{
-	return !(v1 == v2);
-}
-
-bool
-aloe::operator < (const var_node_t& v1, const var_node_t& v2)
-{
-	if (v1.name()	 != v2.name())
-	{
-		return v1.name() < v2.name();
-	}
-	return *v1.var_type() < *v2.var_type();
-}*/

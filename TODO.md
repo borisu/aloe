@@ -11,9 +11,11 @@
 - [X] revision value again
 - [X] introduce modifiers for llvm compiler
 - [X] Add pointers
-- [ ] introduce structs (layout)
+- [X] introduce structs (layout)
+- [ ] Add virtual inheritance support
 - [ ] casting infrastructure
 - [ ] Change LNAME identifier type tospecific VAR and FUN
 - [ ] Implement correctly the comma operator
 - [?] review di types 
-- [?] Add asserts instead of raise - e.g. raise must include condition
+- [X] Add asserts instead of raise - e.g. raise must include condition
+

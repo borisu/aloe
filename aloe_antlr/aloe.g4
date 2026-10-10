@@ -80,7 +80,7 @@ gtChain
     ;
 
 gtMember
-    : '>' (identifier | layoutDeclaration)
+    : '>' identifier
     ;
 
 layoutFieldsList

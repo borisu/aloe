@@ -26,7 +26,19 @@ namespace aloe
 
 		expr_node_t_ptr	initializer;
 	};
-
 	defptr(var_node_t);
+
+	typedef vector<var_node_t_ptr> var_vec_t;
+	defptr(var_vec_t);
+
+	typedef map<string, var_node_t_ptr>	var_map_t;
+	defptr(var_map_t);
+
+	struct var_set_t
+	{
+		var_vec_t v;
+		var_map_t m;
+	};
+	defptr(var_set_t);
 
 }

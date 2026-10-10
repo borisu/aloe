@@ -19,6 +19,7 @@ namespace aloe
 		IDENTFIER_NODE,
 		EXPRESSION_NODE,
 		ARG_LIST_NODE,
+		GT_NODE,
 		LITERAL_NODE,
 		LAYOUT_NODE,
 		MARKER_NODE
@@ -35,9 +36,9 @@ namespace aloe
 		
 		bool ignore;
 
-		int line;
+		size_t line;
 
-		int pos;
+		size_t pos;
 
 		virtual ~node_t() {}
 	};

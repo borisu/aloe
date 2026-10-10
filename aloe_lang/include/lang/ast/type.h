@@ -1,8 +1,10 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <set>
 #include "node.h"
 #include "var.h"
+#include "gt.h"
 
 using namespace std;
 
@@ -33,42 +35,6 @@ namespace aloe
 			return false;
 		}
 	}
-
-	typedef vector<var_node_t_ptr> var_vec_t;
-	defptr(var_vec_t);
-
-	typedef map<string, var_node_t_ptr>	var_map_t;
-	defptr(var_map_t);
-
-	struct var_set_t 
-	{
-		var_vec_t v;
-		var_map_t m;
-	};
-	defptr(var_set_t);
-
-	struct gt_t
-	{
-		type_proxy_t_ptr p_gt_type;
-
-		type_node_t_ptr gt_type() const;
-		
-		void gt_type(type_proxy_t_ptr p_gt_type);
-
-	};
-	defptr(gt_t);
-
-	typedef vector<gt_t_ptr> gt_vec_t;
-	defptr(gt_vec_t);
-
-	typedef map<type_node_t, gt_t_ptr>	gt_map_t;
-	defptr(gt_map_t);
-
-	struct gt_set_t 
-	{
-		gt_vec_t v;
-	};
-	defptr(gt_set_t);
 
 	struct layout_info_t
 	{
@@ -149,15 +115,13 @@ namespace aloe
 	};
 	defptr(type_node_t);
 
+	typedef set<type_node_t> type_set_t;
+	defptr(type_set_t);
+
 	bool operator==(const type_node_t& t1, const type_node_t& t2);
 
 	bool operator!=(const type_node_t& t1, const type_node_t& t2);
 
 	bool operator<(const type_node_t& t1, const type_node_t& t2);
 
-	/*bool operator == (const var_node_t& v1, const var_node_t& v2);
-
-	bool operator != (const var_node_t& v1, const var_node_t& v2);
-
-	bool operator < (const var_node_t& v1, const var_node_t& v2);*/
 }

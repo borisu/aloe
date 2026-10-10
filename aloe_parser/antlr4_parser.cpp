@@ -26,19 +26,28 @@ static int uid_counter = 0;
         ctx->getStart()->getStartIndex(), \
         ##__VA_ARGS__)
 
+
+#define RAISE_POS(N,fmt, ...) \
+    throw aloe_exception_t("%s:%zu:%zu: error: " fmt, \
+        env->source().c_str(), \
+        N->line, \
+        N->pos, \
+        ##__VA_ARGS__)
+
+
 #define ASSERT_LOC(C, fmt, ...) \
     if (!(C)) { \
          RAISE_LOC(fmt, ##__VA_ARGS__); \
     }
 
+#define ASSERT_POS(N,C, fmt, ...) \
+    if (!(C)) { \
+         RAISE_POS(N,fmt, ##__VA_ARGS__); \
+    }
+
 #define INIT_POS(node, ctx) \
-    node->line = (int)ctx->getStart()->getLine(); \
-    node->pos  = (int)ctx->getStart()->getStartIndex();
-
-#define INIT_END_POS(node, ctx) \
-    node->line = (int)ctx->getStop()->getLine(); \
-    node->pos  = (int)ctx->getStop()->getStartIndex();
-
+    node->line = ctx->getStart()->getLine(); \
+    node->pos  = ctx->getStart()->getStartIndex();
 
 parser_t_ptr
 aloe::create_antlr4_parser()
@@ -400,43 +409,61 @@ gt_set_t_ptr
 antl4_parser_t::walk_gt_chain_node(environment_t_ptr env, aloeParser::GtChainContext* ctx)
 {
     auto out = newptr(gt_set_t);
-    
-	for (auto& member : ctx->gtMember())
+    for (auto& member : ctx->gtMember())
 	{
         auto gt = walk_gt_chain_member(env, member);
-
-        ASSERT(!gt->gt_type()->is_incomplete, "incomplete type '%s' cannot be used in gt chain", gt->gt_type()->name().c_str());
         
         out->v.push_back(gt);
+	}
+
+	auto type_set = newptr(type_set_t);
+    for (auto& gt : out->v)
+	{
+        verify_gt_chain(env, gt, type_set);
 	}
 
 	return out;
 }
 
-gt_t_ptr
+
+gt_node_t_ptr
 antl4_parser_t::walk_gt_chain_member(environment_t_ptr env, aloeParser::GtMemberContext* ctx)
 {
-    auto out = newptr(gt_t);
+    auto out = newptr(gt_node_t);
+    INIT_POS(out, ctx);
    
     if (ctx->identifier())
     {
-        auto idt     = walk_identifier(env, ctx->identifier());
+        auto idt    = walk_identifier(env, ctx->identifier());
         auto prev   = env->find_type(idt);
+
+        ASSERT(prev, "layout member '%s' was not defined", idt->name.c_str());
+        ASSERT(prev->target->type_id == ALOE_TYPE_LAYOUT, "only layout types can be used in gt chains", idt->name.c_str());
         
-        ASSERT (prev, "layout member '%s' was not defined", idt->name.c_str());
+
         out->gt_type(prev);
-    }
-    else if (ctx->layoutDeclaration())
-    {
-        auto layout_type  = walk_layout_declaration(env, ctx->layoutDeclaration());
-        out->gt_type(layout_type->p_layout_type);
     }
     else
     {
         RAISE_LOC("unknown gt chain member '%s'", ctx->getText().c_str());
     }
 
+    ASSERT_LOC(!out->gt_type()->is_incomplete, "incomplete type '%s' cannot be used in gt chain", out->gt_type()->name().c_str());
+
     return out;
+}
+
+void 
+antl4_parser_t::verify_gt_chain(environment_t_ptr env, gt_node_t_ptr gt, type_set_t_ptr type_set)
+{
+    ASSERT_POS(gt,type_set->count(*gt->gt_type()) == 0, "gt chain has a cycle with type '%s'", gt->gt_type()->name().c_str());
+
+    type_set->insert(*gt->gt_type());
+
+	for (auto& next : gt->gt_type()->layout->gt_chain->v)
+	{
+		verify_gt_chain(env, next, type_set);
+	}
 }
 
 type_proxy_t_ptr
@@ -512,7 +539,7 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
     } // for 
 
 	out->end_of_fun = marker_node_t_ptr(new marker_node_t());
-	INIT_END_POS(out->end_of_fun, ctx);
+	INIT_POS(out->end_of_fun, ctx);
    
     return out;
 }

@@ -35,6 +35,7 @@ namespace aloe
 		void test_anonymous_layout_type();
 		void test_duplicate_layout_decalrations();
 		void test_pointers_cast();
+		void test_diamond_layout();
 		
 		void run_test(const char* test_name, const char* al, bool expected);
 

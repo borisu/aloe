@@ -44,7 +44,9 @@ namespace aloe
 
 		virtual gt_set_t_ptr walk_gt_chain_node(environment_t_ptr env, aloeParser::GtChainContext* ctx);
 
-		virtual gt_t_ptr walk_gt_chain_member(environment_t_ptr env, aloeParser::GtMemberContext* ctx);
+		virtual gt_node_t_ptr walk_gt_chain_member(environment_t_ptr env, aloeParser::GtMemberContext* ctx);
+
+		virtual void verify_gt_chain(environment_t_ptr env, gt_node_t_ptr gt, type_set_t_ptr gt_chain);
 
 		virtual var_set_t_ptr walk_layout_member_list(environment_t_ptr env, aloeParser::LayoutFieldsListContext* ctx);
 
@@ -73,7 +75,9 @@ namespace aloe
 		virtual void check_assignment(environment_t_ptr env, aloeParser::ExpressionContext* ctx, expr_node_t_ptr lhs, expr_node_t_ptr rhs);
 
 		virtual void check_is_pointer(environment_t_ptr env, aloeParser::ExpressionContext* ctx, expr_node_t_ptr expr_node, const char* op_str);
+
 		
+
 		bool syntax_error_occurred;
 
 	};

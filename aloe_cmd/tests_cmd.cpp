@@ -388,10 +388,25 @@ tests_cmd_t::test_duplicate_layout_decalrations()
         layout C {b:int}    
         layout D {b:int}    
 
-        layout A > B > C > layout { a: int } > D { 
+        layout A > B > C > D { 
         a:layout { c:int  d:int } 
-        b:int ;
+        b:int;
         b:int
+        };
+        )",
+        false);
+}
+
+void 
+tests_cmd_t::test_diamond_layout()
+{
+    TEST_PARSE_STRING(R"( 
+        layout A {b:int}    
+        layout Y > A  {b:int}    
+        layout X > A  {b:int}    
+
+        layout Z > X > Y{
+            a:int
         };
         )",
         false);
@@ -430,14 +445,7 @@ tests_cmd_t::run_tests()
         dump_ir = true;
         no_debug = true;
 
-        TEST_PARSE_STRING(R"( 
-        fun foo:() -> void 
-        {
-            var a:^int   = 0:^int
-            var b:^^int  = 0:^^int  
-            var c:^^^int = 0:^^^int
-        })",
-            true);
+        test_diamond_layout();
 
         return true;
 
@@ -463,6 +471,7 @@ tests_cmd_t::run_tests()
     test_anonymous_layout_type();
     test_pointers_cast();
     test_duplicate_layout_decalrations();
+    test_diamond_layout();
     
 
    
