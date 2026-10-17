@@ -191,14 +191,22 @@ type_node_t::to_str()
 	}
 	case ALOE_TYPE_LAYOUT:
 	{
-		string s = "layout " + layout->name + "{";
+		string s;
 		
-		for (auto& m : layout->fields->v)
-		{
-			s += m->name() + ":" + m->var_type()->to_str() + "; ";
+		if (is_incomplete) {
+			s = "incomplete layout " + layout->long_name;
 		}
-		
-		s += "}";
+		else {
+			s = "layout " + layout->long_name /* + "{";
+
+
+			for (auto& m : layout->fields->v)
+			{
+				s += m->name() + ":" + m->var_type()->to_str() + "; ";
+			}
+
+			s += "}"*/;
+		}
 		return s;
 	}
 	default:

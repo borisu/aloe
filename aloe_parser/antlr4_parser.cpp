@@ -81,7 +81,7 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_t_ptr& ast, const string&
 
         environment_t_ptr src_mod(new source_modifier_t(source_id));
 		environment_t_ptr fun_mod(new fun_modifier_t(nullptr, src_mod));
-		environment_t_ptr scp_mod(new scope_modifier_t(SCOPE_GLOBAL, fun_mod));
+		environment_t_ptr scp_mod(new scope_modifier_t(SCOPE_GLOBAL, "", fun_mod));
 		environment_t_ptr env_mod(new environment_modifier_t(scp_mod));
 
         environment_t_ptr env = env_mod;
@@ -308,15 +308,17 @@ antl4_parser_t::walk_layout_expectation(environment_t_ptr env, aloeParser::Expec
 
 	auto idt = walk_identifier(env, ctx->identifier());
     type->layout->name = idt->name;
+	type->layout->long_name = idt->name + "@" + env->scope_name()   ;
 	type->is_incomplete = true;
 
     auto prev = env->find_type(idt, true);
     if (prev)
     {
-        ASSERT_LOC(*prev->target == *type, "identifier '%s' was already defined with different type at (%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
+        ASSERT_LOC(*prev->target == *type, "identifier '%s' was already defined at (%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
     }
     else
     {
+        type->layout->id = uid_counter++;
         env->register_type(idt, type);
     }
 }
@@ -332,23 +334,38 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
 
 	type->layout = newptr(layout_info_t);
 	type->is_incomplete = true;
-	type->layout->id = uid_counter++;
-
+    
+	
     if (ctx->identifier())
     {
 		auto idt = walk_identifier(env, ctx->identifier());
-        type->layout->name = idt->name;
-       
+
         auto prev = env->find_type(idt, true);
 
         ASSERT_LOC(!prev || prev->target->type_id == ALOE_TYPE_LAYOUT, "identifier '%s' was already defined as a different kind at (%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
 
         ASSERT_LOC (!prev || prev->target->is_incomplete, "layout '%s' was already defined at(%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
-        
+
+        if (prev)
+        {
+			type->layout->id = prev->target->layout->id;
+        }
+        else
+        {
+			type->layout->id = uid_counter++;
+        }
+
+        type->layout->name = idt->name;
+        type->layout->long_name = idt->name + "@" + env->scope_name();
+
         out->layout_type(env->register_type(idt,type));
     }
     else
     {
+        type->layout->id = uid_counter++;
+
+        type->layout->long_name = "anonymous_fun_" + to_string(uid_counter++) + "@" + env->scope_name();
+
         out->layout_type(newptr(type_proxy_t, type));
     }
     
@@ -476,8 +493,8 @@ antl4_parser_t::walk_fun_type(environment_t_ptr env, aloeParser::FunTypeContext*
 
     type->fun->ret_type(walk_type(env, ctx->type()));
 
-    environment_t_ptr new_env(new scope_modifier_t(SCOPE_FUN_ARGS, env));
-    type->fun->params = walk_var_list(new_env, ctx->varList());
+    //environment_t_ptr new_env(new scope_modifier_t(SCOPE_FUN_ARGS, env));
+    type->fun->params = walk_var_list(env, ctx->varList());
     
     return out;
 }
@@ -502,7 +519,7 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
     ASSERT_LOC(!prev_fun || !prev_fun->is_defined, "function %s was already defined at (%d:%d)", out->idt->name.c_str(), prev_fun->line, prev_fun->pos);
     
     environment_t_ptr fun_mod(new fun_modifier_t(out, env));
-    environment_t_ptr scope_mod(new scope_modifier_t(SCOPE_FUNCTION, fun_mod));
+    environment_t_ptr scope_mod(new scope_modifier_t(SCOPE_FUNCTION, out->idt ? out->idt->name : "anonymous_" + to_string(uid_counter++), fun_mod));
 	environment_t_ptr env_mod(new environment_modifier_t(scope_mod));
     
     environment_t_ptr new_env = env_mod;
@@ -535,6 +552,18 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
         {
             out->statements.push_back(walk_return(new_env, exec_ctx->returnStatement()));
         }
+        else if (exec_ctx->layoutDeclaration())
+        {
+            out->statements.push_back(walk_layout_declaration(new_env, exec_ctx->layoutDeclaration()));
+        }
+		else if (exec_ctx->expectation())
+		{
+			walk_expectation(new_env, exec_ctx->expectation());
+		}
+		else
+		{
+			RAISE_LOC("unknown function level statement '%s'", exec_ctx->getText().c_str());
+		}
 
     } // for 
 

@@ -51,6 +51,16 @@ base_modifier_t::curr_scope()
     return prev->curr_scope();
 }
 
+const string&
+base_modifier_t::scope_name()
+{
+	static string global = "";
+    if (prev == nullptr)
+        return global;
+
+    return prev->scope_name();
+}
+
 fun_node_t_ptr
 base_modifier_t::curr_fun()
 {
@@ -146,11 +156,21 @@ environment_modifier_t::find_object(identifier_node_t_ptr idt, bool local_scope)
     return prev->find_object(idt, false);
 }
 
+#define SCOPE_SEPARATOR "::"
 
-scope_modifier_t::scope_modifier_t(scope_e scope, environment_t_ptr env) : 
+scope_modifier_t::scope_modifier_t(scope_e scope, string name, environment_t_ptr env) : 
     base_modifier_t(env), 
-    scope_id(scope)
+    scope_id(scope),
+    scope_name_(name)
 {
+    if (prev)
+    {
+        scope_name_ = (prev->scope_name() == SCOPE_SEPARATOR) ? prev->scope_name() + name : prev->scope_name() + "::" + name;
+    }
+    else
+    {
+        scope_name_ = name;
+    }
 	
 }
 
@@ -158,6 +178,12 @@ scope_e
 scope_modifier_t::curr_scope()
 {
     return scope_id;
+}
+
+const string& 
+scope_modifier_t::scope_name()
+{
+    return scope_name_;
 }
 
 fun_modifier_t::fun_modifier_t(fun_node_t_ptr fun, environment_t_ptr env) :

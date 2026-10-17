@@ -6,11 +6,6 @@ using namespace std;
 
 namespace aloe
 {
-	enum object_type_e
-	{
-		LLVM_IR,
-		OBJECT_FILE
-	};
 	
 	class compiler_t
 	{	

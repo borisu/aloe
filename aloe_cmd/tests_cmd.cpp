@@ -413,6 +413,54 @@ tests_cmd_t::test_diamond_layout()
 }
 
 void
+tests_cmd_t::test_layout_id()
+{
+    TEST_PARSE_STRING(R"( 
+        expect layout A;
+
+        var a1:^A;
+        var a2:^A;
+
+        fun foo:() -> void {
+            layout A {b:int};
+
+            var b1 : A;
+            var b2 : A; 
+
+            a1 = a2;
+            a1 = ^b1;
+            a2 = ^b2;
+            b1 = b2;
+        };
+        )",
+
+        false);
+
+    /*TEST_PARSE_STRING(R"( 
+        expect layout A;
+
+        var a1:^A;
+        var a2:^A;
+
+        layout A {b:int};
+
+        var b1 : A;
+        var b2 : A; 
+
+        fun foo:() -> void {
+            a1 = a2;
+            a1 = ^b1;
+            a2 = ^b2;
+            b1 = b2;
+        };
+        )",
+
+        true);*/
+
+   
+}
+
+void
 tests_cmd_t::run_parser()
 {
 
@@ -437,7 +485,7 @@ tests_cmd_t::run_tests()
 		return true;
     }
 
-    if (false)
+    if (true)
     {
 		compile = false;
 
@@ -445,7 +493,7 @@ tests_cmd_t::run_tests()
         dump_ir = true;
         no_debug = true;
 
-        test_diamond_layout();
+        test_layout_id();
 
         return true;
 

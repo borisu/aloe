@@ -32,6 +32,8 @@ namespace aloe
 
 		virtual scope_e curr_scope() = 0;
 
+		virtual const string& scope_name() = 0;
+
 		virtual fun_node_t_ptr curr_fun() = 0;
 
 		virtual const string& source() = 0;
@@ -52,11 +54,13 @@ namespace aloe
 
 		virtual node_proxy_t_ptr find_object(identifier_node_t_ptr id, bool local_scope = false) override;
 
-		scope_e curr_scope() override;
+		virtual scope_e curr_scope() override;
 
-		fun_node_t_ptr curr_fun() override;
+		virtual const string& scope_name() override;
 
-		const string& source() override;
+		virtual fun_node_t_ptr curr_fun() override;
+
+		virtual const string& source() override;
 
 	protected:
 
@@ -94,11 +98,15 @@ namespace aloe
 	class scope_modifier_t : public virtual base_modifier_t
 	{
 	public:
-		scope_modifier_t(scope_e scope, environment_t_ptr env = nullptr);
+		scope_modifier_t(scope_e scope, string name, environment_t_ptr env = nullptr);
 
 		scope_e curr_scope() override;
-		
+
+		const string& scope_name() override;
+				
 		scope_e scope_id;
+
+		string scope_name_;
 	};
 
 	class fun_modifier_t : public virtual base_modifier_t

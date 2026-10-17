@@ -42,6 +42,8 @@ namespace aloe
 
 		string name;
 
+		string long_name;
+
 		int id;
 
 		gt_set_t_ptr gt_chain;
