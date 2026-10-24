@@ -733,7 +733,11 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        auto  expr_node = newptr(identifier_expr_node_t);
      
        expr_node->idt = walk_identifier(env, e->identifier());
-	   expr_node->ref(env->find_object(expr_node->idt));
+	   auto obj = env->find_object(expr_node->idt);
+
+	   ASSERT_LOC(obj, "undefined identifier '%s'", expr_node->idt->name.c_str());
+
+	   expr_node->ref(obj);
        
        switch (expr_node->ref()->node_type_id)
        {
@@ -855,11 +859,19 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
+
+	   ASSERT_LOC(expr_node->operand->expr_type()->type_id == ALOE_TYPE_LAYOUT, "expression '%s' is not of a layout type", ctx->getText().c_str());
+
        expr_node->idt       = walk_identifier(env, e->identifier());
 
-	   throw;  // dot operator not implemented yet
+	   var_node_t_ptr field = get_field(expr_node->operand->expr_type(), expr_node->idt);
+       
+	   ASSERT_LOC(field, "layout '%s' does not have a field named '%s'", expr_node->operand->expr_type()->name().c_str(), expr_node->idt->name.c_str());
 
-       out = expr_node;
+	   expr_node->p_expr_type = field->p_var_type;
+           
+       expr_node->is_lvalue = true;
+	   out = expr_node;
 
    }
    else if (E_INSTANCE_OF(aloeParser::Expr_arrowContext)) {
@@ -1580,4 +1592,28 @@ string
 antl4_parser_t::create_anonymous_name()
 {
 	return "???" + to_string(uid_counter++);
+}
+
+var_node_t_ptr 
+antl4_parser_t::get_field(type_node_t_ptr type, identifier_node_t_ptr idt)
+{
+	ASSERT(type->type_id == ALOE_TYPE_LAYOUT, "type '%s' is not a layout type", type->to_str().c_str());
+
+	for (auto& field : type->layout->fields->v)
+	{
+		if (field->name() == idt->name)
+		{
+			return field;
+		}
+	}
+
+	for (auto& gt : type->layout->gt_chain->v)
+	{
+		auto field = get_field(gt->gt_type(), idt);
+		if (field)
+		{
+			return field;
+		}
+	}
+	return nullptr;
 }

@@ -78,6 +78,8 @@ namespace aloe
 
 		virtual string create_anonymous_name();
 
+		var_node_t_ptr get_field(type_node_t_ptr type, identifier_node_t_ptr idt);
+
 		bool syntax_error_occurred;
 
 	};

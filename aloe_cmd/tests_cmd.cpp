@@ -474,6 +474,17 @@ tests_cmd_t::run_parser()
 
 }
 
+void 
+tests_cmd_t::basic_layout_member_access()
+{
+    TEST_PARSE_STRING(
+        R"(
+            fun foo:(var:int)-> void {  }
+            layout A { a:int; b:int; }  
+            fun bar :()-> void { var a:A; foo (a.a);})",
+        true);
+}
+
 bool
 tests_cmd_t::run_tests()
 {
@@ -496,7 +507,8 @@ tests_cmd_t::run_tests()
         TEST_PARSE_STRING(
             R"(
             fun foo:(var:int)-> void {  }
-            fun bar :()-> void { foo (10);})", 
+            layout A { a:int; b:int; }  
+            fun bar :()-> void { var a:A; foo (a.a);})", 
             true);
 
         return true;
@@ -525,8 +537,7 @@ tests_cmd_t::run_tests()
     test_duplicate_layout_decalrations();
     test_diamond_layout();
     test_layout_id();
-    
-
+	basic_layout_member_access();
    
     
     return success;
