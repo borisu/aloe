@@ -485,7 +485,7 @@ tests_cmd_t::run_tests()
 		return true;
     }
 
-    if (true)
+    if (false)
     {
 		compile = false;
 
@@ -493,7 +493,11 @@ tests_cmd_t::run_tests()
         dump_ir = true;
         no_debug = true;
 
-        test_layout_id();
+        TEST_PARSE_STRING(
+            R"(
+            fun foo:(var:int)-> void {  }
+            fun bar :()-> void { foo (10);})", 
+            true);
 
         return true;
 
@@ -520,6 +524,7 @@ tests_cmd_t::run_tests()
     test_pointers_cast();
     test_duplicate_layout_decalrations();
     test_diamond_layout();
+    test_layout_id();
     
 
    

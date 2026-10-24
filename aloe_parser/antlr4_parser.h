@@ -76,6 +76,8 @@ namespace aloe
 
 		virtual void check_is_pointer(environment_t_ptr env, aloeParser::ExpressionContext* ctx, expr_node_t_ptr expr_node, const char* op_str);
 
+		virtual string create_anonymous_name();
+
 		bool syntax_error_occurred;
 
 	};

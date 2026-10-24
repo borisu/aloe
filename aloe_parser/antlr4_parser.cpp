@@ -81,7 +81,7 @@ antl4_parser_t::parse_from_stream(istream& stream, ast_t_ptr& ast, const string&
 
         environment_t_ptr src_mod(new source_modifier_t(source_id));
 		environment_t_ptr fun_mod(new fun_modifier_t(nullptr, src_mod));
-		environment_t_ptr scp_mod(new scope_modifier_t(SCOPE_GLOBAL, "", fun_mod));
+		environment_t_ptr scp_mod(new context_modifier_t(CTX_GLOBAL, fun_mod));
 		environment_t_ptr env_mod(new environment_modifier_t(scp_mod));
 
         environment_t_ptr env = env_mod;
@@ -335,7 +335,8 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
 	type->layout = newptr(layout_info_t);
 	type->is_incomplete = true;
     
-	
+    type->layout->id = uid_counter++;
+
     if (ctx->identifier())
     {
 		auto idt = walk_identifier(env, ctx->identifier());
@@ -346,15 +347,6 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
 
         ASSERT_LOC (!prev || prev->target->is_incomplete, "layout '%s' was already defined at(%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
 
-        if (prev)
-        {
-			type->layout->id = prev->target->layout->id;
-        }
-        else
-        {
-			type->layout->id = uid_counter++;
-        }
-
         type->layout->name = idt->name;
         type->layout->long_name = idt->name + "@" + env->scope_name();
 
@@ -362,9 +354,8 @@ antl4_parser_t::walk_layout_declaration(environment_t_ptr env, aloeParser::Layou
     }
     else
     {
-        type->layout->id = uid_counter++;
 
-        type->layout->long_name = "anonymous_fun_" + to_string(uid_counter++) + "@" + env->scope_name();
+        type->layout->long_name = create_anonymous_name() + "@" + env->scope_name();
 
         out->layout_type(newptr(type_proxy_t, type));
     }
@@ -493,8 +484,8 @@ antl4_parser_t::walk_fun_type(environment_t_ptr env, aloeParser::FunTypeContext*
 
     type->fun->ret_type(walk_type(env, ctx->type()));
 
-    //environment_t_ptr new_env(new scope_modifier_t(SCOPE_FUN_ARGS, env));
-    type->fun->params = walk_var_list(env, ctx->varList());
+    environment_t_ptr new_env(new context_modifier_t(CTX_FUN_ARGS, env));
+    type->fun->params = walk_var_list(new_env, ctx->varList());
     
     return out;
 }
@@ -517,10 +508,15 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
 
     // check that function is not defined twice
     ASSERT_LOC(!prev_fun || !prev_fun->is_defined, "function %s was already defined at (%d:%d)", out->idt->name.c_str(), prev_fun->line, prev_fun->pos);
+
+    if (out->idt)
+    {
+        env->register_object(out->idt, out); 
+    }
     
     environment_t_ptr fun_mod(new fun_modifier_t(out, env));
-    environment_t_ptr scope_mod(new scope_modifier_t(SCOPE_FUNCTION, out->idt ? out->idt->name : "anonymous_" + to_string(uid_counter++), fun_mod));
-	environment_t_ptr env_mod(new environment_modifier_t(scope_mod));
+    environment_t_ptr scope_mod(new context_modifier_t(CTX_FUNCTION, fun_mod));
+	environment_t_ptr env_mod(new environment_modifier_t(scope_mod, out->idt ? out->idt->name : create_anonymous_name()));
     
     environment_t_ptr new_env = env_mod;
 
@@ -528,12 +524,7 @@ antl4_parser_t::walk_fun_declaration( environment_t_ptr env, aloeParser::FunDecl
 
 	// check that function is not defined with different type
     ASSERT_LOC( !prev || *prev_fun->fun_type() == *out->fun_type(), "function %s was already declared with different type at (%d:%d)", out->idt->name.c_str(), prev_fun->line, prev_fun->pos);
-    
-    if (out->idt)
-    {
-        env->register_object(out->idt, out); // it will mark previous node as ignore
-    }
-
+  
     for (auto& exec_ctx : ctx->funLevelStatement())
     {
         if (exec_ctx->varDeclaration())
@@ -611,7 +602,7 @@ antl4_parser_t::walk_var(environment_t_ptr env, aloeParser::VarDeclarationContex
 		ASSERT_LOC(!prev_node,  "var %s was already defined", out->idt->name.c_str());
         
     }
-    else if (env->curr_scope() != SCOPE_FUN_ARGS)
+    else if (env->curr_ctx() != CTX_FUN_ARGS)
     {
 		RAISE_LOC("variable declaration must have an identifier in this scope");
     }
@@ -621,9 +612,9 @@ antl4_parser_t::walk_var(environment_t_ptr env, aloeParser::VarDeclarationContex
     if (ctx->expression())
     {
         
-		ASSERT_LOC(env->curr_scope() != SCOPE_FUN_ARGS, "variable initialization is not allowed in this context");
+		ASSERT_LOC(env->curr_ctx() != CTX_FUN_ARGS, "variable initialization is not allowed in this context");
         
-        ASSERT_LOC(env->curr_scope() != SCOPE_GLOBAL || dynamic_cast<aloeParser::Expr_literalContext*>(ctx->expression()),   "only literal expressions are allowed for global variable initialization");
+        ASSERT_LOC(env->curr_ctx() != CTX_GLOBAL || dynamic_cast<aloeParser::Expr_literalContext*>(ctx->expression()),   "only literal expressions are allowed for global variable initialization");
 
         out->initializer = walk_expression(env, ctx->expression());
 		check_type_equality(env, ctx, out->initializer->expr_type(), out->var_type());
@@ -1585,4 +1576,8 @@ antl4_parser_t::check_is_pointer(environment_t_ptr env, aloeParser::ExpressionCo
 		expr_node->expr_type()->to_str().c_str());
 }
 
-
+string 
+antl4_parser_t::create_anonymous_name()
+{
+	return "???" + to_string(uid_counter++);
+}

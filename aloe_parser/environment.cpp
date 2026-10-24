@@ -7,6 +7,8 @@
 
 using namespace aloe;
 
+#define SCOPE_SEPARATOR "::"
+
 base_modifier_t::base_modifier_t(environment_t_ptr env):prev(env)
 {
 
@@ -42,13 +44,13 @@ base_modifier_t::find_object(identifier_node_t_ptr idt, bool local_scope)
 	return prev->find_object(idt, local_scope);
 }   
 
-scope_e
-base_modifier_t::curr_scope()
+context_e
+base_modifier_t::curr_ctx()
 {
 	if (prev == nullptr)
-		return SCOPE_UNKNOWN;
+		return CTX_UNKNOWN;
 
-    return prev->curr_scope();
+    return prev->curr_ctx();
 }
 
 const string&
@@ -80,9 +82,18 @@ base_modifier_t::source()
     return prev->source();
 }
 
-environment_modifier_t::environment_modifier_t(environment_t_ptr env) :base_modifier_t(env)
+environment_modifier_t::environment_modifier_t(environment_t_ptr env, string name):
+base_modifier_t(env),
+scope_name_(name)
 {
-	
+    if (prev)
+    {
+        scope_name_ = (prev->scope_name() == SCOPE_SEPARATOR) ? prev->scope_name() + name : prev->scope_name() + "::" + name;
+    }
+    else
+    {
+        scope_name_ = name;
+    }
 };
 
 type_proxy_t_ptr
@@ -156,35 +167,26 @@ environment_modifier_t::find_object(identifier_node_t_ptr idt, bool local_scope)
     return prev->find_object(idt, false);
 }
 
-#define SCOPE_SEPARATOR "::"
-
-scope_modifier_t::scope_modifier_t(scope_e scope, string name, environment_t_ptr env) : 
-    base_modifier_t(env), 
-    scope_id(scope),
-    scope_name_(name)
-{
-    if (prev)
-    {
-        scope_name_ = (prev->scope_name() == SCOPE_SEPARATOR) ? prev->scope_name() + name : prev->scope_name() + "::" + name;
-    }
-    else
-    {
-        scope_name_ = name;
-    }
-	
-}
-
-scope_e
-scope_modifier_t::curr_scope()
-{
-    return scope_id;
-}
-
-const string& 
-scope_modifier_t::scope_name()
+const string&
+environment_modifier_t::scope_name()
 {
     return scope_name_;
 }
+
+context_modifier_t::context_modifier_t(context_e scope, environment_t_ptr env) : 
+    base_modifier_t(env), 
+    ctx_id(scope)
+{
+  	
+}
+
+context_e
+context_modifier_t::curr_ctx()
+{
+    return ctx_id;
+}
+
+
 
 fun_modifier_t::fun_modifier_t(fun_node_t_ptr fun, environment_t_ptr env) :
     base_modifier_t(env),

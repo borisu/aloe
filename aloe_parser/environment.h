@@ -9,13 +9,13 @@ namespace aloe
 	class environment_t;
 	defptr(environment_t);
 
-	enum scope_e
+	enum context_e
 	{
-		SCOPE_UNKNOWN,
-		SCOPE_GLOBAL,
-		SCOPE_FUNCTION,
-		SCOPE_FUN_ARGS,
-		SCOPE_EXEC_BLOCK,
+		CTX_UNKNOWN,
+		CTX_GLOBAL,
+		CTX_FUNCTION,
+		CTX_FUN_ARGS,
+		CTX_EXEC_BLOCK,
 	};
 
 	class environment_t 
@@ -30,7 +30,7 @@ namespace aloe
 
 		virtual node_proxy_t_ptr find_object(identifier_node_t_ptr id, bool local_scope = false) = 0;
 
-		virtual scope_e curr_scope() = 0;
+		virtual context_e curr_ctx() = 0;
 
 		virtual const string& scope_name() = 0;
 
@@ -54,7 +54,7 @@ namespace aloe
 
 		virtual node_proxy_t_ptr find_object(identifier_node_t_ptr id, bool local_scope = false) override;
 
-		virtual scope_e curr_scope() override;
+		virtual context_e curr_ctx() override;
 
 		virtual const string& scope_name() override;
 
@@ -72,7 +72,7 @@ namespace aloe
 	{
 	public:
 
-		environment_modifier_t(environment_t_ptr env = nullptr);
+		environment_modifier_t(environment_t_ptr env = nullptr, string name = "");
 
 		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) override;
 
@@ -81,6 +81,8 @@ namespace aloe
 		virtual void register_object(identifier_node_t_ptr id, node_t_ptr node) override;
 
 		virtual node_proxy_t_ptr find_object(identifier_node_t_ptr id, bool local_scope) override;
+
+		virtual const string& scope_name() override;
 		
 	protected:
 	
@@ -93,20 +95,18 @@ namespace aloe
 		proxy_map_t;
 
 		proxy_map_t obj_map;
-	};
-
-	class scope_modifier_t : public virtual base_modifier_t
-	{
-	public:
-		scope_modifier_t(scope_e scope, string name, environment_t_ptr env = nullptr);
-
-		scope_e curr_scope() override;
-
-		const string& scope_name() override;
-				
-		scope_e scope_id;
 
 		string scope_name_;
+	};
+
+	class context_modifier_t : public virtual base_modifier_t
+	{
+	public:
+		context_modifier_t(context_e scope, environment_t_ptr env = nullptr);
+
+		context_e curr_ctx() override;
+				
+		context_e ctx_id;
 	};
 
 	class fun_modifier_t : public virtual base_modifier_t
