@@ -879,10 +879,19 @@ antl4_parser_t::walk_expression(environment_t_ptr env, aloeParser::ExpressionCon
        INIT_POS(expr_node, ctx);
 
        expr_node->operand   = walk_expression(env, e->expression());
-       expr_node->idt       = walk_identifier(env, e->identifier());
 
-	   throw;  // TBD: pointer dereference not implemented yet
+       ASSERT_LOC(expr_node->operand->expr_type()->type_id == ALOE_TYPE_PTR, "expression '%s' is not of a pointer type", ctx->getText().c_str());
+       ASSERT_LOC(expr_node->operand->expr_type()->ptr->pointee_type()->type_id == ALOE_TYPE_LAYOUT, "expression '%s' is not of a pointer to layout type", ctx->getText().c_str());
 
+       expr_node->idt = walk_identifier(env, e->identifier());
+
+       var_node_t_ptr field = get_field(expr_node->operand->expr_type()->ptr->pointee_type(), expr_node->idt);
+
+       ASSERT_LOC(field, "layout '%s' does not have a field named '%s'", expr_node->operand->expr_type()->ptr->pointee_type()->name().c_str(), expr_node->idt->name.c_str());
+
+       expr_node->p_expr_type = field->p_var_type;
+
+       expr_node->is_lvalue = true;
        out = expr_node;
 
    }

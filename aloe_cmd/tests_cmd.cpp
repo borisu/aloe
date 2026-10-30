@@ -475,13 +475,24 @@ tests_cmd_t::run_parser()
 }
 
 void 
-tests_cmd_t::basic_layout_member_access()
+tests_cmd_t::basic_dot_layout_member_access()
 {
     TEST_PARSE_STRING(
         R"(
             fun foo:(var:int)-> void {  }
             layout A { a:int; b:int; }  
             fun bar :()-> void { var a:A; foo (a.a);})",
+        true);
+}
+
+void
+tests_cmd_t::basic_arrow_layout_member_access()
+{
+    TEST_PARSE_STRING(
+        R"(
+            fun foo:(var:int)-> void {  }
+            layout A { a:int; b:int; }  
+            fun bar :()-> void { var a:^A; foo (a->a);})",
         true);
 }
 
@@ -508,7 +519,7 @@ tests_cmd_t::run_tests()
             R"(
             fun foo:(var:int)-> void {  }
             layout A { a:int; b:int; }  
-            fun bar :()-> void { var a:A; foo (a.a);})", 
+            fun bar :()-> void { var a:^A; foo (a->a);})",
             true);
 
         return true;
@@ -537,7 +548,9 @@ tests_cmd_t::run_tests()
     test_duplicate_layout_decalrations();
     test_diamond_layout();
     test_layout_id();
-	basic_layout_member_access();
+	basic_dot_layout_member_access();
+    basic_arrow_layout_member_access();
+
    
     
     return success;
