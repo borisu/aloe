@@ -8,7 +8,7 @@
 
 #include "base/logger.h"
 #include "antlr4_parser/parser.h"
-//#include "llvm_compiler/compiler.h"
+#include "llvm_compiler/compiler.h"
 #include "compile_cmd.h"
 
 
@@ -47,28 +47,28 @@ tests_cmd_t::run_test(const char *test_name, const char* al, bool expected)
 
     try {
 
-        auto p_expr_type = create_antlr4_parser();
+        auto p = create_antlr4_parser();
 
-        /*auto c = create_llvm_compiler();
+        auto c = create_llvm_compiler();
 
         c->set_validate(validate);
 
-        c->set_no_debug(no_debug);*/
+        c->set_no_debug(no_debug);
 
         ast_t_ptr ast;
 
         istringstream iss(al);
 
-        if (run_res = p_expr_type->parse_from_stream(iss, ast, "<string>"))
+        if (run_res = p->parse_from_stream(iss, ast, "<string>"))
         {
             if (expected && compile)
             {
-                /*stringstream ss;
+                stringstream ss;
                 run_res = c->compile(ast, ss);
 				if (dump_ir)
 				{
 					printf("\nIR:\n%s\n", ss.str().c_str());
-				}*/
+				}
             }
         }
         
@@ -509,18 +509,13 @@ tests_cmd_t::run_tests()
 
     if (false)
     {
-		compile = false;
+		compile = true;
 
-		validate = false;
+		validate = true;
         dump_ir = true;
         no_debug = true;
 
-        TEST_PARSE_STRING(
-            R"(
-            fun foo:(var:int)-> void {  }
-            layout A { a:int; b:int; }  
-            fun bar :()-> void { var a:^A; foo (a->a);})",
-            true);
+        TEST_PARSE_STRING(R"(var a:char[3] = "ok")", true);
 
         return true;
 

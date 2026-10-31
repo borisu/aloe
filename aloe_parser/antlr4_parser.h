@@ -34,11 +34,11 @@ namespace aloe
 
 		virtual fun_node_t_ptr walk_fun_declaration(environment_t_ptr env,  aloeParser::FunDeclarationContext* ctx);
 
-		virtual void walk_expectation(environment_t_ptr env, aloeParser::ExpectationContext* ctx);
+		virtual node_t_ptr walk_expectation(environment_t_ptr env, aloeParser::ExpectationContext* ctx);
 
-		virtual void walk_fun_expectation(environment_t_ptr env, aloeParser::ExpectFunContext* ctx);
+		virtual fun_node_t_ptr walk_fun_expectation(environment_t_ptr env, aloeParser::ExpectFunContext* ctx);
 
-		virtual void walk_layout_expectation(environment_t_ptr env, aloeParser::ExpectLayoutContext* ctx);
+		virtual type_node_t_ptr walk_layout_expectation(environment_t_ptr env, aloeParser::ExpectLayoutContext* ctx);
 
 		virtual layout_node_t_ptr walk_layout_declaration(environment_t_ptr env, aloeParser::LayoutDeclarationContext* ctx);
 

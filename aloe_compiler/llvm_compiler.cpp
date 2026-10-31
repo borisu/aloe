@@ -83,7 +83,7 @@ llvmir_compiler_t::compile(
             throw aloe_exception_t("internal error: expected program node");
         }
 
-        walk_prog(ast_ctx, castptr(prog_node_t, ast->root));
+        emit_prog(ast_ctx, castptr(prog_node_t, ast->root));
 		res = true;
 
         dib.finalize();
@@ -271,7 +271,8 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_t_ptr ctx, Function* fun, fu
         auto* arg_slot = ctx->builder()->CreateAlloca(ir_arg->getType());
         ctx->builder()->CreateStore(ir_arg, arg_slot);
 
-        if (!var->idt->name.empty())
+        // add debug information
+        if (var->idt && !var->idt->name.empty())
         {
             //auto var_name = arg_node->id->name;
             //ir_arg->setName(var_name);
@@ -369,7 +370,7 @@ llvmir_compiler_t::emit_return(compiler_ctx_t_ptr ctx, return_node_t_ptr node)
 }
 
 void 
-llvmir_compiler_t::walk_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node)
+llvmir_compiler_t::emit_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node)
 {
     init_dloc(ctx, node);
 
@@ -1008,9 +1009,7 @@ value_t_ptr
 llvmir_compiler_t::emit_literal(compiler_ctx_t_ptr ctx, literal_node_t_ptr node)
 {
 	init_dloc(ctx, node);
-
     value_t_ptr val(new value_t());
-    
    
     switch (node->lit_type_id)
     {
@@ -1024,11 +1023,12 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t_ptr ctx, literal_node_t_ptr node)
     }
     case LIT_STRING:
     {
-        Type * ir_type  = emit_ir_type(ctx, node->literal_type());
-        string s = std::get<string>(node->value);
-        val->ir_value   = ctx->builder()->CreateGlobalString(s,"",0,ctx->module());
+        val->ir_value   = ConstantDataArray::getString(
+            *ctx->ctx(),
+            std::get<string>(node->value),
+            true  // Add null terminator
+        );
         val->is_lvalue  = false;
-        
         break;
     }
     case LIT_CHAR:

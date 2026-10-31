@@ -167,12 +167,15 @@ antl4_parser_t::walk_prog(environment_t_ptr env, aloeParser::ProgContext* ctx)
 			}
             else if (statement_ctx->expectation())
             {
-                walk_expectation(env, statement_ctx->expectation());
+                statement_node = walk_expectation(env, statement_ctx->expectation());
             }
 			else
 			{
 				RAISE_LOC("unknown declaration statement '%s'", statement_ctx->getText().c_str());
 			}
+
+			ASSERT_LOC(statement_node, "internal error: failed to parse top-level statement '%s'", statement_ctx->getText().c_str());
+
 			out->statements.push_back(statement_node);
             
         }
@@ -256,24 +259,26 @@ antl4_parser_t::walk_type( environment_t_ptr env, aloeParser::TypeContext* ctx)
     return out;
 }
 
-void 
+node_t_ptr
 antl4_parser_t::walk_expectation(environment_t_ptr env, aloeParser::ExpectationContext* ctx)
 {
+	node_t_ptr out;
 	if (ctx->expectFun())
 	{
-		walk_fun_expectation(env, ctx->expectFun());
+		out =  walk_fun_expectation(env, ctx->expectFun());
 	}
 	else if (ctx->expectLayout())
 	{
-		walk_layout_expectation(env, ctx->expectLayout());
+		out = walk_layout_expectation(env, ctx->expectLayout());
 	}
 	else
 	{
 		RAISE_LOC("unknown expectation '%s'", ctx->getText().c_str());
 	}
+	return out;
 }
 
-void 
+fun_node_t_ptr
 antl4_parser_t::walk_fun_expectation(environment_t_ptr env, aloeParser::ExpectFunContext* ctx)
 {
 	auto out = newptr(fun_node_t);
@@ -297,30 +302,31 @@ antl4_parser_t::walk_fun_expectation(environment_t_ptr env, aloeParser::ExpectFu
         env->register_object(out->idt, out);
     }
 	
-    return;
+    return out;
 }
 
-void 
+type_node_t_ptr
 antl4_parser_t::walk_layout_expectation(environment_t_ptr env, aloeParser::ExpectLayoutContext* ctx)
 {
-    auto type = newptr(type_node_t, ALOE_TYPE_LAYOUT);
-    INIT_POS(type, ctx);
+    auto out = newptr(type_node_t, ALOE_TYPE_LAYOUT);
+    INIT_POS(out, ctx);
 
 	auto idt = walk_identifier(env, ctx->identifier());
-    type->layout->name = idt->name;
-	type->layout->long_name = idt->name + "@" + env->scope_name()   ;
-	type->is_incomplete = true;
+    out->layout->name = idt->name;
+	out->layout->long_name = idt->name + "@" + env->scope_name()   ;
+	out->is_incomplete = true;
 
     auto prev = env->find_type(idt, true);
     if (prev)
     {
-        ASSERT_LOC(*prev->target == *type, "identifier '%s' was already defined at (%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
+        ASSERT_LOC(*prev->target == *out, "identifier '%s' was already defined at (%d,%d)", idt->name.c_str(), prev->target->line, prev->target->pos);
     }
     else
     {
-        type->layout->id = uid_counter++;
-        env->register_type(idt, type);
+        out->layout->id = uid_counter++;
+        env->register_type(idt, out);
     }
+    return out;
 }
 
 layout_node_t_ptr

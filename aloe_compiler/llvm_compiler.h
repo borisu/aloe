@@ -27,7 +27,7 @@ namespace aloe
 
 	protected:
 
-		virtual void walk_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node);
+		virtual void emit_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node);
 
 		virtual Type* emit_ir_type(compiler_ctx_t_ptr ctx, type_node_t_ptr atype);
 
