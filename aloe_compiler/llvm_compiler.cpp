@@ -191,6 +191,11 @@ llvmir_compiler_t::emit_ir_type(compiler_ctx_t_ptr ctx, type_node_t_ptr type)
     return out;
 }
 
+Type*
+llvmir_compiler_t::emit_layout_type(compiler_ctx_t_ptr ctx, layout_node_t_ptr node)
+{
+	return emit_ir_type(ctx, node->layout_type());
+}
 
 value_t_ptr
 llvmir_compiler_t::emit_fun(compiler_ctx_t_ptr ctx, fun_node_t_ptr node)
@@ -383,6 +388,9 @@ llvmir_compiler_t::emit_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node)
 			break;
         case VAR_NODE:
             emit_var(ctx, castptr(var_node_t, decl));
+            break;
+        case LAYOUT_NODE:
+            emit_layout_type(ctx, castptr(layout_node_t, decl));
             break;
         default:
 			RAISE("unknown top-level declaration node type %d", decl->node_type_id);

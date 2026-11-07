@@ -29,7 +29,9 @@ namespace aloe
 
 		virtual void emit_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node);
 
-		virtual Type* emit_ir_type(compiler_ctx_t_ptr ctx, type_node_t_ptr atype);
+		virtual Type* emit_ir_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node);
+
+		virtual Type* emit_layout_type(compiler_ctx_t_ptr ctx, layout_node_t_ptr node);
 
 		virtual value_t_ptr emit_fun(compiler_ctx_t_ptr ctx, fun_node_t_ptr node);
 

@@ -507,7 +507,7 @@ tests_cmd_t::run_tests()
 		return true;
     }
 
-    if (false)
+    if (true)
     {
 		compile = true;
 
@@ -515,7 +515,9 @@ tests_cmd_t::run_tests()
         dump_ir = true;
         no_debug = true;
 
-        TEST_PARSE_STRING(R"(var a:char[3] = "ok")", true);
+        TEST_PARSE_STRING(R"(
+            layout A { a:int; b:int; }  
+            )",  true);
 
         return true;
 
