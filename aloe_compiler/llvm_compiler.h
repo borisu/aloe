@@ -4,7 +4,7 @@
 #include "lang/ast/ast.h"
 #include "lang/compiler.h"
 #include "value.h"
-#include "di_cache.h"
+#include "type_cache.h"
 #include "compiler_ctx.h"
 
 using namespace llvm;
@@ -29,9 +29,11 @@ namespace aloe
 
 		virtual void emit_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node);
 
-		virtual Type* emit_ir_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node);
+		virtual Type* emit_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node);
 
-		virtual Type* emit_layout_type(compiler_ctx_t_ptr ctx, layout_node_t_ptr node);
+		virtual Type* emit_layout_declaration(compiler_ctx_t_ptr ctx, layout_node_t_ptr node);
+
+		virtual Type* emit_layout_declaration(compiler_ctx_t_ptr ctx, layout_info_t_ptr layout);
 
 		virtual value_t_ptr emit_fun(compiler_ctx_t_ptr ctx, fun_node_t_ptr node);
 
@@ -105,9 +107,11 @@ namespace aloe
 
 	private:
 
-		di_cache_t_ptr di_cache;
+		type_cache_t_ptr di_cache;
 
 		map<node_t_ptr, value_t_ptr> obj_cache;
+
+		map<type_node_t_ptr, Type *> type_cache;
 
 		bool validate;
 

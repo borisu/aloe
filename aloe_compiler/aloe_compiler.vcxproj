@@ -161,7 +161,7 @@
     <ClInclude Include="llvm_compiler.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="value.h" />
-    <ClInclude Include="di_cache.h" />
+    <ClInclude Include="type_cache.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -174,7 +174,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="di_cache.cpp" />
+    <ClCompile Include="type_cache.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>

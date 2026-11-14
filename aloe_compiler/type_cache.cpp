@@ -1,17 +1,11 @@
 #include "pch.h"
-#include "di_cache.h"
+#include "type_cache.h"
 #include  "i64_platform.h"
 
 using namespace aloe;
 
-di_cache_t::di_cache_t(DIBuilder& dib) : 
-    di_builder(dib)
-{
-
-}
-
 DIType*
-di_cache_t::get_dit_type(type_node_t_ptr atype)
+type_cache_t::get_dit_type(compiler_ctx_t_ptr ctx, type_node_t_ptr atype)
 {
     switch (atype->type_id)
     {
@@ -19,7 +13,7 @@ di_cache_t::get_dit_type(type_node_t_ptr atype)
     {
         if (di_cache.find(*atype) == di_cache.end())
         {
-            di_cache[*atype] = di_builder.createBasicType("int", 32, dwarf::DW_ATE_signed);
+            di_cache[*atype] = ctx->di_builder()->createBasicType("int", 32, dwarf::DW_ATE_signed);
         }
 
         break;
@@ -28,7 +22,7 @@ di_cache_t::get_dit_type(type_node_t_ptr atype)
     {
         if (di_cache.find(*atype) == di_cache.end())
         {
-            di_cache[*atype] = di_builder.createBasicType("char", ALOE_CHAR_SIZE, dwarf::DW_ATE_signed_char);
+            di_cache[*atype] = ctx->di_builder()-> createBasicType("char", ALOE_CHAR_SIZE, dwarf::DW_ATE_signed_char);
         }
 
         break;
@@ -46,7 +40,7 @@ di_cache_t::get_dit_type(type_node_t_ptr atype)
     {
         if (di_cache.find(*atype) == di_cache.end())
         {
-            di_cache[*atype] = di_builder.createBasicType("double", 64, dwarf::DW_ATE_float);
+            di_cache[*atype] = ctx->di_builder()->createBasicType("double", 64, dwarf::DW_ATE_float);
         }
         
         break;
@@ -55,8 +49,8 @@ di_cache_t::get_dit_type(type_node_t_ptr atype)
     {
         if (di_cache.find(*atype) == di_cache.end())
         {
-            di_cache[*atype] = di_builder.createPointerType(
-				get_dit_type(atype->ptr->pointee_type()),
+            di_cache[*atype] = ctx->di_builder()->createPointerType(
+				get_dit_type(ctx, atype->ptr->pointee_type()),
                 ALOE_PTR_SIZE);
         }
 
@@ -68,14 +62,14 @@ di_cache_t::get_dit_type(type_node_t_ptr atype)
         {
 
             SmallVector<Metadata*, 8>   dit_args;
-            dit_args.push_back(get_dit_type(atype->fun->ret_type()));
+            dit_args.push_back(get_dit_type(ctx, atype->fun->ret_type()));
 
             for (auto var : atype->fun->params->v)
             {
-                dit_args.push_back(get_dit_type(var->var_type()));
+                dit_args.push_back(get_dit_type(ctx,var->var_type()));
             };
 
-            di_cache[*atype] = di_builder.createSubroutineType(di_builder.getOrCreateTypeArray(dit_args));
+            di_cache[*atype] = ctx->di_builder()->createSubroutineType(ctx->di_builder()->getOrCreateTypeArray(dit_args));
         }
 
         break;
@@ -85,13 +79,13 @@ di_cache_t::get_dit_type(type_node_t_ptr atype)
     {
         if (di_cache.find(*atype) == di_cache.end())
         {
-            DISubrange* range = di_builder.getOrCreateSubrange(0, atype->arr->size);
-            DINodeArray subscripts = di_builder.getOrCreateArray(range);
+            DISubrange* range = ctx->di_builder()->getOrCreateSubrange(0, atype->arr->size);
+            DINodeArray subscripts = ctx->di_builder()->getOrCreateArray(range);
 
-			di_cache[*atype] = di_builder.createArrayType(
+			di_cache[*atype] = ctx->di_builder()->createArrayType(
 				atype->arr->size,
 				ALOE_CHAR_SIZE,
-				get_dit_type(atype->arr->elem_type()),
+				get_dit_type(ctx, atype->arr->elem_type()),
                 subscripts);
         }
         break;

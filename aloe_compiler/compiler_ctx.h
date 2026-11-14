@@ -5,7 +5,6 @@
 #include "lang/ast/ast.h"
 #include "lang/compiler.h"
 #include "value.h"
-#include "di_cache.h"
 
 using namespace llvm;
 

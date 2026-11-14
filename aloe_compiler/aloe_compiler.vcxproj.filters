@@ -11,7 +11,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="llvm_compiler.h" />
     <ClInclude Include="value.h" />
-    <ClInclude Include="di_cache.h" />
+    <ClInclude Include="type_cache.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="i64_platform.h" />
     <ClInclude Include="include\llvm_compiler\compiler.h" />
@@ -20,7 +20,7 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="llvm_compiler.cpp" />
-    <ClCompile Include="di_cache.cpp" />
+    <ClCompile Include="type_cache.cpp" />
     <ClCompile Include="intrinsics.cpp" />
     <ClCompile Include="compiler_ctx.cpp" />
     <ClCompile Include="utils.cpp" />
