@@ -29,9 +29,9 @@ namespace aloe
 
 		virtual void emit_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node);
 
-		virtual Type* emit_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node);
+		virtual Type* emit_type(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr node);
 
-		virtual Type* emit_layout_declaration(compiler_ctx_t_ptr ctx, layout_node_t_ptr node);
+		virtual Type* emit_layout_declaration(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr node);
 
 		virtual Type* emit_layout_declaration(compiler_ctx_t_ptr ctx, layout_info_t_ptr layout);
 
@@ -43,7 +43,7 @@ namespace aloe
 
 		virtual void emit_var(compiler_ctx_t_ptr ctx, var_node_t_ptr node);
 
-		virtual value_t_ptr emit_default(compiler_ctx_t_ptr ctx, type_node_t_ptr atype);
+		virtual value_t_ptr emit_default(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr atype);
 
 		virtual value_t_ptr emit_expr_identifier(compiler_ctx_t_ptr ctx, identifier_expr_node_t_ptr node);
 
@@ -85,7 +85,7 @@ namespace aloe
 		//
 		// HELPERS
 		//
-		virtual value_t_ptr emit_constant(compiler_ctx_t_ptr ctx, variant<int,float, double, char> val, type_node_t_ptr atype, node_t_ptr node);
+		virtual value_t_ptr emit_constant(compiler_ctx_t_ptr ctx, variant<int,float, double, char> val, type_proxy_node_t_ptr atype, node_t_ptr node);
 
 		virtual value_t_ptr emit_raw_assign(compiler_ctx_t_ptr ctx, value_t_ptr lhs, value_t_ptr rhs, node_t_ptr node);
 

@@ -5,6 +5,7 @@
 #include "fwd.h"
 #include "node.h"
 #include "identifier.h"
+#include "type_proxy.h"
 
 using namespace std;
 
@@ -16,9 +17,9 @@ namespace aloe
 
 		identifier_node_t_ptr	idt;
 
-		type_proxy_t_ptr		p_var_type;
+		type_proxy_node_t_ptr	p_var_type;
 
-		void var_type(type_proxy_t_ptr type);
+		void var_type(type_proxy_node_t_ptr type);
 
 		type_node_t_ptr var_type() const;
 

@@ -22,9 +22,9 @@ namespace aloe
 	{
 	public:
 		
-		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) = 0;
+		virtual type_proxy_node_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) = 0;
 		
-		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope = false) = 0;
+		virtual type_proxy_node_t_ptr find_type(identifier_node_t_ptr id, bool local_scope = false) = 0;
 
 		virtual void register_object(identifier_node_t_ptr id, node_t_ptr node) = 0;
 
@@ -46,9 +46,9 @@ namespace aloe
 
 		base_modifier_t(environment_t_ptr env = nullptr);
 
-		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) override;
+		virtual type_proxy_node_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) override;
 
-		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope) override;
+		virtual type_proxy_node_t_ptr find_type(identifier_node_t_ptr id, bool local_scope) override;
 
 		virtual void register_object(identifier_node_t_ptr id, node_t_ptr node) override;
 
@@ -74,9 +74,9 @@ namespace aloe
 
 		environment_modifier_t(environment_t_ptr env = nullptr, string name = "");
 
-		virtual type_proxy_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) override;
+		virtual type_proxy_node_t_ptr register_type(identifier_node_t_ptr id, type_node_t_ptr node) override;
 
-		virtual type_proxy_t_ptr find_type(identifier_node_t_ptr id, bool local_scope) override;
+		virtual type_proxy_node_t_ptr find_type(identifier_node_t_ptr id, bool local_scope) override;
 
 		virtual void register_object(identifier_node_t_ptr id, node_t_ptr node) override;
 
@@ -86,7 +86,7 @@ namespace aloe
 		
 	protected:
 	
-		typedef map<string, type_proxy_t_ptr>
+		typedef map<string, type_proxy_node_t_ptr>
 		type_map_t;
 
 		type_map_t  type_map;

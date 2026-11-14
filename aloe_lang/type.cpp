@@ -221,13 +221,13 @@ gt_node_t::gt_type() const
 }
 
 void 
-gt_node_t::gt_type(type_proxy_t_ptr p_gt_type)
+gt_node_t::gt_type(type_proxy_node_t_ptr p_gt_type)
 {
 	this->p_gt_type = p_gt_type;
 }
 
 
-void var_node_t::var_type(type_proxy_t_ptr type)
+void var_node_t::var_type(type_proxy_node_t_ptr type)
 {
 	this->p_var_type = type;
 }
@@ -250,13 +250,13 @@ type_node_t_ptr fun_info_t::ret_type() const
 	return p_ret_type->target;
 }
 
-void fun_info_t::ret_type(type_proxy_t_ptr p_ret_type)
+void fun_info_t::ret_type(type_proxy_node_t_ptr p_ret_type)
 {
 	this->p_ret_type = p_ret_type;
 }
 
 
-void array_info_t::elem_type(type_proxy_t_ptr p_elem_type)
+void array_info_t::elem_type(type_proxy_node_t_ptr p_elem_type)
 {
 	this->p_elem_type = p_elem_type;
 }
@@ -266,7 +266,7 @@ type_node_t_ptr array_info_t::elem_type() const
 	return p_elem_type->target;
 }
 
-void ptr_info_t::pointee_type(type_proxy_t_ptr p_ptr_type)
+void ptr_info_t::pointee_type(type_proxy_node_t_ptr p_ptr_type)
 {
 	this->p_ptr_type = p_ptr_type;
 }

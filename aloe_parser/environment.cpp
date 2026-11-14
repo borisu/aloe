@@ -14,13 +14,13 @@ base_modifier_t::base_modifier_t(environment_t_ptr env):prev(env)
 
 }
 
-type_proxy_t_ptr
+type_proxy_node_t_ptr
 base_modifier_t::register_type(identifier_node_t_ptr idt, type_node_t_ptr type)
 {
     return prev->register_type(idt, type);
 }
 
-type_proxy_t_ptr
+type_proxy_node_t_ptr
 base_modifier_t::find_type(identifier_node_t_ptr idt, bool local_scope)
 {
 	if (prev == nullptr)
@@ -96,7 +96,7 @@ scope_name_(name)
     }
 };
 
-type_proxy_t_ptr
+type_proxy_node_t_ptr
 environment_modifier_t::register_type(identifier_node_t_ptr idt, type_node_t_ptr type)
 {
 	
@@ -111,13 +111,13 @@ environment_modifier_t::register_type(identifier_node_t_ptr idt, type_node_t_ptr
         // so that when the type is redefined, the existing pointer will be updated with 
 		// the new type information. This way, anyone holding a pointer to the type will 
         // see the updated information.
-        type_map[idt->name] = newptr(type_proxy_t,type); 
+        type_map[idt->name] = newptr(type_proxy_node_t,type); 
     }
 
     return type_map[idt->name];
 }
 
-type_proxy_t_ptr
+type_proxy_node_t_ptr
 environment_modifier_t::find_type(identifier_node_t_ptr idt, bool local_scope)
 {
     if (type_map.count(idt->name) > 0)

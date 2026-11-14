@@ -17,9 +17,5 @@ namespace aloe
 
 	struct expr_node_t;
 	defptr(expr_node_t);
-
-	typedef proxy_t<type_node_t_ptr> type_proxy_t;
-	defptr(type_proxy_t);
-
 	
 }

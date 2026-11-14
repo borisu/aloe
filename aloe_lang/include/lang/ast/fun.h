@@ -21,14 +21,14 @@ namespace aloe
 
 		marker_node_t_ptr		end_of_fun;
 
-		type_proxy_t_ptr	    p_fun_type;
+		type_proxy_node_t_ptr	    p_fun_type;
 
 		type_node_t_ptr fun_type() const
 		{
 			return p_fun_type->target;
 		}
 
-		void fun_type(type_proxy_t_ptr fun_type)
+		void fun_type(type_proxy_node_t_ptr fun_type)
 		{
 			this->p_fun_type = fun_type;
 		}

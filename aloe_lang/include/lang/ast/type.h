@@ -5,6 +5,7 @@
 #include "node.h"
 #include "var.h"
 #include "gt.h"
+#include "type_proxy.h"
 
 using namespace std;
 
@@ -57,9 +58,9 @@ namespace aloe
 	{
 		array_info_t();
 
-		type_proxy_t_ptr p_elem_type;
+		type_proxy_node_t_ptr p_elem_type;
 
-		void elem_type(type_proxy_t_ptr p_elem_type);
+		void elem_type(type_proxy_node_t_ptr p_elem_type);
 
 		type_node_t_ptr elem_type() const;
 
@@ -69,9 +70,9 @@ namespace aloe
 
 	struct ptr_info_t
 	{
-		type_proxy_t_ptr p_ptr_type;
+		type_proxy_node_t_ptr p_ptr_type;
 
-		void pointee_type(type_proxy_t_ptr p_ptr_type);
+		void pointee_type(type_proxy_node_t_ptr p_ptr_type);
 
 		type_node_t_ptr pointee_type() const;
 	};
@@ -79,11 +80,11 @@ namespace aloe
 
 	struct fun_info_t
 	{
-		type_proxy_t_ptr p_ret_type;
+		type_proxy_node_t_ptr p_ret_type;
 
 		type_node_t_ptr ret_type() const;
 
-		void ret_type(type_proxy_t_ptr p_ret_type);
+		void ret_type(type_proxy_node_t_ptr p_ret_type);
 
 		var_set_t_ptr params;
 

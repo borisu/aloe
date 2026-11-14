@@ -6,6 +6,7 @@
 #include "fwd.h"
 #include "node.h"
 #include "identifier.h"
+#include "type_proxy.h"
 
 using namespace std;
 
@@ -15,13 +16,13 @@ namespace aloe
 	{
 		gt_node_t() :node_t(GT_NODE) {};
 
-		type_proxy_t_ptr p_gt_type;
+		type_proxy_node_t_ptr p_gt_type;
 
 		type_node_t_ptr gt_type() const;
 
 		identifier_node_t_ptr idt;
 
-		void gt_type(type_proxy_t_ptr p_gt_type);
+		void gt_type(type_proxy_node_t_ptr p_gt_type);
 	};
 	defptr(gt_node_t);
 

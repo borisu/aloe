@@ -60,7 +60,7 @@
     <ClInclude Include="include\lang\ast\var.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\lang\ast\layout.h">
+    <ClInclude Include="include\lang\ast\type_proxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\lang\ast\type.h">

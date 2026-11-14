@@ -31,9 +31,9 @@ namespace aloe
 
 		literal_type_e lit_type_id;
 
-		type_proxy_t_ptr p_literal_type;
+		type_proxy_node_t_ptr p_literal_type;
 
-		void literal_type(type_proxy_t_ptr type)
+		void literal_type(type_proxy_node_t_ptr type)
 		{
 			this->p_literal_type = type;
 		}

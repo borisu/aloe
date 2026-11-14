@@ -112,13 +112,13 @@ llvmir_compiler_t::compile(
 
 
 Type*
-llvmir_compiler_t::emit_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node)
+llvmir_compiler_t::emit_type(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr node)
 {
     init_dloc(ctx, node);
 
     Type* out = nullptr;
 
-    switch (node->type_id)
+    switch (node->type()->type_id)
     {
     case ALOE_TYPE_INT:
     {
@@ -152,18 +152,18 @@ llvmir_compiler_t::emit_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node)
     }
 	case ALOE_TYPE_ARRAY:
 	{
-		Type* arr_type = emit_type(ctx, node->arr->elem_type());
-		out = ArrayType::get(arr_type, node->arr->size);
+		Type* arr_type = emit_type(ctx, node->type()->arr->p_elem_type);
+		out = ArrayType::get(arr_type, node->type()->arr->size);
 		break;
 	}
     case ALOE_TYPE_FUNCTION:
     {
-        Type* ir_type = emit_type(ctx, node->fun->ret_type());
+        Type* ir_type = emit_type(ctx, node->type()->fun->p_ret_type);
 
         std::vector<Type*>  irt_args;
-        for (auto var : node->fun->params->v)
+        for (auto var : node->type()->fun->params->v)
         {
-            Type* argt = emit_type(ctx, var->var_type());
+            Type* argt = emit_type(ctx, var->p_var_type);
             irt_args.push_back(argt);
         };
 
@@ -173,7 +173,7 @@ llvmir_compiler_t::emit_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node)
     }
 	case ALOE_TYPE_LAYOUT:
 	{
-		out = emit_layout_declaration(ctx, node->layout);
+		out = emit_layout_declaration(ctx, node->type()->layout);
 		break;
 	}
     default:
@@ -185,12 +185,12 @@ llvmir_compiler_t::emit_type(compiler_ctx_t_ptr ctx, type_node_t_ptr node)
     return out;
 }
 
-Type* llvmir_compiler_t::emit_layout_declaration(compiler_ctx_t_ptr ctx, layout_node_t_ptr node)
+Type* llvmir_compiler_t::emit_layout_declaration(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr node)
 {
     init_dloc(ctx, node);
     Type* out = nullptr;
 
-	return emit_layout_declaration(ctx, node->layout_type()->layout);
+	return emit_layout_declaration(ctx, node->type()->layout);
 }
 
 Type*
@@ -201,7 +201,7 @@ llvmir_compiler_t::emit_layout_declaration(compiler_ctx_t_ptr ctx, layout_info_t
     std::vector<Type*>  irt_members;
     for (auto field : layout->fields->v)
     {
-        Type* mt = emit_type(ctx, field->var_type());
+        Type* mt = emit_type(ctx, field->p_var_type);
         irt_members.push_back(mt);
     };
     out = StructType::create(*ctx->ctx(), irt_members, "layout");
@@ -219,7 +219,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t_ptr ctx, fun_node_t_ptr node)
 
     value_t_ptr out(new value_t());
 
-    Type *ir_fun_type   = emit_type(ctx, node->fun_type());
+    Type *ir_fun_type   = emit_type(ctx, node->p_fun_type);
 	out->di_type        = di_cache->get_dit_type(ctx, node->fun_type());
   
     Function* ir_fun =
@@ -401,8 +401,8 @@ llvmir_compiler_t::emit_prog(compiler_ctx_t_ptr ctx, prog_node_t_ptr node)
         case VAR_NODE:
             emit_var(ctx, castptr(var_node_t, decl));
             break;
-        case LAYOUT_NODE:
-            emit_layout_declaration(ctx, castptr(layout_node_t, decl));
+        case TYPE_PROXY_NODE:
+            emit_type(ctx, castptr(type_proxy_node_t, decl));
             break;
         default:
 			RAISE("unknown top-level declaration node type %d", decl->node_type_id);
@@ -437,13 +437,13 @@ llvmir_compiler_t::emit_expr_identifier(compiler_ctx_t_ptr ctx, identifier_expr_
 
 
 value_t_ptr 
-llvmir_compiler_t::emit_default(compiler_ctx_t_ptr ctx, type_node_t_ptr atype)
+llvmir_compiler_t::emit_default(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr atype)
 {
 	value_t_ptr out(new value_t());
 
     out->is_lvalue = false;
     out->ir_value  = Constant::getNullValue(emit_type(ctx, atype));
-    out->di_type   = di_cache->get_dit_type(ctx, atype);
+    out->di_type   = di_cache->get_dit_type(ctx, atype->type());
    
     return out;
 
@@ -456,12 +456,11 @@ llvmir_compiler_t::emit_var(compiler_ctx_t_ptr ctx, var_node_t_ptr node)
     init_dloc(ctx, node);
 	value_t_ptr out(new value_t());
 
-    Type *ir_var_type  = emit_type(ctx, node->var_type() );
+    Type *ir_var_type  = emit_type(ctx, node->p_var_type );
     out->lval_ir_type = ir_var_type;
     out->is_lvalue = true;
 
-	auto init_val = node->initializer ? emit_expr_value(ctx, node->initializer) : emit_default(ctx, node->var_type());
-
+	auto init_val = node->initializer ? emit_expr_value(ctx, node->initializer) : emit_default(ctx, node->p_var_type);
     if (!ctx->curr_fun())
     {
         auto g_var = new GlobalVariable(
@@ -778,7 +777,7 @@ llvmir_compiler_t::emit_expr_deref(compiler_ctx_t_ptr ctx, deref_expr_node_t_ptr
 
     val->ir_value  = emit_rvalue(ctx, operand_val);
     val->is_lvalue = true;
-	val->lval_ir_type = emit_type(ctx, node->expr_type());
+	val->lval_ir_type = emit_type(ctx, node->p_expr_type);
 	val->di_type   = di_cache->get_dit_type(ctx, node->expr_type());
 
 
@@ -825,7 +824,7 @@ llvmir_compiler_t::emit_expr_postfix(compiler_ctx_t_ptr ctx, unary_expr_node_t_p
     case expr_sfxminmin:
     case expr_sfxplusplus:
     {
-        value_t_ptr const_val = emit_constant(ctx, 1, make_shared<type_node_t>(ALOE_TYPE_INT), node);
+        value_t_ptr const_val = emit_constant(ctx, 1, newptr(type_proxy_node_t, newptr(type_node_t, ALOE_TYPE_INT)), node);
 
         check_ir_type_equal(ctx, operand_rval->ir_value, const_val->ir_value, node);
         value_t_ptr math_val = emit_raw_binary_arithmetic(ctx, node->op_id == expr_sfxminmin ? expr_sub : expr_add, 
@@ -877,7 +876,7 @@ llvmir_compiler_t::emit_expr_prefix(compiler_ctx_t_ptr ctx, unary_expr_node_t_pt
     case expr_preminmin:
     {
 		check_lvalue(ctx, operand_val, node);
-		value_t_ptr const_val = emit_constant(ctx, 1 , make_shared<type_node_t>(ALOE_TYPE_INT), node);
+		value_t_ptr const_val = emit_constant(ctx, 1 , newptr(type_proxy_node_t, newptr(type_node_t, ALOE_TYPE_INT)), node);
 
         value_t_ptr operand_rval(new value_t());
         operand_rval->ir_value = emit_rvalue(ctx, operand_val);
@@ -965,14 +964,14 @@ llvmir_compiler_t::emit_expr_index(compiler_ctx_t_ptr ctx, index_expr_node_t_ptr
     
     // get element pointer
     Value* gep_val = ctx->builder()->CreateGEP(
-		emit_type(ctx, array_val->type->arr->elem_type()),
+		emit_type(ctx, array_val->type->arr->p_elem_type),
         array_val->ir_value,
         emit_rvalue(ctx, index_val)
     );
 
     val->ir_value = gep_val;
     val->is_lvalue = true;
-    val->lval_ir_type = emit_type(ctx, node->expr_type());
+    val->lval_ir_type = emit_type(ctx, node->p_expr_type);
     val->di_type = di_cache->get_dit_type(ctx, node->expr_type());
 
 
@@ -1035,7 +1034,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t_ptr ctx, literal_node_t_ptr node)
     {
     case LIT_INT:
     {
-        Type * ir_type = emit_type(ctx, node->literal_type());
+        Type * ir_type = emit_type(ctx, node->p_literal_type);
 	    val->ir_value   = ConstantInt::get(ir_type, std::get<int>(node->value), true);
 		val->is_lvalue  = false;
 
@@ -1053,7 +1052,7 @@ llvmir_compiler_t::emit_literal(compiler_ctx_t_ptr ctx, literal_node_t_ptr node)
     }
     case LIT_CHAR:
     {
-        Type * ir_type = emit_type(ctx, node->literal_type());
+        Type * ir_type = emit_type(ctx, node->p_literal_type);
         val->ir_value   = ConstantInt::get(ir_type, std::get<char>(node->value));
         val->is_lvalue  = false;
         break;
@@ -1103,11 +1102,11 @@ llvmir_compiler_t::check_lvalue(compiler_ctx_t_ptr ctx, value_t_ptr v, node_t_pt
 }
 
 value_t_ptr 
-llvmir_compiler_t::emit_constant(compiler_ctx_t_ptr ctx, variant<int, float, double, char> var, type_node_t_ptr atype, node_t_ptr node)
+llvmir_compiler_t::emit_constant(compiler_ctx_t_ptr ctx, variant<int, float, double, char> var, type_proxy_node_t_ptr atype, node_t_ptr node)
 {
     value_t_ptr val(new value_t());
 
-    switch (atype->type_id)
+    switch (atype->type()->type_id)
     {
     case ALOE_TYPE_INT:
     {
@@ -1125,7 +1124,7 @@ llvmir_compiler_t::emit_constant(compiler_ctx_t_ptr ctx, variant<int, float, dou
     }
     default:
     {
-		RAISE_LOC("unsupported constant type %d", atype->type_id);
+		RAISE_LOC("unsupported constant type %d", atype->type()->type_id);
     }
 	}
 	return val;

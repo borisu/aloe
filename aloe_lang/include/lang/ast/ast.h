@@ -8,8 +8,8 @@
 #include "expression.h"
 #include "literal.h"
 #include "identifier.h"
+#include "type_proxy.h"
 #include "type.h"
-#include "layout.h"
 
 
 using namespace std;

@@ -73,9 +73,9 @@ namespace aloe
 
 		expression_op_e op_id;
 
-		type_proxy_t_ptr p_expr_type;
+		type_proxy_node_t_ptr p_expr_type;
 
-		void expr_type(type_proxy_t_ptr type)
+		void expr_type(type_proxy_node_t_ptr type)
 		{
 			this->p_expr_type = type;
 		}

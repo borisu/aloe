@@ -21,7 +21,7 @@ namespace aloe
 		ARG_LIST_NODE,
 		GT_NODE,
 		LITERAL_NODE,
-		LAYOUT_NODE,
+		TYPE_PROXY_NODE,
 		MARKER_NODE
 	};
 
