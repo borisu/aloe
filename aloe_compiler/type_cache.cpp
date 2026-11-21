@@ -182,11 +182,15 @@ type_cache_t::get_layout_ir_type(compiler_ctx_t_ptr ctx, layout_info_t_ptr layou
 
     // push gt chain first 
 
-	for (auto gt : layout->gt_chain->v)
+	if (layout->gt_chain)
 	{
-		Type* mt = get_ir_type(ctx, gt->gt_type());
-		irt_members.push_back(mt);
-	};
+        for (auto gt : layout->gt_chain->v)
+        {
+            Type* mt = get_ir_type(ctx, gt->type());
+            irt_members.push_back(mt);
+        };
+		
+	}
 
     for (auto field : layout->fields->v)
     {

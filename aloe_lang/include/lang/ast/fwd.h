@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include <vector>
+#include <map>
 #include "base/defs.h"
 
 using namespace std;

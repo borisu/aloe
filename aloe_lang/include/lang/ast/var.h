@@ -35,11 +35,11 @@ namespace aloe
 	typedef map<string, var_node_t_ptr>	var_map_t;
 	defptr(var_map_t);
 
-	struct var_set_t
+	struct var_container_t
 	{
 		var_vec_t v;
 		var_map_t m;
 	};
-	defptr(var_set_t);
+	defptr(var_container_t);
 
 }

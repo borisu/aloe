@@ -12,6 +12,7 @@
 - [X] introduce modifiers for llvm compiler
 - [X] Add pointers
 - [X] introduce structs (layout)
+- [ ] Review structure gt casting design
 - [ ] Add virtual inheritance support
 - [ ] casting infrastructure
 - [ ] Change LNAME identifier type tospecific VAR and FUN

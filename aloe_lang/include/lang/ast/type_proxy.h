@@ -9,7 +9,6 @@ using namespace std;
 
 namespace aloe
 {
-
 	struct type_proxy_node_t : public node_t
 	{
 		type_proxy_node_t() :node_t(TYPE_PROXY_NODE) {}
@@ -31,6 +30,5 @@ namespace aloe
 	};
 
 	defptr(type_proxy_node_t);
-
 }
 

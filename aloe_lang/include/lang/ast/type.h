@@ -4,13 +4,23 @@
 #include <set>
 #include "node.h"
 #include "var.h"
-#include "gt.h"
 #include "type_proxy.h"
 
 using namespace std;
 
 namespace aloe
 {
+	typedef vector<type_proxy_node_t_ptr>	type_vec_t; // can be defined because of forward declaration of type_node_t
+	typedef set<type_proxy_node_t_ptr>		type_set_t; 
+	
+
+	struct type_container_t
+	{
+		type_vec_t v;
+		type_set_t s;
+	};
+	defptr(type_container_t);
+
 	enum aloe_type_e
 	{
 		ALOE_TYPE_UNKNOWN,
@@ -47,9 +57,9 @@ namespace aloe
 
 		int id;
 
-		gt_set_t_ptr gt_chain;
+		type_container_t_ptr gt_chain;
 
-		var_set_t_ptr fields;
+		var_container_t_ptr fields;
 
 	};
 	defptr(layout_info_t);
@@ -86,7 +96,7 @@ namespace aloe
 
 		void ret_type(type_proxy_node_t_ptr p_ret_type);
 
-		var_set_t_ptr params;
+		var_container_t_ptr params;
 
 		string name;
 
@@ -117,9 +127,6 @@ namespace aloe
 		
 	};
 	defptr(type_node_t);
-
-	typedef set<type_node_t> type_set_t;
-	defptr(type_set_t);
 
 	bool operator==(const type_node_t& t1, const type_node_t& t2);
 

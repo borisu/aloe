@@ -214,18 +214,6 @@ type_node_t::to_str()
 	}
 }
 
-type_node_t_ptr 
-gt_node_t::gt_type() const
-{
-	return p_gt_type->target;
-}
-
-void 
-gt_node_t::gt_type(type_proxy_node_t_ptr p_gt_type)
-{
-	this->p_gt_type = p_gt_type;
-}
-
 
 void var_node_t::var_type(type_proxy_node_t_ptr type)
 {
@@ -276,9 +264,7 @@ type_node_t_ptr ptr_info_t::pointee_type() const
 	return p_ptr_type->target;
 }
 
-layout_info_t::layout_info_t() : id(-1),
-gt_chain(newptr(gt_set_t)),
-fields(newptr(var_set_t))
+layout_info_t::layout_info_t() : id(-1)
 {
 
 }
