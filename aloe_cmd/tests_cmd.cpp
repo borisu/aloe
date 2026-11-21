@@ -517,6 +517,7 @@ tests_cmd_t::run_tests()
 
         TEST_PARSE_STRING(R"(
             layout A { a:int; b:int; }  
+            layout B > A { a: A }   
             )",  true);
 
         return true;

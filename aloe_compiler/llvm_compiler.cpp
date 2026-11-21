@@ -73,7 +73,7 @@ llvmir_compiler_t::compile(
     compiler_ctx_t_ptr compiler_ctx(new llvm_ctx_modifier_t(&ctx, &module, &ir, &dib, di_file, cu));
     compiler_ctx_t_ptr ast_ctx(new ast_ctx_modifier_t(ast, compiler_ctx));
 
-	di_cache = make_shared<type_cache_t>();
+	type_cache = make_shared<type_cache_t>();
 
 	bool res = false;
     try
@@ -115,98 +115,9 @@ Type*
 llvmir_compiler_t::emit_type(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr node)
 {
     init_dloc(ctx, node);
-
-    Type* out = nullptr;
-
-    switch (node->type()->type_id)
-    {
-    case ALOE_TYPE_INT:
-    {
-        out = Type::getInt64Ty(*ctx->ctx());
-        
-        break;
-    }
-    case ALOE_TYPE_CHAR:
-    {
-        out = Type::getInt8Ty(*ctx->ctx());
-
-        break;
-    }
-    case ALOE_TYPE_VOID:
-    {
-        out = Type::getVoidTy(*ctx->ctx());
-
-        break;
-    }
-    case ALOE_TYPE_DOUBLE:
-    {
-        out = Type::getDoubleTy(*ctx->ctx());
-
-        break;
-    }
-    case ALOE_TYPE_PTR:
-    {
-        out = PointerType::getUnqual(*ctx->ctx()); // collapse pointer types, we will preserve the original type in debug info for each level of indirection
-
-        break;
-    }
-	case ALOE_TYPE_ARRAY:
-	{
-		Type* arr_type = emit_type(ctx, node->type()->arr->p_elem_type);
-		out = ArrayType::get(arr_type, node->type()->arr->size);
-		break;
-	}
-    case ALOE_TYPE_FUNCTION:
-    {
-        Type* ir_type = emit_type(ctx, node->type()->fun->p_ret_type);
-
-        std::vector<Type*>  irt_args;
-        for (auto var : node->type()->fun->params->v)
-        {
-            Type* argt = emit_type(ctx, var->p_var_type);
-            irt_args.push_back(argt);
-        };
-
-        out  = FunctionType::get(ir_type, irt_args, false);
-        break;
-
-    }
-	case ALOE_TYPE_LAYOUT:
-	{
-		out = emit_layout_declaration(ctx, node->type()->layout);
-		break;
-	}
-    default:
-    {
-        assert(false && "(internal error): unknown type id");
-    }
-    };
+    Type* out = type_cache->get_ir_type(ctx, node->type());
 
     return out;
-}
-
-Type* llvmir_compiler_t::emit_layout_declaration(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr node)
-{
-    init_dloc(ctx, node);
-    Type* out = nullptr;
-
-	return emit_layout_declaration(ctx, node->type()->layout);
-}
-
-Type*
-llvmir_compiler_t::emit_layout_declaration(compiler_ctx_t_ptr ctx, layout_info_t_ptr layout)
-{
-    Type* out = nullptr;
-
-    std::vector<Type*>  irt_members;
-    for (auto field : layout->fields->v)
-    {
-        Type* mt = emit_type(ctx, field->p_var_type);
-        irt_members.push_back(mt);
-    };
-    out = StructType::create(*ctx->ctx(), irt_members, "layout");
-
-	return out;
 }
 
 value_t_ptr
@@ -220,7 +131,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t_ptr ctx, fun_node_t_ptr node)
     value_t_ptr out(new value_t());
 
     Type *ir_fun_type   = emit_type(ctx, node->p_fun_type);
-	out->di_type        = di_cache->get_dit_type(ctx, node->fun_type());
+	out->di_type        = type_cache->get_dit_type(ctx, node->fun_type());
   
     Function* ir_fun =
         Function::Create(ir_sc<FunctionType>(ir_fun_type),
@@ -232,7 +143,7 @@ llvmir_compiler_t::emit_fun(compiler_ctx_t_ptr ctx, fun_node_t_ptr node)
         node->idt->name,         // Mangled function name.
         ctx->di_file(),         // File where this variable is defined.
         node->line,             // Line number.
-		ir_sc<DISubroutineType>(di_cache->get_dit_type(ctx, node->fun_type())), // type
+		ir_sc<DISubroutineType>(type_cache->get_dit_type(ctx, node->fun_type())), // type
         node->line,             // scope line
         DINode::FlagZero,
 		node->is_defined ? DISubprogram::SPFlagDefinition : DISubprogram::SPFlagZero
@@ -300,7 +211,7 @@ llvmir_compiler_t::emit_fun_definition(compiler_ctx_t_ptr ctx, Function* fun, fu
                 i + 1,
                 ctx->di_file(),
                 node->line,
-                di_cache->get_dit_type(ctx, var->var_type()),
+                type_cache->get_dit_type(ctx, var->var_type()),
                 true
             );
 
@@ -443,7 +354,7 @@ llvmir_compiler_t::emit_default(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr at
 
     out->is_lvalue = false;
     out->ir_value  = Constant::getNullValue(emit_type(ctx, atype));
-    out->di_type   = di_cache->get_dit_type(ctx, atype->type());
+    out->di_type   = type_cache->get_dit_type(ctx, atype->type());
    
     return out;
 
@@ -478,7 +389,7 @@ llvmir_compiler_t::emit_var(compiler_ctx_t_ptr ctx, var_node_t_ptr node)
             node->idt->name,                // linkage name
             ctx->di_file(),               
             node->line,
-            di_cache->get_dit_type(ctx, node->var_type()),     
+            type_cache->get_dit_type(ctx, node->var_type()),     
             true                    
         );
 
@@ -496,7 +407,7 @@ llvmir_compiler_t::emit_var(compiler_ctx_t_ptr ctx, var_node_t_ptr node)
                 node->idt->name,        
                 ctx->di_file(),
                 node->line,           
-				di_cache->get_dit_type(ctx, node->var_type())
+				type_cache->get_dit_type(ctx, node->var_type())
             );
 
         ctx->di_builder()->insertDeclare(
@@ -778,7 +689,7 @@ llvmir_compiler_t::emit_expr_deref(compiler_ctx_t_ptr ctx, deref_expr_node_t_ptr
     val->ir_value  = emit_rvalue(ctx, operand_val);
     val->is_lvalue = true;
 	val->lval_ir_type = emit_type(ctx, node->p_expr_type);
-	val->di_type   = di_cache->get_dit_type(ctx, node->expr_type());
+	val->di_type   = type_cache->get_dit_type(ctx, node->expr_type());
 
 
     return val;
@@ -972,7 +883,7 @@ llvmir_compiler_t::emit_expr_index(compiler_ctx_t_ptr ctx, index_expr_node_t_ptr
     val->ir_value = gep_val;
     val->is_lvalue = true;
     val->lval_ir_type = emit_type(ctx, node->p_expr_type);
-    val->di_type = di_cache->get_dit_type(ctx, node->expr_type());
+    val->di_type = type_cache->get_dit_type(ctx, node->expr_type());
 
 
     return val;

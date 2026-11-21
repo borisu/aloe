@@ -31,10 +31,6 @@ namespace aloe
 
 		virtual Type* emit_type(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr node);
 
-		virtual Type* emit_layout_declaration(compiler_ctx_t_ptr ctx, type_proxy_node_t_ptr node);
-
-		virtual Type* emit_layout_declaration(compiler_ctx_t_ptr ctx, layout_info_t_ptr layout);
-
 		virtual value_t_ptr emit_fun(compiler_ctx_t_ptr ctx, fun_node_t_ptr node);
 
 		virtual void emit_fun_definition(compiler_ctx_t_ptr ctx, Function *fun, fun_node_t_ptr node);
@@ -107,11 +103,9 @@ namespace aloe
 
 	private:
 
-		type_cache_t_ptr di_cache;
+		type_cache_t_ptr type_cache;
 
 		map<node_t_ptr, value_t_ptr> obj_cache;
-
-		map<type_node_t_ptr, Type *> type_cache;
 
 		bool validate;
 
